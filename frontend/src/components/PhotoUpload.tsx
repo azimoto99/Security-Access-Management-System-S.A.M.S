@@ -43,6 +43,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -143,10 +144,32 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
     });
   };
 
-  const openCamera = () => {
-    setCameraError(null);
-    setCameraOpen(true);
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
   };
+
+  const openCamera = () => {
+    // On mobile devices, use native camera app via file input with capture attribute
+    if (isMobileDevice() && cameraInputRef.current) {
+      cameraInputRef.current.click();
+    } else {
+      // Fallback to web camera for desktop
+      setCameraError(null);
+      setCameraOpen(true);
+    }
+  };
+
+  const handleCameraInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      addFiles(e.target.files);
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = '';
+      }
+    },
+    [addFiles]
+  );
 
   // Start camera when dialog opens
   useEffect(() => {
@@ -333,6 +356,14 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
           accept="image/jpeg,image/jpg,image/png"
           multiple
           onChange={handleFileInput}
+          style={{ display: 'none' }}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/jpeg,image/jpg,image/png"
+          capture="environment"
+          onChange={handleCameraInput}
           style={{ display: 'none' }}
         />
         <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
