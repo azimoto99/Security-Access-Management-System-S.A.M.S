@@ -70,3 +70,4 @@ export const uploadHRDocument = multer({
 export const uploadSingleHRDocument = uploadHRDocument.single('document');
 
 
+

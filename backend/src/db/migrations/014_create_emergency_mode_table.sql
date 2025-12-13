@@ -23,3 +23,4 @@ COMMENT ON COLUMN emergency_mode.actions_taken IS 'JSON array of actions taken d
 COMMENT ON COLUMN emergency_mode.summary_report IS 'Summary report generated when emergency mode ends';
 
 
+

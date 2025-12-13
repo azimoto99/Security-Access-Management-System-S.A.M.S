@@ -18,3 +18,4 @@ router.post('/bulk-exit', emergencyController.processBulkExit);
 export default router;
 
 
+
