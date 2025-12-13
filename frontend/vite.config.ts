@@ -26,5 +26,11 @@ export default defineConfig({
   preview: {
     port: Number(process.env.PORT) || 3000,
     host: '0.0.0.0',
+    allowedHosts: [
+      'fixer.gg',
+      '.fixer.gg', // Allow all subdomains
+      'localhost',
+      '.onrender.com', // Allow Render subdomains
+    ],
   },
 });
