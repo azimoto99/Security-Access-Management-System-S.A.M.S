@@ -143,28 +143,47 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
     });
   };
 
-  const openCamera = async () => {
-    try {
-      setCameraError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }, // Prefer back camera on mobile
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setCameraOpen(true);
-      }
-    } catch (err: any) {
-      console.error('Error accessing camera:', err);
-      setCameraError(
-        err.name === 'NotAllowedError'
-          ? 'Camera access denied. Please allow camera access in your browser settings.'
-          : err.name === 'NotFoundError'
-          ? 'No camera found on this device.'
-          : 'Failed to access camera. Please try again.'
-      );
-    }
+  const openCamera = () => {
+    setCameraError(null);
+    setCameraOpen(true);
   };
+
+  // Start camera when dialog opens
+  useEffect(() => {
+    if (cameraOpen && videoRef.current) {
+      const startCamera = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }, // Prefer back camera on mobile
+          });
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play();
+          }
+        } catch (err: any) {
+          console.error('Error accessing camera:', err);
+          setCameraError(
+            err.name === 'NotAllowedError'
+              ? 'Camera access denied. Please allow camera access in your browser settings.'
+              : err.name === 'NotFoundError'
+              ? 'No camera found on this device.'
+              : 'Failed to access camera. Please try again.'
+          );
+        }
+      };
+
+      startCamera();
+    }
+
+    // Cleanup when dialog closes
+    return () => {
+      if (!cameraOpen && streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [cameraOpen]);
 
   const closeCamera = () => {
     if (streamRef.current) {
@@ -239,6 +258,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
       }
     };
   }, []);
@@ -449,13 +469,16 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         <DialogTitle>Take Photo</DialogTitle>
         <DialogContent>
           {cameraError ? (
-            <Alert severity="error">{cameraError}</Alert>
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {cameraError}
+            </Alert>
           ) : (
-            <Box sx={{ position: 'relative', width: '100%', paddingTop: '75%' }}>
+            <Box sx={{ position: 'relative', width: '100%', paddingTop: '75%', minHeight: 300 }}>
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
+                muted
                 style={{
                   position: 'absolute',
                   top: 0,
@@ -472,7 +495,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={closeCamera}>Cancel</Button>
-          {!cameraError && (
+          {!cameraError && streamRef.current && (
             <Button
               onClick={capturePhoto}
               variant="contained"
