@@ -61,6 +61,15 @@ export const DashboardPage: React.FC = () => {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar>
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="Shield Canine Services Logo"
+            sx={{
+              height: 40,
+              mr: 2,
+            }}
+          />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Security Access Management
           </Typography>
@@ -81,12 +90,25 @@ export const DashboardPage: React.FC = () => {
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4 }}>
         <Paper sx={{ p: 4, mb: 4 }}>
-          <Typography variant="h4" gutterBottom>
-            Dashboard
-          </Typography>
-          <Typography variant="body1" paragraph>
-            Welcome, {user?.username}!
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+            <Box
+              component="img"
+              src="/logo.png"
+              alt="Shield Canine Services Logo"
+              sx={{
+                height: 80,
+                mr: 3,
+              }}
+            />
+            <Box>
+              <Typography variant="h4" gutterBottom>
+                Dashboard
+              </Typography>
+              <Typography variant="body1" paragraph>
+                Welcome, {user?.username}!
+              </Typography>
+            </Box>
+          </Box>
           <Typography variant="body2" color="text.secondary">
             Role: {user?.role}
           </Typography>
