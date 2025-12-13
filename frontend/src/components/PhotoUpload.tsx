@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -8,8 +8,12 @@ import {
   IconButton,
   LinearProgress,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
-import { CloudUpload, Delete } from '@mui/icons-material';
+import { CloudUpload, Delete, Camera, CameraAlt } from '@mui/icons-material';
 
 interface PhotoFile {
   file: File;
@@ -36,7 +40,12 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const validateFile = (file: File): string | null => {
     // Check file type
@@ -134,6 +143,106 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
     });
   };
 
+  const openCamera = async () => {
+    try {
+      setCameraError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }, // Prefer back camera on mobile
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setCameraOpen(true);
+      }
+    } catch (err: any) {
+      console.error('Error accessing camera:', err);
+      setCameraError(
+        err.name === 'NotAllowedError'
+          ? 'Camera access denied. Please allow camera access in your browser settings.'
+          : err.name === 'NotFoundError'
+          ? 'No camera found on this device.'
+          : 'Failed to access camera. Please try again.'
+      );
+    }
+  };
+
+  const closeCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraOpen(false);
+    setCameraError(null);
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+
+    if (!context) return;
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw video frame to canvas
+    context.drawImage(video, 0, 0);
+
+    // Convert canvas to blob, then to File
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+
+        const file = new File([blob], `camera-${Date.now()}.jpg`, {
+          type: 'image/jpeg',
+        });
+
+        // Validate and add the file
+        const validationError = validateFile(file);
+        if (validationError) {
+          setError(validationError);
+          closeCamera();
+          return;
+        }
+
+        if (photos.length >= maxPhotos) {
+          setError(`Maximum ${maxPhotos} photos allowed`);
+          closeCamera();
+          return;
+        }
+
+        const preview = URL.createObjectURL(file);
+        setPhotos((prev) => [
+          ...prev,
+          {
+            file,
+            preview,
+            id: Date.now() + Math.random().toString(),
+          },
+        ]);
+
+        closeCamera();
+      },
+      'image/jpeg',
+      0.9
+    );
+  };
+
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
   const handleUpload = async () => {
     if (!entryId) {
       setError('Entry ID is required');
@@ -213,13 +322,24 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           JPEG or PNG, max {Math.round(maxFileSize / 1024 / 1024)}MB per file, up to {maxPhotos} photos
         </Typography>
-        <Button
-          variant="outlined"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={photos.length >= maxPhotos}
-        >
-          Select Photos
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+          <Button
+            variant="outlined"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={photos.length >= maxPhotos}
+            startIcon={<CloudUpload />}
+          >
+            Select Photos
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={openCamera}
+            disabled={photos.length >= maxPhotos}
+            startIcon={<CameraAlt />}
+          >
+            Take Photo
+          </Button>
+        </Box>
       </Paper>
 
       {photos.length > 0 && (
@@ -323,6 +443,47 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
           )}
         </Box>
       )}
+
+      {/* Camera Dialog */}
+      <Dialog open={cameraOpen} onClose={closeCamera} maxWidth="sm" fullWidth>
+        <DialogTitle>Take Photo</DialogTitle>
+        <DialogContent>
+          {cameraError ? (
+            <Alert severity="error">{cameraError}</Alert>
+          ) : (
+            <Box sx={{ position: 'relative', width: '100%', paddingTop: '75%' }}>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  backgroundColor: '#000',
+                }}
+              />
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeCamera}>Cancel</Button>
+          {!cameraError && (
+            <Button
+              onClick={capturePhoto}
+              variant="contained"
+              startIcon={<Camera />}
+              color="primary"
+            >
+              Capture
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
