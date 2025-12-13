@@ -56,6 +56,16 @@ export const LoginPage: React.FC = () => {
         }}
       >
         <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+            <Box
+              component="img"
+              src="/logo.png"
+              alt="Shield Canine Services Logo"
+              sx={{
+                height: 100,
+              }}
+            />
+          </Box>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
             Security Access Management
           </Typography>
@@ -116,6 +126,7 @@ export const LoginPage: React.FC = () => {
     </Container>
   );
 };
+
 
 
 
