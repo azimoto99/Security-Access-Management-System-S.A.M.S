@@ -54,7 +54,22 @@ export const photoService = {
    * Get photo URL
    */
   getPhotoUrl(photoId: string, thumbnail = false): string {
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+    // Use the same API base URL logic as api.ts
+    const getApiBaseUrl = (): string => {
+      const envApiUrl = import.meta.env.VITE_API_BASE_URL;
+      if (envApiUrl) return envApiUrl;
+      
+      if (typeof window !== 'undefined') {
+        const host = window.location.hostname;
+        if (host.includes('onrender.com') || host === 'fixer.gg' || host.includes('fixer.gg')) {
+          return 'https://security-access-management-system-s-a-m-s.onrender.com/api';
+        }
+      }
+      
+      return 'http://localhost:3001/api';
+    };
+    
+    const API_BASE_URL = getApiBaseUrl();
     return `${API_BASE_URL}/photos/${photoId}${thumbnail ? '?thumbnail=true' : ''}`;
   },
 

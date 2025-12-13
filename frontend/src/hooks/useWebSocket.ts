@@ -30,7 +30,38 @@ export const useWebSocket = (onMessage?: (message: WebSocketMessage) => void) =>
         return;
       }
 
-      const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
+      // Auto-detect WebSocket URL if not set
+      const getWsUrl = (): string => {
+        // Use environment variable if set
+        const envWsUrl = import.meta.env.VITE_WS_URL;
+        if (envWsUrl) {
+          return envWsUrl;
+        }
+        
+        // Try to derive from API URL
+        const apiUrl = import.meta.env.VITE_API_BASE_URL || '';
+        if (apiUrl.includes('https://')) {
+          return apiUrl.replace('https://', 'wss://').replace('/api', '');
+        }
+        if (apiUrl.includes('http://')) {
+          return apiUrl.replace('http://', 'ws://').replace('/api', '');
+        }
+        
+        // Runtime detection for production
+        if (typeof window !== 'undefined') {
+          const host = window.location.hostname;
+          
+          // If on Render or fixer.gg, use known backend URL
+          if (host.includes('onrender.com') || host === 'fixer.gg' || host.includes('fixer.gg')) {
+            return 'wss://security-access-management-system-s-a-m-s.onrender.com';
+          }
+        }
+        
+        // Development default
+        return 'ws://localhost:3001';
+      };
+      
+      const WS_URL = getWsUrl();
       const ws = new WebSocket(`${WS_URL}?token=${token}`);
 
       ws.onopen = () => {
