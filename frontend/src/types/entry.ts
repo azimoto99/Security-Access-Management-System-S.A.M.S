@@ -22,6 +22,7 @@ export interface VisitorEntryData {
 export interface TruckEntryData {
   license_plate: string;
   truck_number?: string;
+  trailer_number?: string;
   company: string;
   driver_name: string;
   cargo_description?: string;

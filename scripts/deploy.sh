@@ -105,3 +105,5 @@ echo "📝 View logs: docker-compose logs -f"
 echo "🛑 Stop services: docker-compose down"
 
 
+
+

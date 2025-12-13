@@ -71,6 +71,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
           setFormData({
             license_plate: '',
             truck_number: '',
+            trailer_number: '',
             company: '',
             driver_name: '',
             cargo_description: '',
@@ -398,6 +399,16 @@ export const EntryForm: React.FC<EntryFormProps> = ({
           onChange={handleChange('truck_number')}
           error={!!errors.truck_number}
           helperText={errors.truck_number}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Trailer Number"
+          value={formData.trailer_number || ''}
+          onChange={handleChange('trailer_number')}
+          error={!!errors.trailer_number}
+          helperText={errors.trailer_number}
         />
       </Grid>
       <Grid item xs={12} sm={6}>
