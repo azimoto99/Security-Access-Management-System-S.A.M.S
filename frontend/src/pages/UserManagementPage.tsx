@@ -24,6 +24,7 @@ import {
   Menu,
   MenuItem,
   Snackbar,
+  TextField,
 } from '@mui/material';
 import {
   Edit,
@@ -36,11 +37,11 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import {
   userService,
-  User,
-  CreateUserData,
-  UpdateUserData,
+  type User,
+  type CreateUserData,
+  type UpdateUserData,
 } from '../services/userService';
-import { jobSiteService, JobSite } from '../services/jobSiteService';
+import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { UserForm } from '../components/UserForm';
 
 export const UserManagementPage: React.FC = () => {

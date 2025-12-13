@@ -1,6 +1,6 @@
 import api from './api';
-import { ApiResponse } from './api';
-import { EntryType, EntryStatus } from '../types/entry';
+import type { ApiResponse } from './api';
+import type { EntryType, EntryStatus } from '../types/entry';
 
 export interface Entry {
   id: string;

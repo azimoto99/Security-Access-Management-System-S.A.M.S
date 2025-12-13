@@ -17,10 +17,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Snackbar,
 } from '@mui/material';
 import {
@@ -31,20 +27,16 @@ import {
   Download,
   Edit,
 } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
 import {
   hrDocumentService,
-  DocumentAssignment,
+  type DocumentAssignment,
 } from '../services/hrDocumentService';
 
 export const OnboardingDashboardPage: React.FC = () => {
-  const { user } = useAuth();
   const [assignments, setAssignments] = useState<DocumentAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [selectedAssignment, setSelectedAssignment] = useState<DocumentAssignment | null>(null);
-  const [signingDialogOpen, setSigningDialogOpen] = useState(false);
 
   useEffect(() => {
     loadAssignments();
@@ -119,7 +111,6 @@ export const OnboardingDashboardPage: React.FC = () => {
 
   const pendingCount = assignments.filter((a) => a.status === 'pending').length;
   const completedCount = assignments.filter((a) => a.status === 'completed').length;
-  const requiredCount = assignments.filter((a) => a.status === 'completed').length; // Simplified
 
   if (loading) {
     return (

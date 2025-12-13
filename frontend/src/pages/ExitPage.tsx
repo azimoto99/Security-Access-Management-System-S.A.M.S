@@ -24,10 +24,10 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { entryService, Entry } from '../services/entryService';
-import { jobSiteService, JobSite } from '../services/jobSiteService';
+import { entryService, type Entry } from '../services/entryService';
+import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
-import { EntryType } from '../types/entry';
+import type { EntryType } from '../types/entry';
 
 export const ExitPage: React.FC = () => {
   const { user } = useAuth();
@@ -172,7 +172,7 @@ export const ExitPage: React.FC = () => {
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
             <Tabs
               value={entryType}
-              onChange={(e, newValue) => setEntryType(newValue)}
+              onChange={(_e, newValue) => setEntryType(newValue)}
             >
               <Tab label="All" value="all" />
               <Tab label="Vehicles" value="vehicle" />

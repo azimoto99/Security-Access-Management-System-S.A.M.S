@@ -9,13 +9,13 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Alert,
   Accordion,
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
-import { EntryType, VehicleEntryData, VisitorEntryData, TruckEntryData } from '../types/entry';
+import type { EntryType } from '../types/entry';
 import { PhotoUpload } from './PhotoUpload';
 
 interface EntryFormProps {
@@ -132,6 +132,18 @@ export const EntryForm: React.FC<EntryFormProps> = ({
   };
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | { value: unknown }>) => {
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSelectChange = (field: string) => (e: SelectChangeEvent) => {
     const value = e.target.value;
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -291,7 +303,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
           <InputLabel>Delivery/Pickup</InputLabel>
           <Select
             value={formData.delivery_pickup || 'delivery'}
-            onChange={handleChange('delivery_pickup')}
+            onChange={handleSelectChange('delivery_pickup')}
             label="Delivery/Pickup"
           >
             <MenuItem value="delivery">Delivery</MenuItem>

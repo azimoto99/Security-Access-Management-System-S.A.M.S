@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../hooks/useWebSocket';
-import { occupancyService, JobSiteOccupancy } from '../services/occupancyService';
+import { occupancyService, type JobSiteOccupancy } from '../services/occupancyService';
 import { OccupancyCard } from '../components/OccupancyCard';
 
 export const DashboardPage: React.FC = () => {

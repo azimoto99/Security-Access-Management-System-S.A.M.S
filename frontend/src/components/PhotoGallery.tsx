@@ -10,7 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import { ZoomIn, Delete } from '@mui/icons-material';
-import { photoService, Photo } from '../services/photoService';
+import { photoService, type Photo } from '../services/photoService';
 import { useAuth } from '../contexts/AuthContext';
 
 interface PhotoGalleryProps {

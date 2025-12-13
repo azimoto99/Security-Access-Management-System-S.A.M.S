@@ -38,11 +38,11 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import {
   alertService,
-  Alert as AlertType,
-  AlertType as AlertTypeEnum,
-  AlertSeverity,
+  type Alert as AlertType,
+  type AlertType as AlertTypeEnum,
+  type AlertSeverity,
 } from '../services/alertService';
-import { jobSiteService, JobSite } from '../services/jobSiteService';
+import { jobSiteService, type JobSite } from '../services/jobSiteService';
 
 export const AlertsPage: React.FC = () => {
   const { user } = useAuth();

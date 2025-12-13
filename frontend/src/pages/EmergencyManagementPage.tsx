@@ -23,7 +23,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
   Snackbar,
   FormControl,
   InputLabel,
@@ -34,19 +33,16 @@ import {
   Warning,
   CheckCircle,
   ExitToApp,
-  History,
 } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
 import {
   emergencyService,
-  EmergencyMode,
-  CreateEmergencyModeData,
+  type EmergencyMode,
+  type CreateEmergencyModeData,
 } from '../services/emergencyService';
-import { jobSiteService, JobSite } from '../services/jobSiteService';
+import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useWebSocket } from '../hooks/useWebSocket';
 
 export const EmergencyManagementPage: React.FC = () => {
-  const { user } = useAuth();
   const [activeEmergencyModes, setActiveEmergencyModes] = useState<EmergencyMode[]>([]);
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [occupancy, setOccupancy] = useState<any>(null);

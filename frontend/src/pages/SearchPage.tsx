@@ -32,10 +32,10 @@ import {
   CardContent,
 } from '@mui/material';
 import { Search, Visibility, Clear } from '@mui/icons-material';
-import { entryService, Entry } from '../services/entryService';
-import { jobSiteService, JobSite } from '../services/jobSiteService';
+import { entryService, type Entry } from '../services/entryService';
+import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
-import { EntryType, EntryStatus } from '../types/entry';
+import type { EntryType, EntryStatus } from '../types/entry';
 import { PhotoGallery } from '../components/PhotoGallery';
 
 export const SearchPage: React.FC = () => {

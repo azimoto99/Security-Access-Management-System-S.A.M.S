@@ -9,13 +9,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Checkbox,
   Chip,
   Autocomplete,
 } from '@mui/material';
-import { User, CreateUserData, UpdateUserData } from '../services/userService';
-import { JobSite } from '../services/jobSiteService';
+import type { SelectChangeEvent } from '@mui/material';
+import type { User, CreateUserData, UpdateUserData } from '../services/userService';
+import type { JobSite } from '../services/jobSiteService';
 
 interface UserFormProps {
   user?: User | null;
@@ -99,6 +98,21 @@ export const UserForm: React.FC<UserFormProps> = ({ user, jobSites, onSubmit, on
       ...prev,
       [field]: value,
     }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSelectChange = (field: string) => (e: SelectChangeEvent) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => {
@@ -133,7 +147,7 @@ export const UserForm: React.FC<UserFormProps> = ({ user, jobSites, onSubmit, on
             <InputLabel>Role</InputLabel>
             <Select
               value={formData.role}
-              onChange={handleChange('role')}
+              onChange={handleSelectChange('role')}
               label="Role"
             >
               <MenuItem value="guard">Guard</MenuItem>

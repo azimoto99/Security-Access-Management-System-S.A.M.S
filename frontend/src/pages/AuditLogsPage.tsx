@@ -12,10 +12,6 @@ import {
   TableRow,
   TextField,
   Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Alert,
   CircularProgress,
   AppBar,
@@ -30,8 +26,8 @@ import {
   CardContent,
   Grid,
 } from '@mui/material';
-import { Search, Clear, Download } from '@mui/icons-material';
-import { auditLogService, AuditLog, AuditLogFilters } from '../services/auditLogService';
+import { Clear, Download } from '@mui/icons-material';
+import { auditLogService, type AuditLog, type AuditLogFilters } from '../services/auditLogService';
 
 export const AuditLogsPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);

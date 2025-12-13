@@ -6,7 +6,7 @@ import {
   Grid,
   Typography,
 } from '@mui/material';
-import { JobSite, CreateJobSiteData, UpdateJobSiteData } from '../services/jobSiteService';
+import type { JobSite, CreateJobSiteData, UpdateJobSiteData } from '../services/jobSiteService';
 
 interface JobSiteFormProps {
   jobSite?: JobSite | null;

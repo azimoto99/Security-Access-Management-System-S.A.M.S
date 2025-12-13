@@ -1,5 +1,5 @@
 import api from './api';
-import { ApiResponse } from './api';
+import type { ApiResponse } from './api';
 
 export interface ReportFilters {
   job_site_id?: string;

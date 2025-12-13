@@ -25,9 +25,8 @@ import {
   TableRow,
 } from '@mui/material';
 import { Download, Assessment } from '@mui/icons-material';
-import { reportService, ReportData, ReportFilters } from '../services/reportService';
-import { jobSiteService, JobSite } from '../services/jobSiteService';
-import { useAuth } from '../contexts/AuthContext';
+import { reportService, type ReportData, type ReportFilters } from '../services/reportService';
+import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import {
   BarChart,
   Bar,
@@ -42,7 +41,6 @@ import {
 } from 'recharts';
 
 export const ReportsPage: React.FC = () => {
-  const { user } = useAuth();
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [filters, setFilters] = useState<ReportFilters>({
     date_from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
@@ -149,7 +147,7 @@ export const ReportsPage: React.FC = () => {
                 <Select
                   value={filters.entry_type || ''}
                   onChange={(e) =>
-                    setFilters({ ...filters, entry_type: e.target.value || undefined })
+                    setFilters({ ...filters, entry_type: (e.target.value as 'vehicle' | 'visitor' | 'truck' | undefined) || undefined })
                   }
                   label="Entry Type"
                 >

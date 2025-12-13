@@ -16,7 +16,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   Alert,
   CircularProgress,
   AppBar,
@@ -36,9 +35,9 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import {
   watchlistService,
-  WatchlistEntry,
-  CreateWatchlistData,
-  UpdateWatchlistData,
+  type WatchlistEntry,
+  type CreateWatchlistData,
+  type UpdateWatchlistData,
 } from '../services/watchlistService';
 import { WatchlistForm } from '../components/WatchlistForm';
 

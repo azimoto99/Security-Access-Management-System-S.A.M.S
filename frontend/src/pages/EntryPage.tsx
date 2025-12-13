@@ -12,20 +12,17 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { EntryForm } from '../components/EntryForm';
-import { EntryType } from '../types/entry';
+import type { EntryType } from '../types/entry';
 import { entryService } from '../services/entryService';
-import { jobSiteService, JobSite } from '../services/jobSiteService';
+import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 export const EntryPage: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [entryType, setEntryType] = useState<EntryType>('vehicle');
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [selectedJobSiteId, setSelectedJobSiteId] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [createdEntryId, setCreatedEntryId] = useState<string | null>(null);
@@ -73,12 +70,12 @@ export const EntryPage: React.FC = () => {
     }
 
     try {
-      setSubmitting(true);
       setError(null);
       setSuccess(null);
 
       const entry = await entryService.createEntry({
-        ...data,
+        entry_type: data.entry_type,
+        entry_data: data.entry_data,
         job_site_id: selectedJobSiteId,
       });
 
@@ -92,8 +89,6 @@ export const EntryPage: React.FC = () => {
       }, 5000);
     } catch (err: any) {
       setError(err.message || 'Failed to create entry');
-    } finally {
-      setSubmitting(false);
     }
   };
 

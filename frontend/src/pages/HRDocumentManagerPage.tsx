@@ -25,27 +25,20 @@ import {
   Select,
   MenuItem,
   Snackbar,
-  Grid,
-  Card,
-  CardContent,
 } from '@mui/material';
 import {
   Add,
-  Edit,
   Delete,
   Description,
   Assignment,
 } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
 import {
   hrDocumentService,
-  HRDocument,
-  DocumentAssignment,
+  type HRDocument,
 } from '../services/hrDocumentService';
-import { userService, User } from '../services/userService';
+import { userService, type User } from '../services/userService';
 
 export const HRDocumentManagerPage: React.FC = () => {
-  const { user } = useAuth();
   const [documents, setDocuments] = useState<HRDocument[]>([]);
   const [employees, setEmployees] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User, authService } from '../services/authService';
+import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { authService, type User } from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
-    let inactivityTimer: NodeJS.Timeout;
+    let inactivityTimer: ReturnType<typeof setTimeout>;
 
     const resetTimer = () => {
       clearTimeout(inactivityTimer);

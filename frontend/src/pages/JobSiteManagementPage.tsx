@@ -17,7 +17,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Alert,
   CircularProgress,
   AppBar,
@@ -25,7 +24,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Add, CheckCircle, Cancel } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { jobSiteService, JobSite, CreateJobSiteData, UpdateJobSiteData } from '../services/jobSiteService';
+import { jobSiteService, type JobSite, type CreateJobSiteData, type UpdateJobSiteData } from '../services/jobSiteService';
 import { JobSiteForm } from '../components/JobSiteForm';
 
 export const JobSiteManagementPage: React.FC = () => {

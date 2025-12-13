@@ -9,7 +9,7 @@ import {
   LinearProgress,
   Alert,
 } from '@mui/material';
-import { CloudUpload, Delete, Image as ImageIcon } from '@mui/icons-material';
+import { CloudUpload, Delete } from '@mui/icons-material';
 
 interface PhotoFile {
   file: File;

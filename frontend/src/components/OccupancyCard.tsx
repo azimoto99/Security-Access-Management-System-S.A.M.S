@@ -9,7 +9,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Warning } from '@mui/icons-material';
-import { JobSiteOccupancy } from '../services/occupancyService';
+import type { JobSiteOccupancy } from '../services/occupancyService';
 
 interface OccupancyCardProps {
   occupancy: JobSiteOccupancy;

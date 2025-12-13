@@ -8,9 +8,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Typography,
 } from '@mui/material';
-import { WatchlistEntry, CreateWatchlistData, UpdateWatchlistData } from '../services/watchlistService';
+import type { SelectChangeEvent } from '@mui/material';
+import type { WatchlistEntry, CreateWatchlistData, UpdateWatchlistData } from '../services/watchlistService';
 
 interface WatchlistFormProps {
   entry?: WatchlistEntry | null;
@@ -82,6 +82,21 @@ export const WatchlistForm: React.FC<WatchlistFormProps> = ({ entry, onSubmit, o
       ...prev,
       [field]: value,
     }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSelectChange = (field: string) => (e: SelectChangeEvent) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => {
@@ -100,7 +115,7 @@ export const WatchlistForm: React.FC<WatchlistFormProps> = ({ entry, onSubmit, o
             <InputLabel>Type</InputLabel>
             <Select
               value={formData.type}
-              onChange={handleChange('type')}
+              onChange={handleSelectChange('type')}
               label="Type"
               disabled={!!entry} // Type cannot be changed after creation
             >
@@ -114,7 +129,7 @@ export const WatchlistForm: React.FC<WatchlistFormProps> = ({ entry, onSubmit, o
             <InputLabel>Alert Level</InputLabel>
             <Select
               value={formData.alert_level}
-              onChange={handleChange('alert_level')}
+              onChange={handleSelectChange('alert_level')}
               label="Alert Level"
             >
               <MenuItem value="low">Low</MenuItem>
