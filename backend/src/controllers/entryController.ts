@@ -420,6 +420,7 @@ export const searchEntries = async (
         searchConditions.push(
           `(
             e.entry_data->>'license_plate' ILIKE $${paramCount} OR
+            e.entry_data->>'truck_number' ILIKE $${paramCount} OR
             e.entry_data->>'name' ILIKE $${paramCount} OR
             e.entry_data->>'driver_name' ILIKE $${paramCount} OR
             e.entry_data->>'company' ILIKE $${paramCount}

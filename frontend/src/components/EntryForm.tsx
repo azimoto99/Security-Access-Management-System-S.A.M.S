@@ -70,6 +70,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
         case 'truck':
           setFormData({
             license_plate: '',
+            truck_number: '',
             company: '',
             driver_name: '',
             cargo_description: '',
@@ -82,7 +83,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
     hasAutofilledRef.current = false;
   }, [entryType, initialData]);
 
-  // Autofill from previous entries when license plate is entered
+  // Autofill from previous entries when license plate or truck number is entered
   useEffect(() => {
     // Only autofill for vehicle and truck entry types
     if (entryType !== 'vehicle' && entryType !== 'truck') {
@@ -90,9 +91,14 @@ export const EntryForm: React.FC<EntryFormProps> = ({
     }
 
     const licensePlate = formData.license_plate?.trim().toUpperCase();
+    const truckNumber = entryType === 'truck' ? formData.truck_number?.trim() : null;
     
-    // Don't autofill if license plate is empty or too short
-    if (!licensePlate || licensePlate.length < 2) {
+    // Don't autofill if both license plate and truck number are empty or too short
+    const hasSearchValue = 
+      (licensePlate && licensePlate.length >= 2) || 
+      (truckNumber && truckNumber.length >= 2);
+    
+    if (!hasSearchValue) {
       return;
     }
 
@@ -104,17 +110,29 @@ export const EntryForm: React.FC<EntryFormProps> = ({
     // Debounce the search
     autofillTimeoutRef.current = setTimeout(async () => {
       try {
-        const response = await entryService.searchEntries({
-          license_plate: licensePlate,
+        // Build search params - search by license plate or truck number
+        const searchParams: any = {
           entry_type: entryType,
           limit: '1', // Get the most recent entry
-        });
+        };
+
+        if (licensePlate && licensePlate.length >= 2) {
+          searchParams.license_plate = licensePlate;
+        }
+
+        // For trucks, also search by truck_number if provided
+        if (entryType === 'truck' && truckNumber && truckNumber.length >= 2) {
+          // Use search_term to search in entry_data JSONB
+          searchParams.search_term = truckNumber;
+        }
+
+        const response = await entryService.searchEntries(searchParams);
 
         if (response.entries && response.entries.length > 0) {
           const previousEntry = response.entries[0];
           const entryData = previousEntry.entry_data || {};
 
-          // Only autofill if we haven't already autofilled for this license plate
+          // Only autofill if we haven't already autofilled for this search
           // and the fields are currently empty
           setFormData((prev) => {
             const updated = { ...prev };
@@ -136,6 +154,14 @@ export const EntryForm: React.FC<EntryFormProps> = ({
               }
             } else if (entryType === 'truck') {
               // Autofill truck fields if they're empty
+              if (!prev.license_plate && entryData.license_plate) {
+                updated.license_plate = entryData.license_plate;
+                hasChanges = true;
+              }
+              if (!prev.truck_number && entryData.truck_number) {
+                updated.truck_number = entryData.truck_number;
+                hasChanges = true;
+              }
               if (!prev.driver_name && entryData.driver_name) {
                 updated.driver_name = entryData.driver_name;
                 hasChanges = true;
@@ -164,7 +190,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
         clearTimeout(autofillTimeoutRef.current);
       }
     };
-  }, [formData.license_plate, entryType]);
+  }, [formData.license_plate, formData.truck_number, entryType]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -362,6 +388,16 @@ export const EntryForm: React.FC<EntryFormProps> = ({
           error={!!errors.license_plate}
           helperText={errors.license_plate}
           required
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Truck Number"
+          value={formData.truck_number || ''}
+          onChange={handleChange('truck_number')}
+          error={!!errors.truck_number}
+          helperText={errors.truck_number}
         />
       </Grid>
       <Grid item xs={12} sm={6}>

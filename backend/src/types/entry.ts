@@ -26,6 +26,7 @@ export interface VisitorEntryData extends BaseEntryData {
 
 export interface TruckEntryData extends BaseEntryData {
   license_plate: string;
+  truck_number?: string;
   company: string;
   driver_name: string;
   cargo_description?: string;
@@ -72,6 +73,7 @@ export interface SearchEntriesRequest {
   date_to?: string;
   guard_id?: string;
 }
+
 
 
 
