@@ -53,10 +53,22 @@ export const calculateJobSiteOccupancy = async (jobSiteId: string): Promise<JobS
       total: 0,
     };
 
+    // Map singular entry types from database to plural count keys
+    const entryTypeMap: Record<string, keyof OccupancyCounts> = {
+      vehicle: 'vehicles',
+      visitor: 'visitors',
+      truck: 'trucks',
+    };
+
     countsResult.rows.forEach((row) => {
       const count = parseInt(row.count);
-      counts[row.entry_type as keyof OccupancyCounts] = count;
-      counts.total += count;
+      const entryType = row.entry_type as string;
+      const countKey = entryTypeMap[entryType];
+      
+      if (countKey && countKey !== 'total') {
+        counts[countKey] = count;
+        counts.total += count;
+      }
     });
 
     // Calculate warnings (90% capacity threshold)
