@@ -58,9 +58,55 @@ export const OnboardingDashboardPage: React.FC = () => {
   const handleSign = async (assignment: DocumentAssignment) => {
     try {
       setError(null);
-      const { signing_url } = await hrDocumentService.initiateSigning(assignment.id);
-      // Redirect to DocuSign
-      window.location.href = signing_url;
+      const { signing_url, envelope_id } = await hrDocumentService.initiateSigning(assignment.id);
+      
+      // Open DocuSign in a popup window
+      const width = 800;
+      const height = 600;
+      const left = (window.screen.width - width) / 2;
+      const top = (window.screen.height - height) / 2;
+      
+      const popup = window.open(
+        signing_url,
+        'DocuSign',
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+      );
+
+      if (!popup) {
+        setError('Please allow popups to sign documents');
+        return;
+      }
+
+      // Poll for signing completion
+      const checkStatus = setInterval(async () => {
+        try {
+          if (popup.closed) {
+            clearInterval(checkStatus);
+            // Refresh assignments after popup closes
+            await loadAssignments();
+            setSuccess('Document signing completed. Please refresh if status has not updated.');
+          } else {
+            // Check if signing is complete by polling the status
+            const status = await hrDocumentService.getSigningStatus(assignment.id);
+            if (status && status.docusign_envelope_status === 'completed') {
+              clearInterval(checkStatus);
+              popup.close();
+              await loadAssignments();
+              setSuccess('Document signed successfully!');
+            }
+          }
+        } catch (err) {
+          // Ignore errors during polling
+        }
+      }, 2000); // Check every 2 seconds
+
+      // Cleanup interval after 10 minutes
+      setTimeout(() => {
+        clearInterval(checkStatus);
+        if (!popup.closed) {
+          popup.close();
+        }
+      }, 600000);
     } catch (err: any) {
       setError(err.message || 'Failed to initiate signing');
     }
@@ -234,14 +280,14 @@ export const OnboardingDashboardPage: React.FC = () => {
                     >
                       Download
                     </Button>
-                    {assignment.status === 'pending' && (
+                    {(assignment.status === 'pending' || assignment.status === 'in_progress') && (
                       <Button
                         size="small"
                         variant="contained"
                         startIcon={<Edit />}
                         onClick={() => handleSign(assignment)}
                       >
-                        Sign
+                        {assignment.status === 'in_progress' ? 'Continue Signing' : 'Sign with DocuSign'}
                       </Button>
                     )}
                   </TableCell>
