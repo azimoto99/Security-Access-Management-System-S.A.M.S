@@ -14,7 +14,6 @@ import {
   CardActions,
   CircularProgress,
   Alert,
-  Chip,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -29,7 +28,7 @@ export const DashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // WebSocket connection for real-time updates
-  const { isConnected } = useWebSocket((message) => {
+  useWebSocket((message) => {
     if (message.type === 'occupancy_update') {
       setOccupancies(message.data || []);
     }
@@ -74,12 +73,6 @@ export const DashboardPage: React.FC = () => {
             Security Access Management
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Chip
-              label={isConnected ? 'Live' : 'Offline'}
-              color={isConnected ? 'success' : 'default'}
-              size="small"
-              title={isConnected ? 'Real-time updates active' : 'Real-time updates unavailable - data will refresh on page reload'}
-            />
             <Typography variant="body2" sx={{ mr: 2 }}>
               {user?.username} ({user?.role})
             </Typography>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   TextField,
@@ -17,6 +17,7 @@ import type { SelectChangeEvent } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
 import type { EntryType } from '../types/entry';
 import { PhotoUpload } from './PhotoUpload';
+import { entryService } from '../services/entryService';
 
 interface EntryFormProps {
   entryType: EntryType;
@@ -37,6 +38,8 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const autofillTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasAutofilledRef = useRef(false);
 
   useEffect(() => {
     if (initialData) {
@@ -76,7 +79,92 @@ export const EntryForm: React.FC<EntryFormProps> = ({
           break;
       }
     }
+    hasAutofilledRef.current = false;
   }, [entryType, initialData]);
+
+  // Autofill from previous entries when license plate is entered
+  useEffect(() => {
+    // Only autofill for vehicle and truck entry types
+    if (entryType !== 'vehicle' && entryType !== 'truck') {
+      return;
+    }
+
+    const licensePlate = formData.license_plate?.trim().toUpperCase();
+    
+    // Don't autofill if license plate is empty or too short
+    if (!licensePlate || licensePlate.length < 2) {
+      return;
+    }
+
+    // Clear previous timeout
+    if (autofillTimeoutRef.current) {
+      clearTimeout(autofillTimeoutRef.current);
+    }
+
+    // Debounce the search
+    autofillTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await entryService.searchEntries({
+          license_plate: licensePlate,
+          entry_type: entryType,
+          limit: '1', // Get the most recent entry
+        });
+
+        if (response.entries && response.entries.length > 0) {
+          const previousEntry = response.entries[0];
+          const entryData = previousEntry.entry_data || {};
+
+          // Only autofill if we haven't already autofilled for this license plate
+          // and the fields are currently empty
+          setFormData((prev) => {
+            const updated = { ...prev };
+            let hasChanges = false;
+
+            if (entryType === 'vehicle') {
+              // Autofill vehicle fields if they're empty
+              if (!prev.driver_name && entryData.driver_name) {
+                updated.driver_name = entryData.driver_name;
+                hasChanges = true;
+              }
+              if (!prev.company && entryData.company) {
+                updated.company = entryData.company;
+                hasChanges = true;
+              }
+              if (!prev.vehicle_type && entryData.vehicle_type) {
+                updated.vehicle_type = entryData.vehicle_type;
+                hasChanges = true;
+              }
+            } else if (entryType === 'truck') {
+              // Autofill truck fields if they're empty
+              if (!prev.driver_name && entryData.driver_name) {
+                updated.driver_name = entryData.driver_name;
+                hasChanges = true;
+              }
+              if (!prev.company && entryData.company) {
+                updated.company = entryData.company;
+                hasChanges = true;
+              }
+            }
+
+            if (hasChanges) {
+              hasAutofilledRef.current = true;
+            }
+
+            return updated;
+          });
+        }
+      } catch (error) {
+        // Silently fail - autofill is a convenience feature
+        console.log('Autofill search failed:', error);
+      }
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (autofillTimeoutRef.current) {
+        clearTimeout(autofillTimeoutRef.current);
+      }
+    };
+  }, [formData.license_plate, entryType]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
