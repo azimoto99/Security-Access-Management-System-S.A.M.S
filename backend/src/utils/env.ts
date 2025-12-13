@@ -12,12 +12,25 @@ const envSchema = Joi.object({
   PORT: Joi.number().default(3001),
   CORS_ORIGIN: Joi.string().default('http://localhost:5173'),
 
-  // Database
+  // Database - support both DATABASE_URL and individual variables
+  DATABASE_URL: Joi.string().optional(),
   DB_HOST: Joi.string().default('localhost'),
   DB_PORT: Joi.number().default(5432),
-  DB_NAME: Joi.string().required(),
-  DB_USER: Joi.string().required(),
-  DB_PASSWORD: Joi.string().required(),
+  DB_NAME: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
+  DB_USER: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
+  DB_PASSWORD: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
 
   // JWT
   JWT_SECRET: Joi.string().required(),
@@ -44,6 +57,12 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`);
 }
 
+// If DB_HOST contains a connection string (starts with postgresql:// or postgres://),
+// use it as DATABASE_URL instead
+const dbHost = envVars.DB_HOST || '';
+const isConnectionString = dbHost.startsWith('postgresql://') || dbHost.startsWith('postgres://');
+const databaseUrl = envVars.DATABASE_URL || (isConnectionString ? dbHost : undefined);
+
 export const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
@@ -51,7 +70,8 @@ export const config = {
     origin: envVars.CORS_ORIGIN,
   },
   db: {
-    host: envVars.DB_HOST,
+    url: databaseUrl,
+    host: isConnectionString ? undefined : envVars.DB_HOST,
     port: envVars.DB_PORT,
     name: envVars.DB_NAME,
     user: envVars.DB_USER,
