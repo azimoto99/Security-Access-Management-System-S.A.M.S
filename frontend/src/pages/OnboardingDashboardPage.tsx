@@ -58,7 +58,7 @@ export const OnboardingDashboardPage: React.FC = () => {
   const handleSign = async (assignment: DocumentAssignment) => {
     try {
       setError(null);
-      const { signing_url, envelope_id } = await hrDocumentService.initiateSigning(assignment.id);
+      const { signing_url } = await hrDocumentService.initiateSigning(assignment.id);
       
       // Open DocuSign in a popup window
       const width = 800;
