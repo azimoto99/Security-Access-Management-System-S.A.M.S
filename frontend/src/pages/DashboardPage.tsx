@@ -75,9 +75,10 @@ export const DashboardPage: React.FC = () => {
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Chip
-              label={isConnected ? 'Connected' : 'Disconnected'}
-              color={isConnected ? 'success' : 'error'}
+              label={isConnected ? 'Live' : 'Offline'}
+              color={isConnected ? 'success' : 'default'}
               size="small"
+              title={isConnected ? 'Real-time updates active' : 'Real-time updates unavailable - data will refresh on page reload'}
             />
             <Typography variant="body2" sx={{ mr: 2 }}>
               {user?.username} ({user?.role})

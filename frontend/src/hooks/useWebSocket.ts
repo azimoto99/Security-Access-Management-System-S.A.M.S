@@ -62,9 +62,12 @@ export const useWebSocket = (onMessage?: (message: WebSocketMessage) => void) =>
       };
       
       const WS_URL = getWsUrl();
-      const ws = new WebSocket(`${WS_URL}?token=${token}`);
+      const wsUrlWithToken = `${WS_URL}?token=${token}`;
+      console.log('Attempting WebSocket connection to:', WS_URL);
+      const ws = new WebSocket(wsUrlWithToken);
 
       ws.onopen = () => {
+        console.log('WebSocket connected successfully');
         setIsConnected(true);
         setError(null);
         reconnectAttempts.current = 0;
@@ -85,21 +88,32 @@ export const useWebSocket = (onMessage?: (message: WebSocketMessage) => void) =>
 
       ws.onerror = (err) => {
         console.error('WebSocket error:', err);
+        console.error('WebSocket URL attempted:', WS_URL);
         setError('WebSocket connection error');
+        setIsConnected(false);
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         setIsConnected(false);
         wsRef.current = null;
+        console.log('WebSocket closed:', event.code, event.reason);
+
+        // Don't reconnect if it was a normal closure or authentication failure
+        if (event.code === 1000 || event.code === 1008) {
+          console.log('WebSocket closed normally or authentication failed, not reconnecting');
+          return;
+        }
 
         // Attempt to reconnect
         if (reconnectAttempts.current < maxReconnectAttempts) {
           reconnectAttempts.current += 1;
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000); // Exponential backoff, max 30s
+          console.log(`Attempting to reconnect (${reconnectAttempts.current}/${maxReconnectAttempts}) in ${delay}ms`);
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, delay);
         } else {
+          console.error('Max reconnection attempts reached');
           setError('Failed to reconnect to server');
         }
       };
