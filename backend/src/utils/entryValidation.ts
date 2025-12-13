@@ -1,5 +1,17 @@
-import { VehicleEntryData, VisitorEntryData, TruckEntryData, EntryType } from '../types/entry';
+import {
+  VehicleEntryData,
+  VisitorEntryData,
+  TruckEntryData,
+  EntryType,
+  EntryStatus,
+  CreateEntryRequest,
+  ExitEntryRequest,
+  SearchEntriesRequest,
+} from '../types/entry';
 import { AppError } from '../middleware/errorHandler';
+
+// Re-export types for convenience
+export type { EntryType, EntryStatus, CreateEntryRequest, ExitEntryRequest, SearchEntriesRequest };
 
 /**
  * Validate vehicle entry data

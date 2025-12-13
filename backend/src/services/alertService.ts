@@ -223,9 +223,9 @@ export const checkCapacityWarnings = async (): Promise<void> => {
   const occupancies = await occupancyService.getOccupancies();
 
   for (const occupancy of occupancies) {
-    const vehiclePercent = occupancy.vehicle_capacity > 0 ? (occupancy.vehicle_count / occupancy.vehicle_capacity) * 100 : 0;
-    const visitorPercent = occupancy.visitor_capacity > 0 ? (occupancy.visitor_count / occupancy.visitor_capacity) * 100 : 0;
-    const truckPercent = occupancy.truck_capacity > 0 ? (occupancy.truck_count / occupancy.truck_capacity) * 100 : 0;
+    const vehiclePercent = occupancy.capacity.vehicles > 0 ? (occupancy.counts.vehicles / occupancy.capacity.vehicles) * 100 : 0;
+    const visitorPercent = occupancy.capacity.visitors > 0 ? (occupancy.counts.visitors / occupancy.capacity.visitors) * 100 : 0;
+    const truckPercent = occupancy.capacity.trucks > 0 ? (occupancy.counts.trucks / occupancy.capacity.trucks) * 100 : 0;
 
     const maxPercent = Math.max(vehiclePercent, visitorPercent, truckPercent);
 
@@ -246,18 +246,18 @@ export const checkCapacityWarnings = async (): Promise<void> => {
           type: 'capacity_warning',
           severity,
           title: `Capacity Warning: ${occupancy.job_site_name}`,
-          message: `Site capacity is at ${maxPercent.toFixed(1)}%. Vehicles: ${occupancy.vehicle_count}/${occupancy.vehicle_capacity}, Visitors: ${occupancy.visitor_count}/${occupancy.visitor_capacity}, Trucks: ${occupancy.truck_count}/${occupancy.truck_capacity}`,
+          message: `Site capacity is at ${maxPercent.toFixed(1)}%. Vehicles: ${occupancy.counts.vehicles}/${occupancy.capacity.vehicles}, Visitors: ${occupancy.counts.visitors}/${occupancy.capacity.visitors}, Trucks: ${occupancy.counts.trucks}/${occupancy.capacity.trucks}`,
           job_site_id: occupancy.job_site_id,
           metadata: {
             vehicle_percent: vehiclePercent,
             visitor_percent: visitorPercent,
             truck_percent: truckPercent,
-            vehicle_count: occupancy.vehicle_count,
-            visitor_count: occupancy.visitor_count,
-            truck_count: occupancy.truck_count,
-            vehicle_capacity: occupancy.vehicle_capacity,
-            visitor_capacity: occupancy.visitor_capacity,
-            truck_capacity: occupancy.truck_capacity,
+            vehicle_count: occupancy.counts.vehicles,
+            visitor_count: occupancy.counts.visitors,
+            truck_count: occupancy.counts.trucks,
+            vehicle_capacity: occupancy.capacity.vehicles,
+            visitor_capacity: occupancy.capacity.visitors,
+            truck_capacity: occupancy.capacity.trucks,
           },
         });
       }

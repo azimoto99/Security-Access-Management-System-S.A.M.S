@@ -7,12 +7,12 @@ import fs from 'fs/promises';
 import { updateAssignmentStatus, checkOnboardingStatus } from './documentAssignmentService';
 import { createAlert } from './alertService';
 
-let apiClient: docusign.ApiClient | null = null;
+let apiClient: import('docusign-esign').ApiClient | null = null;
 
 /**
  * Initialize DocuSign API client
  */
-export const initializeDocuSignClient = async (): Promise<docusign.ApiClient> => {
+export const initializeDocuSignClient = async (): Promise<import('docusign-esign').ApiClient> => {
   if (apiClient) {
     return apiClient;
   }
@@ -57,7 +57,7 @@ export const createEnvelope = async (
 ): Promise<{ envelopeId: string; signingUrl: string }> => {
   try {
     const client = await initializeDocuSignClient();
-    const envelopesApi = new docusign.EnvelopesApi(client);
+    const envelopesApi = new docusign.Api.EnvelopesApi(client);
 
     // Read document file
     const fullPath = path.join(process.cwd(), documentPath);
@@ -163,7 +163,7 @@ export const createEnvelope = async (
 export const getEnvelopeStatus = async (envelopeId: string): Promise<string> => {
   try {
     const client = await initializeDocuSignClient();
-    const envelopesApi = new docusign.EnvelopesApi(client);
+    const envelopesApi = new docusign.Api.EnvelopesApi(client);
 
     const results = await envelopesApi.getEnvelope(config.docusign.accountId!, envelopeId);
     return results.status || 'unknown';

@@ -126,5 +126,13 @@ export const getJobSiteBreakdown = async (jobSiteId: string) => {
   }
 };
 
-
+// Export service object for convenience
+export const occupancyService = {
+  calculateJobSiteOccupancy,
+  calculateAllOccupancy,
+  getJobSiteBreakdown,
+  // Alias methods for backward compatibility
+  getOccupancies: calculateAllOccupancy,
+  getJobSiteOccupancy: calculateJobSiteOccupancy,
+};
 

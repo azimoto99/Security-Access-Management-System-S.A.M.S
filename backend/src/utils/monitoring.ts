@@ -19,20 +19,20 @@ export interface SystemHealth {
 /**
  * Check database connection health
  */
-export const checkDatabaseHealth = async (): Promise<{ status: string; responseTime?: number }> => {
+export const checkDatabaseHealth = async (): Promise<{ status: 'connected' | 'disconnected'; responseTime?: number }> => {
   try {
     const startTime = Date.now();
     await pool.query('SELECT 1');
     const responseTime = Date.now() - startTime;
 
     return {
-      status: 'connected',
+      status: 'connected' as const,
       responseTime,
     };
   } catch (error) {
     logger.error('Database health check failed:', error);
     return {
-      status: 'disconnected',
+      status: 'disconnected' as const,
     };
   }
 };

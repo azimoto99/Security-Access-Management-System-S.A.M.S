@@ -89,7 +89,8 @@ export const cacheMiddleware = (ttl?: number) => {
 
     if (cached) {
       res.setHeader('X-Cache', 'HIT');
-      return res.json(cached);
+      res.json(cached);
+      return;
     }
 
     // Store original json method

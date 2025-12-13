@@ -20,13 +20,14 @@ export interface ErrorContext {
  * Track and log error with context
  */
 export const trackError = (error: Error | AppError, context?: ErrorContext): void => {
+  const isAppError = 'statusCode' in error || 'code' in error;
   const errorInfo = {
     message: error.message,
     stack: error.stack,
     name: error.name,
-    ...(error instanceof AppError && {
-      statusCode: error.statusCode,
-      code: error.code,
+    ...(isAppError && {
+      statusCode: (error as AppError).statusCode,
+      code: (error as AppError).code,
     }),
     context,
     timestamp: new Date().toISOString(),
