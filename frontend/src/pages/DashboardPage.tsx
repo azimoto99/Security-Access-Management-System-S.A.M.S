@@ -326,7 +326,7 @@ export const DashboardPage: React.FC = () => {
               </Grid>
             </>
           )}
-          {user?.role === 'employee' && (
+          {(user?.role === 'employee' || user?.role === 'guard') && (
             <>
               <Grid item xs={12} sm={6} md={4}>
                 <Card>

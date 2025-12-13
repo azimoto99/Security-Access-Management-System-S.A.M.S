@@ -127,7 +127,7 @@ function App() {
             <Route
               path="/hr/documents"
               element={
-                <ProtectedRoute allowedRoles={['employee']}>
+                <ProtectedRoute allowedRoles={['employee', 'guard']}>
                   <OnboardingDashboardPage />
                 </ProtectedRoute>
               }
