@@ -175,8 +175,26 @@ export const getActiveEntries = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
     const { jobSiteId } = req.params;
     const { entry_type } = req.query;
+
+    // Check job site access if not admin
+    if (req.user.role !== 'admin') {
+      const jobSiteAccess = req.user.job_site_access || [];
+      if (!jobSiteAccess.includes(jobSiteId)) {
+        const error: AppError = new Error('Access denied to this job site');
+        error.statusCode = 403;
+        error.code = 'JOB_SITE_ACCESS_DENIED';
+        return next(error);
+      }
+    }
 
     let query = 'SELECT * FROM entries WHERE job_site_id = $1 AND status = $2';
     const params: any[] = [jobSiteId, 'active'];
@@ -190,10 +208,17 @@ export const getActiveEntries = async (
 
     const result = await pool.query(query, params);
 
+    // Ensure entry_data and photos are parsed (pg should do this automatically, but ensure it)
+    const entries = result.rows.map((row) => ({
+      ...row,
+      entry_data: typeof row.entry_data === 'string' ? JSON.parse(row.entry_data) : row.entry_data,
+      photos: typeof row.photos === 'string' ? JSON.parse(row.photos) : (row.photos || []),
+    }));
+
     res.json({
       success: true,
       data: {
-        entries: result.rows,
+        entries,
       },
     });
   } catch (error) {
