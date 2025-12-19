@@ -6,7 +6,6 @@ import {
   Box,
   LinearProgress,
   Chip,
-  Alert,
 } from '@mui/material';
 import { Warning } from '@mui/icons-material';
 import type { JobSiteOccupancy } from '../services/occupancyService';
