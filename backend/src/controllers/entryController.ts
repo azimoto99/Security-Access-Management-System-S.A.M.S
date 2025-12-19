@@ -186,6 +186,7 @@ export const getActiveEntries = async (
     const { entry_type } = req.query;
 
     // Check job site access if not admin
+    // Admins can see all entries from all job sites, regardless of who created them (guard_id)
     if (req.user.role !== 'admin') {
       const jobSiteAccess = req.user.job_site_access || [];
       if (!jobSiteAccess.includes(jobSiteId)) {
@@ -196,6 +197,8 @@ export const getActiveEntries = async (
       }
     }
 
+    // Query all active entries for the job site - no filter by guard_id
+    // This ensures admins can see entries created by guards
     let query = 'SELECT * FROM entries WHERE job_site_id = $1 AND status = $2';
     const params: any[] = [jobSiteId, 'active'];
 
@@ -373,6 +376,7 @@ export const searchEntries = async (
     let paramCount = 1;
 
     // Check job site access if not admin
+    // Admins can see all entries from all job sites, regardless of who created them
     if (req.user && req.user.role !== 'admin' && req.user.job_site_access) {
       if (job_site_id && !req.user.job_site_access.includes(job_site_id)) {
         const error: AppError = new Error('Access denied to this job site');
@@ -380,10 +384,11 @@ export const searchEntries = async (
         error.code = 'JOB_SITE_ACCESS_DENIED';
         return next(error);
       }
-      // Filter by accessible job sites
+      // Filter by accessible job sites (non-admins only)
       query += ` AND e.job_site_id = ANY($${paramCount++})`;
       params.push(req.user.job_site_access);
     }
+    // Note: Admins see all entries from all job sites - no job site filter applied
 
     // Build query dynamically
     if (job_site_id) {
