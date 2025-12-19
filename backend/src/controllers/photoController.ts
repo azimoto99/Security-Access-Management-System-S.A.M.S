@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
+import { config } from '../utils/env';
 import * as photoService from '../services/photoService';
 import pool from '../config/database';
 
@@ -150,6 +151,11 @@ export const getPhoto = async (
       return next(error);
     }
 
+    // Set CORS headers explicitly for file responses
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Content-Type', photo.mime_type || 'image/jpeg');
+    
     res.sendFile(filePath);
   } catch (error) {
     next(error);

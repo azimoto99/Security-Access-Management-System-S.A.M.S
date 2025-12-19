@@ -28,6 +28,8 @@ import {
 } from '@mui/material';
 import { Clear, Download } from '@mui/icons-material';
 import { auditLogService, type AuditLog, type AuditLogFilters } from '../services/auditLogService';
+import { entryService, type Entry } from '../services/entryService';
+import { PhotoGallery } from '../components/PhotoGallery';
 
 export const AuditLogsPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -42,6 +44,8 @@ export const AuditLogsPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [relatedEntry, setRelatedEntry] = useState<Entry | null>(null);
+  const [loadingEntry, setLoadingEntry] = useState(false);
 
   useEffect(() => {
     loadLogs();
@@ -103,6 +107,25 @@ export const AuditLogsPage: React.FC = () => {
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleString();
+  };
+
+  const handleViewDetails = async (log: AuditLog) => {
+    setSelectedLog(log);
+    setRelatedEntry(null);
+    
+    // If this log is related to an entry, fetch the entry to show photos
+    if (log.resource_type === 'entry' && log.resource_id) {
+      try {
+        setLoadingEntry(true);
+        const entry = await entryService.getEntryById(log.resource_id);
+        setRelatedEntry(entry);
+      } catch (err) {
+        console.error('Failed to load entry:', err);
+        // Don't show error to user, just continue without entry data
+      } finally {
+        setLoadingEntry(false);
+      }
+    }
   };
 
   return (
@@ -210,7 +233,7 @@ export const AuditLogsPage: React.FC = () => {
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Button size="small" onClick={() => setSelectedLog(log)}>
+                        <Button size="small" onClick={() => handleViewDetails(log)}>
                           View Details
                         </Button>
                       </TableCell>
@@ -235,7 +258,15 @@ export const AuditLogsPage: React.FC = () => {
       </Container>
 
       {/* Log Detail Dialog */}
-      <Dialog open={!!selectedLog} onClose={() => setSelectedLog(null)} maxWidth="md" fullWidth>
+      <Dialog
+        open={!!selectedLog}
+        onClose={() => {
+          setSelectedLog(null);
+          setRelatedEntry(null);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Audit Log Details</DialogTitle>
         <DialogContent>
           {selectedLog && (
@@ -287,12 +318,39 @@ export const AuditLogsPage: React.FC = () => {
                     </CardContent>
                   </Card>
                 </Grid>
+                {selectedLog.resource_type === 'entry' && (
+                  <Grid item xs={12}>
+                    {loadingEntry ? (
+                      <Box display="flex" justifyContent="center" p={3}>
+                        <CircularProgress size={24} />
+                      </Box>
+                    ) : relatedEntry && relatedEntry.photos && relatedEntry.photos.length > 0 ? (
+                      <>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Photos ({relatedEntry.photos.length})
+                        </Typography>
+                        <PhotoGallery entryId={selectedLog.resource_id} allowDelete={false} />
+                      </>
+                    ) : relatedEntry ? (
+                      <Typography variant="body2" color="text.secondary">
+                        No photos available for this entry
+                      </Typography>
+                    ) : null}
+                  </Grid>
+                )}
               </Grid>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelectedLog(null)}>Close</Button>
+          <Button
+            onClick={() => {
+              setSelectedLog(null);
+              setRelatedEntry(null);
+            }}
+          >
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

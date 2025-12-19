@@ -38,16 +38,7 @@ export const useWebSocket = (onMessage?: (message: WebSocketMessage) => void) =>
           return envWsUrl;
         }
         
-        // Try to derive from API URL
-        const apiUrl = import.meta.env.VITE_API_BASE_URL || '';
-        if (apiUrl.includes('https://')) {
-          return apiUrl.replace('https://', 'wss://').replace('/api', '');
-        }
-        if (apiUrl.includes('http://')) {
-          return apiUrl.replace('http://', 'ws://').replace('/api', '');
-        }
-        
-        // Runtime detection for production
+        // Runtime detection for production (check this first to override API URL derivation)
         if (typeof window !== 'undefined') {
           const host = window.location.hostname;
           
@@ -55,6 +46,19 @@ export const useWebSocket = (onMessage?: (message: WebSocketMessage) => void) =>
           if (host.includes('onrender.com') || host === 'fixer.gg' || host.includes('fixer.gg')) {
             return 'wss://security-access-management-system-s-a-m-s.onrender.com';
           }
+        }
+        
+        // Try to derive from API URL (only if runtime detection didn't match)
+        const apiUrl = import.meta.env.VITE_API_BASE_URL || '';
+        if (apiUrl.includes('https://')) {
+          // Don't derive from api.fixer.gg - use Render backend instead
+          if (apiUrl.includes('fixer.gg')) {
+            return 'wss://security-access-management-system-s-a-m-s.onrender.com';
+          }
+          return apiUrl.replace('https://', 'wss://').replace('/api', '');
+        }
+        if (apiUrl.includes('http://')) {
+          return apiUrl.replace('http://', 'ws://').replace('/api', '');
         }
         
         // Development default

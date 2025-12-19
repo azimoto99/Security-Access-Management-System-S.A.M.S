@@ -56,16 +56,32 @@ export const photoService = {
   getPhotoUrl(photoId: string, thumbnail = false): string {
     // Use the same API base URL logic as api.ts
     const getApiBaseUrl = (): string => {
+      // Use environment variable if set (embedded at build time)
       const envApiUrl = import.meta.env.VITE_API_BASE_URL;
-      if (envApiUrl) return envApiUrl;
+      if (envApiUrl) {
+        // Don't use api.fixer.gg - use Render backend instead
+        if (envApiUrl.includes('fixer.gg')) {
+          return 'https://security-access-management-system-s-a-m-s.onrender.com/api';
+        }
+        return envApiUrl;
+      }
       
+      // Runtime detection for production
       if (typeof window !== 'undefined') {
         const host = window.location.hostname;
-        if (host.includes('onrender.com') || host === 'fixer.gg' || host.includes('fixer.gg')) {
+        
+        // If on Render frontend, use known backend URL
+        if (host.includes('onrender.com')) {
+          return 'https://security-access-management-system-s-a-m-s.onrender.com/api';
+        }
+        
+        // For custom domains (like fixer.gg), use known backend URL
+        if (host === 'fixer.gg' || host.includes('fixer.gg')) {
           return 'https://security-access-management-system-s-a-m-s.onrender.com/api';
         }
       }
       
+      // Development default
       return 'http://localhost:3001/api';
     };
     
