@@ -19,11 +19,110 @@ import { HRDocumentManagerPage } from './pages/HRDocumentManagerPage';
 
 const theme = createTheme({
   palette: {
+    mode: 'dark',
     primary: {
-      main: '#1976d2',
+      main: '#ffd700', // Yellow
+      light: '#ffed4e',
+      dark: '#ccaa00',
+      contrastText: '#000000',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#ffffff', // White
+      light: '#f5f5f5',
+      dark: '#cccccc',
+      contrastText: '#000000',
+    },
+    background: {
+      default: '#0a0a0a', // Black
+      paper: '#1a1a1a', // Dark grey
+    },
+    text: {
+      primary: '#ffffff', // White
+      secondary: '#b0b0b0', // Light grey
+    },
+    divider: '#2a2a2a', // Grey divider
+    action: {
+      active: '#ffd700',
+      hover: '#2a2a2a',
+      selected: '#3a3a3a',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h4: {
+      fontWeight: 600,
+      fontSize: '1.5rem',
+    },
+    h5: {
+      fontWeight: 600,
+      fontSize: '1.25rem',
+    },
+    h6: {
+      fontWeight: 600,
+      fontSize: '1rem',
+    },
+    body1: {
+      fontSize: '0.875rem',
+    },
+    body2: {
+      fontSize: '0.75rem',
+    },
+  },
+  components: {
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#000000',
+          boxShadow: '0 1px 3px rgba(255, 215, 0, 0.1)',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#1a1a1a',
+          border: '1px solid #2a2a2a',
+          borderRadius: '8px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            borderColor: '#ffd700',
+            boxShadow: '0 4px 12px rgba(255, 215, 0, 0.15)',
+          },
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600,
+          borderRadius: '6px',
+          padding: '8px 16px',
+        },
+        contained: {
+          backgroundColor: '#ffd700',
+          color: '#000000',
+          '&:hover': {
+            backgroundColor: '#ffed4e',
+          },
+        },
+        outlined: {
+          borderColor: '#ffd700',
+          color: '#ffd700',
+          '&:hover': {
+            borderColor: '#ffed4e',
+            backgroundColor: 'rgba(255, 215, 0, 0.1)',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#1a1a1a',
+          border: '1px solid #2a2a2a',
+        },
+      },
     },
   },
 });

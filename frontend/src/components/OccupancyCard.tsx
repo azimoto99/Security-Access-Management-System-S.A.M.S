@@ -38,29 +38,66 @@ export const OccupancyCard: React.FC<OccupancyCardProps> = ({ occupancy, onSelec
     <Card
       sx={{
         cursor: onSelect ? 'pointer' : 'default',
-        '&:hover': onSelect ? { boxShadow: 4 } : {},
-        border: hasWarnings ? '2px solid' : 'none',
-        borderColor: hasWarnings ? 'warning.main' : 'transparent',
+        height: '100%',
+        border: hasWarnings ? '2px solid #ffd700' : '1px solid #2a2a2a',
+        backgroundColor: '#1a1a1a',
+        transition: 'all 0.2s ease',
+        '&:hover': onSelect
+          ? {
+              borderColor: '#ffd700',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 4px 12px rgba(255, 215, 0, 0.15)',
+            }
+          : {},
       }}
       onClick={onSelect}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">{occupancy.job_site_name}</Typography>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 1.5,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              color: '#ffffff',
+              lineHeight: 1.2,
+            }}
+          >
+            {occupancy.job_site_name}
+          </Typography>
           {hasWarnings && (
             <Chip
-              icon={<Warning />}
-              label="Warning"
-              color="warning"
+              icon={<Warning sx={{ fontSize: '14px !important' }} />}
+              label="!"
               size="small"
+              sx={{
+                backgroundColor: '#ffd700',
+                color: '#000000',
+                height: '20px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                '& .MuiChip-icon': {
+                  color: '#000000',
+                  marginLeft: '4px',
+                },
+              }}
             />
           )}
         </Box>
 
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 1.25 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant="body2">Vehicles</Typography>
-            <Typography variant="body2" fontWeight="bold">
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', color: '#b0b0b0' }}>
+              Vehicles
+            </Typography>
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', fontWeight: 600, color: '#ffffff' }}>
               {occupancy.counts.vehicles} / {occupancy.capacity.vehicles}
             </Typography>
           </Box>
@@ -68,19 +105,41 @@ export const OccupancyCard: React.FC<OccupancyCardProps> = ({ occupancy, onSelec
             variant="determinate"
             value={vehiclePercentage}
             color={getProgressColor(vehiclePercentage, occupancy.warnings.vehicles)}
-            sx={{ height: 8, borderRadius: 1 }}
+            sx={{
+              height: 6,
+              borderRadius: 1,
+              backgroundColor: '#2a2a2a',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor:
+                  vehiclePercentage >= 100
+                    ? '#ff4444'
+                    : occupancy.warnings.vehicles || vehiclePercentage >= 90
+                      ? '#ffd700'
+                      : '#ffd700',
+              },
+            }}
           />
           {occupancy.warnings.vehicles && (
-            <Alert severity="warning" sx={{ mt: 0.5, py: 0 }}>
-              Vehicle capacity at {vehiclePercentage.toFixed(0)}%
-            </Alert>
+            <Typography
+              variant="caption"
+              sx={{
+                mt: 0.25,
+                display: 'block',
+                fontSize: '0.65rem',
+                color: '#ffd700',
+              }}
+            >
+              {vehiclePercentage.toFixed(0)}% capacity
+            </Typography>
           )}
         </Box>
 
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 1.25 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant="body2">Visitors</Typography>
-            <Typography variant="body2" fontWeight="bold">
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', color: '#b0b0b0' }}>
+              Visitors
+            </Typography>
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', fontWeight: 600, color: '#ffffff' }}>
               {occupancy.counts.visitors} / {occupancy.capacity.visitors}
             </Typography>
           </Box>
@@ -88,19 +147,41 @@ export const OccupancyCard: React.FC<OccupancyCardProps> = ({ occupancy, onSelec
             variant="determinate"
             value={visitorPercentage}
             color={getProgressColor(visitorPercentage, occupancy.warnings.visitors)}
-            sx={{ height: 8, borderRadius: 1 }}
+            sx={{
+              height: 6,
+              borderRadius: 1,
+              backgroundColor: '#2a2a2a',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor:
+                  visitorPercentage >= 100
+                    ? '#ff4444'
+                    : occupancy.warnings.visitors || visitorPercentage >= 90
+                      ? '#ffd700'
+                      : '#ffd700',
+              },
+            }}
           />
           {occupancy.warnings.visitors && (
-            <Alert severity="warning" sx={{ mt: 0.5, py: 0 }}>
-              Visitor capacity at {visitorPercentage.toFixed(0)}%
-            </Alert>
+            <Typography
+              variant="caption"
+              sx={{
+                mt: 0.25,
+                display: 'block',
+                fontSize: '0.65rem',
+                color: '#ffd700',
+              }}
+            >
+              {visitorPercentage.toFixed(0)}% capacity
+            </Typography>
           )}
         </Box>
 
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 1.25 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant="body2">Trucks</Typography>
-            <Typography variant="body2" fontWeight="bold">
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', color: '#b0b0b0' }}>
+              Trucks
+            </Typography>
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', fontWeight: 600, color: '#ffffff' }}>
               {occupancy.counts.trucks} / {occupancy.capacity.trucks}
             </Typography>
           </Box>
@@ -108,18 +189,47 @@ export const OccupancyCard: React.FC<OccupancyCardProps> = ({ occupancy, onSelec
             variant="determinate"
             value={truckPercentage}
             color={getProgressColor(truckPercentage, occupancy.warnings.trucks)}
-            sx={{ height: 8, borderRadius: 1 }}
+            sx={{
+              height: 6,
+              borderRadius: 1,
+              backgroundColor: '#2a2a2a',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor:
+                  truckPercentage >= 100
+                    ? '#ff4444'
+                    : occupancy.warnings.trucks || truckPercentage >= 90
+                      ? '#ffd700'
+                      : '#ffd700',
+              },
+            }}
           />
           {occupancy.warnings.trucks && (
-            <Alert severity="warning" sx={{ mt: 0.5, py: 0 }}>
-              Truck capacity at {truckPercentage.toFixed(0)}%
-            </Alert>
+            <Typography
+              variant="caption"
+              sx={{
+                mt: 0.25,
+                display: 'block',
+                fontSize: '0.65rem',
+                color: '#ffd700',
+              }}
+            >
+              {truckPercentage.toFixed(0)}% capacity
+            </Typography>
           )}
         </Box>
 
-        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-          <Typography variant="body2" color="text.secondary" align="center">
-            Total: {occupancy.counts.total} active entries
+        <Box sx={{ mt: 1.25, pt: 1.25, borderTop: '1px solid #2a2a2a' }}>
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              textAlign: 'center',
+              fontSize: '0.7rem',
+              color: '#b0b0b0',
+              fontWeight: 600,
+            }}
+          >
+            Total: {occupancy.counts.total} active
           </Typography>
         </Box>
       </CardContent>

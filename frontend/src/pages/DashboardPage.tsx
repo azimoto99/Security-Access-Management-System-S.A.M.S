@@ -4,17 +4,29 @@ import {
   Box,
   Container,
   Typography,
-  Button,
-  Paper,
   AppBar,
   Toolbar,
   Grid,
   Card,
   CardContent,
-  CardActions,
   CircularProgress,
   Alert,
+  Chip,
+  IconButton,
 } from '@mui/material';
+import {
+  Logout,
+  DirectionsCar,
+  Person,
+  Search,
+  Business,
+  People,
+  Assessment,
+  Security,
+  Warning,
+  Description,
+  Dashboard as DashboardIcon,
+} from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { occupancyService, type JobSiteOccupancy } from '../services/occupancyService';
@@ -56,83 +68,150 @@ export const DashboardPage: React.FC = () => {
     navigate('/login');
   };
 
+  const getActionIcon = (action: string) => {
+    const icons: { [key: string]: React.ReactElement } = {
+      entry: <DirectionsCar fontSize="small" />,
+      exit: <Person fontSize="small" />,
+      search: <Search fontSize="small" />,
+      'job-sites': <Business fontSize="small" />,
+      users: <People fontSize="small" />,
+      'audit-logs': <Assessment fontSize="small" />,
+      reports: <Assessment fontSize="small" />,
+      watchlist: <Security fontSize="small" />,
+      alerts: <Warning fontSize="small" />,
+      'hr/manage': <Description fontSize="small" />,
+      'hr/documents': <Description fontSize="small" />,
+      emergency: <Warning fontSize="small" />,
+    };
+    return icons[action] || <DashboardIcon fontSize="small" />;
+  };
+
+  const actionCards = [
+    ...((user?.role === 'guard' || user?.role === 'admin')
+      ? [
+          { title: 'Log Entry', desc: 'Record entry', path: '/entry', icon: 'entry' },
+          { title: 'Process Exit', desc: 'Process exits', path: '/exit', icon: 'exit' },
+          { title: 'Search Entries', desc: 'Search history', path: '/search', icon: 'search' },
+        ]
+      : []),
+    ...(user?.role === 'admin'
+      ? [
+          { title: 'Job Sites', desc: 'Manage sites', path: '/job-sites', icon: 'job-sites' },
+          { title: 'Users', desc: 'Manage users', path: '/users', icon: 'users' },
+          { title: 'Audit Logs', desc: 'View logs', path: '/audit-logs', icon: 'audit-logs' },
+          { title: 'Reports', desc: 'Analytics', path: '/reports', icon: 'reports' },
+          { title: 'Watchlist', desc: 'Manage list', path: '/watchlist', icon: 'watchlist' },
+          { title: 'Alerts', desc: 'Security alerts', path: '/alerts', icon: 'alerts' },
+          { title: 'HR Docs', desc: 'DocuSign', path: '/hr/manage', icon: 'hr/manage' },
+        ]
+      : []),
+    ...((user?.role === 'employee' || user?.role === 'guard')
+      ? [{ title: 'My Documents', desc: 'HR docs', path: '/hr/documents', icon: 'hr/documents' }]
+      : []),
+    ...((user?.role === 'guard' || user?.role === 'admin')
+      ? [
+          { title: 'Alerts', desc: 'Security alerts', path: '/alerts', icon: 'alerts' },
+          { title: 'Emergency', desc: 'Emergency mode', path: '/emergency', icon: 'emergency' },
+        ]
+      : []),
+  ];
+
+  // Remove duplicates
+  const uniqueActionCards = Array.from(
+    new Map(actionCards.map((card) => [card.path, card])).values()
+  );
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
-        <Toolbar>
+    <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
+      <AppBar position="static" elevation={0}>
+        <Toolbar sx={{ minHeight: '56px !important', py: 1 }}>
           <Box
             component="img"
             src="/logo.png"
-            alt="Shield Canine Services Logo"
-            sx={{
-              height: 40,
-              mr: 2,
-            }}
+            alt="Shield Logo"
+            sx={{ height: 32, mr: 2 }}
           />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" sx={{ flexGrow: 1, fontSize: '1rem', fontWeight: 600 }}>
             Security Access Management
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ mr: 2 }}>
-              {user?.username} ({user?.role})
-            </Typography>
-            <Button color="inherit" onClick={handleLogout}>
-              Logout
-            </Button>
-          </Box>
+          <Chip
+            label={`${user?.username} (${user?.role})`}
+            size="small"
+            sx={{
+              backgroundColor: '#2a2a2a',
+              color: '#ffffff',
+              mr: 1,
+              height: '28px',
+              fontSize: '0.75rem',
+            }}
+          />
+          <IconButton
+            onClick={handleLogout}
+            size="small"
+            sx={{
+              color: '#ffd700',
+              '&:hover': { backgroundColor: '#2a2a2a' },
+            }}
+          >
+            <Logout fontSize="small" />
+          </IconButton>
         </Toolbar>
       </AppBar>
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Paper sx={{ p: 4, mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <Box
-              component="img"
-              src="/logo.png"
-              alt="Shield Canine Services Logo"
-              sx={{
-                height: 80,
-                mr: 3,
-              }}
-            />
-            <Box>
-              <Typography variant="h4" gutterBottom>
-                Dashboard
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Welcome, {user?.username}!
-              </Typography>
-            </Box>
-          </Box>
-          <Typography variant="body2" color="text.secondary">
-            Role: {user?.role}
-          </Typography>
-          {user?.job_site_access && user.job_site_access.length > 0 && (
-            <Typography variant="body2" color="text.secondary">
-              Job Site Access: {user.job_site_access.length} site(s)
+      <Container maxWidth="xl" sx={{ py: 2 }}>
+        {/* Compact Header */}
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+              Dashboard
             </Typography>
-          )}
-        </Paper>
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+              Welcome, {user?.username} • {user?.role}
+              {user?.job_site_access && user.job_site_access.length > 0
+                ? ` • ${user.job_site_access.length} site(s)`
+                : ''}
+            </Typography>
+          </Box>
+        </Box>
 
         {/* Real-time Occupancy */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" gutterBottom>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
             Real-time Occupancy
           </Typography>
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+            <Alert
+              severity="error"
+              sx={{
+                mb: 1.5,
+                backgroundColor: '#2a1a1a',
+                border: '1px solid #ff4444',
+                color: '#ff6666',
+                '& .MuiAlert-icon': { color: '#ff4444' },
+              }}
+              onClose={() => setError(null)}
+            >
               {error}
             </Alert>
           )}
           {loading ? (
-            <Box display="flex" justifyContent="center" p={4}>
-              <CircularProgress />
+            <Box display="flex" justifyContent="center" p={3}>
+              <CircularProgress size={32} sx={{ color: '#ffd700' }} />
             </Box>
           ) : occupancies.length === 0 ? (
-            <Alert severity="info">No active job sites found</Alert>
+            <Alert
+              severity="info"
+              sx={{
+                backgroundColor: '#1a1a2a',
+                border: '1px solid #2a2a3a',
+                color: '#b0b0b0',
+              }}
+            >
+              No active job sites found
+            </Alert>
           ) : (
-            <Grid container spacing={3}>
+            <Grid container spacing={1.5}>
               {occupancies.map((occupancy) => (
-                <Grid item xs={12} sm={6} md={4} key={occupancy.job_site_id}>
+                <Grid item xs={12} sm={6} md={4} lg={3} key={occupancy.job_site_id}>
                   <OccupancyCard occupancy={occupancy} />
                 </Grid>
               ))}
@@ -140,245 +219,61 @@ export const DashboardPage: React.FC = () => {
           )}
         </Box>
 
-        <Grid container spacing={3}>
-          {(user?.role === 'guard' || user?.role === 'admin') && (
-            <>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Log Entry
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Record vehicle, visitor, or truck entry
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/entry')}>
-                      Log Entry
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Process Exit
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Process exits for active entries
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/exit')}>
-                      Process Exit
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Search Entries
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Search and filter historical entries
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/search')}>
-                      Search
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            </>
-          )}
-          {user?.role === 'admin' && (
-            <>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Job Site Management
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Create and manage job sites
+        {/* Quick Actions */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
+            Quick Actions
+          </Typography>
+          <Grid container spacing={1.5}>
+            {uniqueActionCards.map((action) => (
+              <Grid item xs={6} sm={4} md={3} lg={2.4} key={action.path}>
+                <Card
+                  sx={{
+                    cursor: 'pointer',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    '&:hover': {
+                      borderColor: '#ffd700',
+                      transform: 'translateY(-2px)',
+                    },
+                  }}
+                  onClick={() => navigate(action.path)}
+                >
+                  <CardContent sx={{ p: 1.5, flexGrow: 1, '&:last-child': { pb: 1.5 } }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        mb: 0.5,
+                        color: '#ffd700',
+                      }}
+                    >
+                      {getActionIcon(action.icon)}
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          ml: 0.5,
+                          fontWeight: 600,
+                          fontSize: '0.75rem',
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {action.title}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: '#b0b0b0', fontSize: '0.7rem', display: 'block' }}
+                    >
+                      {action.desc}
                     </Typography>
                   </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/job-sites')}>
-                      Manage Job Sites
-                    </Button>
-                  </CardActions>
                 </Card>
               </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      User Management
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Create and manage user accounts
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/users')}>
-                      Manage Users
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Audit Logs
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      View system audit logs
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/audit-logs')}>
-                      View Logs
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Reports & Analytics
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Generate reports and view analytics
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/reports')}>
-                      View Reports
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Watchlist
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Manage watchlist entries
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/watchlist')}>
-                      Manage Watchlist
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Security Alerts
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      View and manage security alerts
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/alerts')}>
-                      View Alerts
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      HR Document Management
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Manage HR documents and DocuSign integration
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/hr/manage')}>
-                      Manage HR Documents
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            </>
-          )}
-          {(user?.role === 'employee' || user?.role === 'guard') && (
-            <>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Onboarding & Documents
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      View and sign your HR documents
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/hr/documents')}>
-                      My Documents
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            </>
-          )}
-          {(user?.role === 'guard' || user?.role === 'admin') && (
-            <>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Security Alerts
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      View and manage security alerts
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/alerts')}>
-                      View Alerts
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Emergency Management
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Handle emergency situations and evacuations
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" onClick={() => navigate('/emergency')}>
-                      Emergency Mode
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            </>
-          )}
-        </Grid>
+            ))}
+          </Grid>
+        </Box>
       </Container>
     </Box>
   );
