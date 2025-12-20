@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import { verifyAccessToken } from '../utils/jwt';
 import { AppError } from './errorHandler';
 
@@ -49,8 +50,7 @@ export const authenticateToken = (
       if (isPhotoRequest) {
         try {
           // Try to decode the expired token to check expiration time
-          const jwt = require('jsonwebtoken');
-          const decoded = jwt.decode(token);
+          const decoded = jwt.decode(token) as any;
           
           if (decoded && decoded.exp) {
             const expirationTime = decoded.exp * 1000; // Convert to milliseconds
