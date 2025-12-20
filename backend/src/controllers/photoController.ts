@@ -159,43 +159,43 @@ export const getPhoto = async (
     }
 
     // Set CORS headers explicitly for file responses
-    // Use configured CORS origin
+    // For photo requests, always set CORS headers to allow cross-origin access
     const allowedOrigin = config.cors.origin;
     const requestOrigin = req.headers.origin;
     
     logger.debug(`CORS: allowedOrigin=${allowedOrigin}, requestOrigin=${requestOrigin}`);
     
-    // Set CORS origin - always set it to allow the request
+    // Always set CORS headers for photo requests
+    // Use the configured origin or request origin, prioritizing configured origin
+    let corsOrigin: string | undefined;
+    
     if (allowedOrigin === '*') {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-    } else if (allowedOrigin && requestOrigin) {
-      // Check if request origin matches allowed origin
-      if (allowedOrigin === requestOrigin) {
-        res.setHeader('Access-Control-Allow-Origin', requestOrigin);
-      } else if (allowedOrigin.includes(',')) {
-        // Multiple origins configured
+      corsOrigin = '*';
+    } else if (allowedOrigin) {
+      if (allowedOrigin.includes(',')) {
+        // Multiple origins - try to match request origin, otherwise use first
         const origins = allowedOrigin.split(',').map((o: string) => o.trim());
-        if (origins.includes(requestOrigin)) {
-          res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+        if (requestOrigin && origins.includes(requestOrigin)) {
+          corsOrigin = requestOrigin;
         } else {
-          // Default to first allowed origin if no match
-          res.setHeader('Access-Control-Allow-Origin', origins[0]);
+          corsOrigin = origins[0];
         }
       } else {
-        // Single origin configured - use it
-        res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+        // Single origin configured - always use it for photo requests
+        corsOrigin = allowedOrigin;
       }
     } else if (requestOrigin) {
-      // No configured origin, use request origin
-      res.setHeader('Access-Control-Allow-Origin', requestOrigin);
-    } else if (allowedOrigin) {
-      // No request origin, use configured origin
-      res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+      corsOrigin = requestOrigin;
     }
     
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    // Always set CORS headers if we have an origin
+    if (corsOrigin) {
+      res.setHeader('Access-Control-Allow-Origin', corsOrigin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    }
+    
     res.setHeader('Content-Type', photo.mime_type || 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
     

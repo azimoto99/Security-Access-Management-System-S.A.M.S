@@ -28,7 +28,19 @@ if (config.env === 'production') {
 }
 
 // Middleware
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:', 'http:'],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+      },
+    },
+  })
+);
 app.use(
   cors({
     origin: config.cors.origin,
