@@ -44,7 +44,6 @@ export const EntryForm: React.FC<EntryFormProps> = ({
   const hasAutofilledRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const photoUploadRef = useRef<PhotoUploadRef | null>(null);
-  const previousEntryIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (initialData) {
@@ -521,7 +520,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                 onUploadStart={() => {
                   setIsUploadingPhotos(true);
                 }}
-                onUploadComplete={(photoIds) => {
+                onUploadComplete={(photoIds: string[]) => {
                   // Photos uploaded successfully
                   console.log('Photos uploaded:', photoIds);
                   setIsUploadingPhotos(false);
@@ -533,9 +532,9 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                   setIsSubmitting(false);
                   isSubmittingRef.current = false;
                 }}
-                onPhotosChange={(hasPhotos) => {
+                onPhotosChange={(_hasPhotos: boolean) => {
                   // Track if there are photos ready to upload
-                  setPendingPhotos(hasPhotos ? [] : []);
+                  // This callback is used to notify parent of photo state changes
                 }}
                 ref={photoUploadRef}
               />

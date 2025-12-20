@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Box,
   Button,
@@ -345,7 +345,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
   };
 
   // Expose methods to parent via ref
-  React.useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => ({
     uploadPhotos: handleUpload,
     hasPhotos: () => photos.length > 0,
   }));
