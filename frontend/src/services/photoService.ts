@@ -89,9 +89,15 @@ export const photoService = {
     
     // Get token from localStorage for image requests (since <img> tags don't send Authorization headers)
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : '';
     
-    return `${API_BASE_URL}/photos/${photoId}${thumbnail ? '?thumbnail=true' : '?thumbnail=false'}${tokenParam}`;
+    // Build query string
+    const params = new URLSearchParams();
+    params.set('thumbnail', thumbnail ? 'true' : 'false');
+    if (token) {
+      params.set('token', token);
+    }
+    
+    return `${API_BASE_URL}/photos/${photoId}?${params.toString()}`;
   },
 
   /**
