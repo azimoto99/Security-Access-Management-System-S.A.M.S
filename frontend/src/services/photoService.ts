@@ -88,38 +88,8 @@ export const photoService = {
     const API_BASE_URL = getApiBaseUrl();
     
     // Get token from localStorage for image requests (since <img> tags don't send Authorization headers)
-    // Try to refresh token if expired before generating URL
-    const getToken = (): string | null => {
-      if (typeof window === 'undefined') return null;
-      
-      const token = localStorage.getItem('accessToken');
-      if (!token) return null;
-      
-      // Check if token is expired by decoding it (without verification)
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const exp = payload.exp * 1000; // Convert to milliseconds
-        const now = Date.now();
-        
-        // If token expires in less than 1 minute, try to refresh it
-        if (exp - now < 60000) {
-          // Token is about to expire or expired, try to refresh
-          const refreshToken = localStorage.getItem('refreshToken');
-          if (refreshToken) {
-            // Refresh token asynchronously (don't block URL generation)
-            photoService.refreshTokenIfNeeded().catch(() => {
-              // Silently fail - will use expired token and let backend handle it
-            });
-          }
-        }
-      } catch (e) {
-        // If we can't decode the token, just use it as-is
-      }
-      
-      return token;
-    };
-    
-    const token = getToken();
+    // Note: Backend allows expired tokens within 5 minute grace period for photo requests
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     
     // Build query string
     const params = new URLSearchParams();
