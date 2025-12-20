@@ -162,7 +162,7 @@ export const getPhoto = async (
         res.setHeader('Access-Control-Allow-Origin', requestOrigin || allowedOrigin);
       } else if (allowedOrigin.includes(',')) {
         // Multiple origins configured
-        const origins = allowedOrigin.split(',').map(o => o.trim());
+        const origins = allowedOrigin.split(',').map((o: string) => o.trim());
         if (requestOrigin && origins.includes(requestOrigin)) {
           res.setHeader('Access-Control-Allow-Origin', requestOrigin);
         }
