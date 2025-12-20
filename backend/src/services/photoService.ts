@@ -137,7 +137,8 @@ export const getRelativePath = (absolutePath: string): string => {
  * Get absolute path from relative path
  */
 export const getAbsolutePath = (relativePath: string): string => {
-  return path.join(config.upload.dir, relativePath);
+  const uploadDir = path.resolve(config.upload.dir);
+  return path.resolve(uploadDir, relativePath);
 };
 
 

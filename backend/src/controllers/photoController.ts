@@ -1,4 +1,5 @@
 import { Response, NextFunction } from 'express';
+import path from 'path';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
@@ -179,7 +180,9 @@ export const getPhoto = async (
     res.setHeader('Content-Type', photo.mime_type || 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
     
-    res.sendFile(filePath);
+    // Ensure filePath is absolute
+    const absoluteFilePath = path.resolve(filePath);
+    res.sendFile(absoluteFilePath);
   } catch (error) {
     next(error);
   }
