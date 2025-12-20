@@ -132,8 +132,11 @@ export const getPhoto = async (
     const { id } = req.params;
     const { thumbnail } = req.query;
 
+    logger.debug(`Photo request: id=${id}, thumbnail=${thumbnail}, origin=${req.headers.origin}`);
+
     const photo = await photoService.getPhotoById(id);
     if (!photo) {
+      logger.warn(`Photo not found: ${id}`);
       const error: AppError = new Error('Photo not found');
       error.statusCode = 404;
       error.code = 'PHOTO_NOT_FOUND';
@@ -144,8 +147,11 @@ export const getPhoto = async (
       ? photoService.getAbsolutePath(photo.thumbnail_path)
       : photoService.getAbsolutePath(photo.file_path);
 
+    logger.debug(`Photo file path: ${filePath}`);
+
     const fs = require('fs');
     if (!fs.existsSync(filePath)) {
+      logger.error(`Photo file not found on disk: ${filePath}`);
       const error: AppError = new Error('Photo file not found');
       error.statusCode = 404;
       error.code = 'PHOTO_FILE_NOT_FOUND';
@@ -157,21 +163,34 @@ export const getPhoto = async (
     const allowedOrigin = config.cors.origin;
     const requestOrigin = req.headers.origin;
     
-    // Set CORS origin - allow the request origin if it matches the configured origin
-    if (allowedOrigin) {
-      if (allowedOrigin === '*' || allowedOrigin === requestOrigin) {
-        res.setHeader('Access-Control-Allow-Origin', requestOrigin || allowedOrigin);
+    logger.debug(`CORS: allowedOrigin=${allowedOrigin}, requestOrigin=${requestOrigin}`);
+    
+    // Set CORS origin - always set it to allow the request
+    if (allowedOrigin === '*') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    } else if (allowedOrigin && requestOrigin) {
+      // Check if request origin matches allowed origin
+      if (allowedOrigin === requestOrigin) {
+        res.setHeader('Access-Control-Allow-Origin', requestOrigin);
       } else if (allowedOrigin.includes(',')) {
         // Multiple origins configured
         const origins = allowedOrigin.split(',').map((o: string) => o.trim());
-        if (requestOrigin && origins.includes(requestOrigin)) {
+        if (origins.includes(requestOrigin)) {
           res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+        } else {
+          // Default to first allowed origin if no match
+          res.setHeader('Access-Control-Allow-Origin', origins[0]);
         }
       } else {
+        // Single origin configured - use it
         res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
       }
     } else if (requestOrigin) {
+      // No configured origin, use request origin
       res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+    } else if (allowedOrigin) {
+      // No request origin, use configured origin
+      res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
     }
     
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -182,8 +201,10 @@ export const getPhoto = async (
     
     // Ensure filePath is absolute
     const absoluteFilePath = path.resolve(filePath);
+    logger.debug(`Sending photo file: ${absoluteFilePath}`);
     res.sendFile(absoluteFilePath);
   } catch (error) {
+    logger.error('Error serving photo:', error);
     next(error);
   }
 };
