@@ -10,6 +10,10 @@ import {
   Toolbar,
   Alert,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { EntryForm } from '../components/EntryForm';
 import type { EntryType } from '../types/entry';
@@ -172,9 +176,21 @@ export const EntryPage: React.FC = () => {
           )}
 
           <Box sx={{ mb: 3 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Job Site: {jobSites.find((s) => s.id === selectedJobSiteId)?.name || 'Not selected'}
-            </Typography>
+            <FormControl fullWidth>
+              <InputLabel>Job Site</InputLabel>
+              <Select
+                value={selectedJobSiteId}
+                onChange={(e) => setSelectedJobSiteId(e.target.value)}
+                label="Job Site"
+                required
+              >
+                {accessibleJobSites.map((site) => (
+                  <MenuItem key={site.id} value={site.id}>
+                    {site.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
 
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>

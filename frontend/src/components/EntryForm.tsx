@@ -16,7 +16,7 @@ import {
 import type { SelectChangeEvent } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
 import type { EntryType } from '../types/entry';
-import { PhotoUpload } from './PhotoUpload';
+import { PhotoUpload, type PhotoUploadRef } from './PhotoUpload';
 import { entryService } from '../services/entryService';
 
 interface EntryFormProps {
@@ -38,8 +38,13 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const autofillTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAutofilledRef = useRef(false);
+  const isSubmittingRef = useRef(false);
+  const photoUploadRef = useRef<PhotoUploadRef | null>(null);
+  const previousEntryIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (initialData) {
@@ -219,31 +224,58 @@ export const EntryForm: React.FC<EntryFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-
-    const submitData: Record<string, any> = {
-      job_site_id: jobSiteId,
-      entry_type: entryType,
-      entry_data: { ...formData },
-    };
-
-    // Clean up expected_duration
-    if (submitData.entry_data.expected_duration === '') {
-      delete submitData.entry_data.expected_duration;
-    } else if (submitData.entry_data.expected_duration) {
-      submitData.entry_data.expected_duration = parseInt(submitData.entry_data.expected_duration);
+    
+    // Prevent multiple submissions
+    if (isSubmittingRef.current || isSubmitting || isUploadingPhotos) {
+      return;
     }
 
-    // Remove empty optional fields
-    Object.keys(submitData.entry_data).forEach((key) => {
-      if (submitData.entry_data[key] === '') {
-        delete submitData.entry_data[key];
-      }
-    });
+    if (!validate()) return;
 
-    onSubmit(submitData);
+    // Check if there are photos waiting to be uploaded
+    const hasPhotos = photoUploadRef.current?.hasPhotos() || false;
+    
+    setIsSubmitting(true);
+    isSubmittingRef.current = true;
+
+    try {
+      const submitData: Record<string, any> = {
+        job_site_id: jobSiteId,
+        entry_type: entryType,
+        entry_data: { ...formData },
+      };
+
+      // Clean up expected_duration
+      if (submitData.entry_data.expected_duration === '') {
+        delete submitData.entry_data.expected_duration;
+      } else if (submitData.entry_data.expected_duration) {
+        submitData.entry_data.expected_duration = parseInt(submitData.entry_data.expected_duration);
+      }
+
+      // Remove empty optional fields
+      Object.keys(submitData.entry_data).forEach((key) => {
+        if (submitData.entry_data[key] === '') {
+          delete submitData.entry_data[key];
+        }
+      });
+
+      // Submit entry - if there are photos, we'll wait for entryId to be set
+      // and then photos will auto-upload
+      onSubmit(submitData);
+      
+      // If no photos, we can reset the submitting state immediately
+      // Otherwise, it will be reset when photos finish uploading
+      if (!hasPhotos) {
+        setIsSubmitting(false);
+        isSubmittingRef.current = false;
+      }
+    } catch (error) {
+      console.error('Error submitting entry:', error);
+      setIsSubmitting(false);
+      isSubmittingRef.current = false;
+    }
   };
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | { value: unknown }>) => {
@@ -486,19 +518,41 @@ export const EntryForm: React.FC<EntryFormProps> = ({
               <PhotoUpload
                 entryId={entryId}
                 maxPhotos={10}
+                onUploadStart={() => {
+                  setIsUploadingPhotos(true);
+                }}
                 onUploadComplete={(photoIds) => {
                   // Photos uploaded successfully
                   console.log('Photos uploaded:', photoIds);
+                  setIsUploadingPhotos(false);
+                  setIsSubmitting(false);
+                  isSubmittingRef.current = false;
                 }}
+                onUploadError={() => {
+                  setIsUploadingPhotos(false);
+                  setIsSubmitting(false);
+                  isSubmittingRef.current = false;
+                }}
+                onPhotosChange={(hasPhotos) => {
+                  // Track if there are photos ready to upload
+                  setPendingPhotos(hasPhotos ? [] : []);
+                }}
+                ref={photoUploadRef}
               />
             </AccordionDetails>
           </Accordion>
         </Grid>
         <Grid item xs={12}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-            <Button onClick={onCancel}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              Submit Entry
+            <Button onClick={onCancel} disabled={isSubmitting || isUploadingPhotos}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              variant="contained"
+              disabled={isSubmitting || isUploadingPhotos}
+            >
+              {isUploadingPhotos ? 'Uploading Photos...' : isSubmitting ? 'Submitting...' : 'Submit Entry'}
             </Button>
           </Box>
         </Grid>

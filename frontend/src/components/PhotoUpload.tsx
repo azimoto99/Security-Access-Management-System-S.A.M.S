@@ -27,16 +27,27 @@ interface PhotoFile {
 interface PhotoUploadProps {
   entryId?: string;
   onUploadComplete?: (photoIds: string[]) => void;
+  onUploadStart?: () => void;
+  onUploadError?: () => void;
+  onPhotosChange?: (hasPhotos: boolean) => void;
   maxPhotos?: number;
   maxFileSize?: number; // in bytes
 }
 
-export const PhotoUpload: React.FC<PhotoUploadProps> = ({
+export interface PhotoUploadRef {
+  uploadPhotos: () => Promise<void>;
+  hasPhotos: () => boolean;
+}
+
+export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
   entryId,
   onUploadComplete,
+  onUploadStart,
+  onUploadError,
+  onPhotosChange,
   maxPhotos = 10,
   maxFileSize = 10 * 1024 * 1024, // 10MB default
-}) => {
+}, ref) => {
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -289,16 +300,20 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const handleUpload = async () => {
     if (!entryId) {
       setError('Entry ID is required');
+      if (onUploadError) onUploadError();
       return;
     }
 
     if (photos.length === 0) {
       setError('Please select at least one photo');
+      if (onUploadError) onUploadError();
       return;
     }
 
     try {
       setError(null);
+      if (onUploadStart) onUploadStart();
+      
       const { photoService } = await import('../services/photoService');
 
       // Mark all as uploading
@@ -320,12 +335,36 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
 
       if (result.errors && result.errors.length > 0) {
         setError(`Some photos failed to upload: ${result.errors.map((e: any) => e.filename).join(', ')}`);
+        if (onUploadError) onUploadError();
       }
     } catch (err: any) {
       setError(err.message || 'Failed to upload photos');
       setPhotos((prev) => prev.map((p) => ({ ...p, uploading: false })));
+      if (onUploadError) onUploadError();
     }
   };
+
+  // Expose methods to parent via ref
+  React.useImperativeHandle(ref, () => ({
+    uploadPhotos: handleUpload,
+    hasPhotos: () => photos.length > 0,
+  }));
+
+  // Notify parent when photos change
+  useEffect(() => {
+    if (onPhotosChange) {
+      onPhotosChange(photos.length > 0);
+    }
+  }, [photos.length, onPhotosChange]);
+
+  // Auto-upload photos when entryId becomes available and we have photos
+  useEffect(() => {
+    if (entryId && photos.length > 0 && !photos.some(p => p.uploading)) {
+      // Only auto-upload if photos aren't already being uploaded
+      handleUpload();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entryId, photos.length]);
 
   return (
     <Box>
@@ -540,7 +579,9 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
       </Dialog>
     </Box>
   );
-};
+});
+
+PhotoUpload.displayName = 'PhotoUpload';
 
 
 
