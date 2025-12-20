@@ -13,14 +13,21 @@ export interface AuthRequest extends Request {
 
 /**
  * Authenticate JWT token
+ * Supports token from Authorization header or query string (for image requests)
  */
 export const authenticateToken = (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ): void => {
+  // Try to get token from Authorization header first
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  let token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  // If no token in header, try query string (for image requests)
+  if (!token && req.query.token) {
+    token = req.query.token as string;
+  }
 
   if (!token) {
     const error: AppError = new Error('Authentication token required');

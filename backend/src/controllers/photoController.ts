@@ -152,9 +152,32 @@ export const getPhoto = async (
     }
 
     // Set CORS headers explicitly for file responses
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    // Use configured CORS origin
+    const allowedOrigin = config.cors.origin;
+    const requestOrigin = req.headers.origin;
+    
+    // Set CORS origin - allow the request origin if it matches the configured origin
+    if (allowedOrigin) {
+      if (allowedOrigin === '*' || allowedOrigin === requestOrigin) {
+        res.setHeader('Access-Control-Allow-Origin', requestOrigin || allowedOrigin);
+      } else if (allowedOrigin.includes(',')) {
+        // Multiple origins configured
+        const origins = allowedOrigin.split(',').map(o => o.trim());
+        if (requestOrigin && origins.includes(requestOrigin)) {
+          res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+        }
+      } else {
+        res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+      }
+    } else if (requestOrigin) {
+      res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+    }
+    
     res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
     res.setHeader('Content-Type', photo.mime_type || 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
     
     res.sendFile(filePath);
   } catch (error) {
