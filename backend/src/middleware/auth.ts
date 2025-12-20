@@ -42,6 +42,37 @@ export const authenticateToken = (
     next();
   } catch (error) {
     if (error instanceof Error && error.message.includes('expired')) {
+      // For photo requests, allow expired tokens within a grace period (5 minutes)
+      // This handles the case where token expires between page load and image request
+      const isPhotoRequest = req.path.includes('/photos/') && req.method === 'GET';
+      
+      if (isPhotoRequest) {
+        try {
+          // Try to decode the expired token to check expiration time
+          const jwt = require('jsonwebtoken');
+          const decoded = jwt.decode(token);
+          
+          if (decoded && decoded.exp) {
+            const expirationTime = decoded.exp * 1000; // Convert to milliseconds
+            const now = Date.now();
+            const gracePeriod = 5 * 60 * 1000; // 5 minutes in milliseconds
+            
+            // If token expired within the last 5 minutes, allow the request
+            if (now - expirationTime < gracePeriod) {
+              req.user = {
+                id: decoded.id,
+                username: decoded.username,
+                role: decoded.role,
+                job_site_access: decoded.job_site_access || [],
+              };
+              return next();
+            }
+          }
+        } catch (decodeError) {
+          // If we can't decode, fall through to error
+        }
+      }
+      
       const appError: AppError = new Error('Token expired');
       appError.statusCode = 401;
       appError.code = 'TOKEN_EXPIRED';
