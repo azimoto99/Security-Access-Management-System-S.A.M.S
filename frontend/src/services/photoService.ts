@@ -107,7 +107,7 @@ export const photoService = {
           const refreshToken = localStorage.getItem('refreshToken');
           if (refreshToken) {
             // Refresh token asynchronously (don't block URL generation)
-            this.refreshTokenIfNeeded().catch(() => {
+            photoService.refreshTokenIfNeeded().catch(() => {
               // Silently fail - will use expired token and let backend handle it
             });
           }
