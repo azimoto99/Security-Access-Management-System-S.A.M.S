@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { config } from '../utils/env';
 import * as photoController from '../controllers/photoController';
 import { authenticateToken } from '../middleware/auth';
 import { uploadMultiple } from '../middleware/upload';
@@ -7,7 +8,6 @@ const router = Router();
 
 // Handle OPTIONS preflight requests for CORS (before authentication)
 router.options('*', (req, res) => {
-  const { config } = require('../utils/env');
   const allowedOrigin = config.cors.origin;
   const requestOrigin = req.headers.origin;
   
