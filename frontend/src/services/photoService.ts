@@ -102,39 +102,6 @@ export const photoService = {
   },
 
   /**
-   * Refresh token if needed (for photo URLs)
-   */
-  async refreshTokenIfNeeded(): Promise<void> {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) return;
-      
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-        (window.location.hostname.includes('fixer.gg') 
-          ? 'https://security-access-management-system-s-a-m-s.onrender.com/api'
-          : 'http://localhost:3001/api');
-      
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data?.accessToken) {
-          localStorage.setItem('accessToken', data.data.accessToken);
-        }
-      }
-    } catch (error) {
-      // Silently fail - token refresh is best effort
-      console.debug('Token refresh failed:', error);
-    }
-  },
-
-  /**
    * Delete photo
    */
   async deletePhoto(photoId: string): Promise<void> {
