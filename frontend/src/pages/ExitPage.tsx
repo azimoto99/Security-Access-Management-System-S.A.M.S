@@ -195,14 +195,20 @@ export const ExitPage: React.FC = () => {
           )}
 
           <Box sx={{ mb: 3 }}>
-            <FormControl fullWidth sx={{ maxWidth: 400 }}>
-              <InputLabel>Job Site</InputLabel>
+            <FormControl fullWidth sx={{ maxWidth: 500 }}>
+              <InputLabel>Select Job Site</InputLabel>
               <Select
                 value={selectedJobSiteId}
                 onChange={(e) => setSelectedJobSiteId(e.target.value)}
-                label="Job Site"
+                label="Select Job Site"
                 required
+                displayEmpty
               >
+                {!selectedJobSiteId && (
+                  <MenuItem value="" disabled>
+                    <em>Choose a job site to view entries</em>
+                  </MenuItem>
+                )}
                 {user?.role === 'admin'
                   ? jobSites.map((site) => (
                       <MenuItem key={site.id} value={site.id}>
@@ -217,6 +223,11 @@ export const ExitPage: React.FC = () => {
                         </MenuItem>
                       ))}
               </Select>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                {user?.role === 'admin'
+                  ? 'Select any job site to view and process exits'
+                  : 'Select a job site to view and process exits for entries you have access to'}
+              </Typography>
             </FormControl>
           </Box>
 
