@@ -17,9 +17,20 @@ export const useWebSocket = (onMessage?: (message: WebSocketMessage) => void) =>
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const onMessageRef = useRef(onMessage);
+  
+  // Update ref when onMessage changes (but don't trigger reconnection)
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
 
   const connect = useCallback(() => {
     if (!isAuthenticated || !user) {
+      return;
+    }
+
+    // Don't connect if already connected or connecting
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
       return;
     }
 
@@ -82,8 +93,9 @@ export const useWebSocket = (onMessage?: (message: WebSocketMessage) => void) =>
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
           setLastMessage(message);
-          if (onMessage) {
-            onMessage(message);
+          // Call onMessage callback if provided (using ref to avoid stale closures)
+          if (onMessageRef.current) {
+            onMessageRef.current(message);
           }
         } catch (err) {
           console.error('Error parsing WebSocket message:', err);
@@ -124,7 +136,7 @@ export const useWebSocket = (onMessage?: (message: WebSocketMessage) => void) =>
     } catch (err: any) {
       setError(err.message || 'Failed to connect');
     }
-  }, [isAuthenticated, user, onMessage]);
+  }, [isAuthenticated, user]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

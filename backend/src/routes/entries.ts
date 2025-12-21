@@ -29,11 +29,7 @@ const manualExitSchema = Joi.object({
   entry_type: Joi.string().valid('vehicle', 'truck').required(),
   entry_data: Joi.object({
     license_plate: Joi.string().required(),
-    truck_number: Joi.string().when('entry_type', {
-      is: 'truck',
-      then: Joi.required(),
-      otherwise: Joi.optional(),
-    }),
+    truck_number: Joi.string().optional(), // Validation handled in controller
     trailer_number: Joi.string().optional(),
     destination: Joi.string().valid('north', 'south').optional(),
     driver_name: Joi.string().optional(),

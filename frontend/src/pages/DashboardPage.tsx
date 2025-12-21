@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -40,11 +40,13 @@ export const DashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // WebSocket connection for real-time updates
-  useWebSocket((message) => {
+  const handleWebSocketMessage = useCallback((message: any) => {
     if (message.type === 'occupancy_update') {
       setOccupancies(message.data || []);
     }
-  });
+  }, []);
+
+  useWebSocket(handleWebSocketMessage);
 
   useEffect(() => {
     loadOccupancy();
