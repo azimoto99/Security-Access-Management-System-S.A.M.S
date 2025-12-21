@@ -96,7 +96,7 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
     }
 
     if (user_id) {
-      query += ` AND al.user_id = $${paramCount++}`;
+      query += ` AND al.user_id = $${paramCount++}::uuid`;
       params.push(user_id);
     }
 
