@@ -126,12 +126,19 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
     }
 
     // Get total count - build count query properly
-    let countQuery = `
-      SELECT COUNT(${needsJobSiteFilter ? 'DISTINCT al.id' : '*'}) as total
-      FROM audit_logs al
-      ${needsJobSiteFilter ? 'LEFT JOIN entries e ON al.resource_type = \'entry\' AND al.resource_id = e.id::text' : ''}
-      WHERE 1=1
-    `;
+    // Use subquery approach for better compatibility when using DISTINCT with JOINs
+    let countQuery = needsJobSiteFilter
+      ? `
+        SELECT COUNT(DISTINCT al.id) as total
+        FROM audit_logs al
+        LEFT JOIN entries e ON al.resource_type = 'entry' AND al.resource_id = e.id::text
+        WHERE 1=1
+      `
+      : `
+        SELECT COUNT(*) as total
+        FROM audit_logs al
+        WHERE 1=1
+      `;
     const countParams: any[] = [];
     let countParamCount = 1;
 

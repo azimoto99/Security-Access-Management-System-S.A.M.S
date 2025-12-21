@@ -46,6 +46,7 @@ export const ExitPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [exitDialog, setExitDialog] = useState<Entry | null>(null);
   const [overrideReason, setOverrideReason] = useState('');
   const [useOverride, setUseOverride] = useState(false);
@@ -132,11 +133,18 @@ export const ExitPage: React.FC = () => {
     try {
       setProcessing(true);
       setError(null);
+      setSuccess(null);
 
-      await entryService.createManualExit(data);
+      const entry = await entryService.createManualExit(data);
 
       setManualExitDialog(false);
+      setSuccess(`✓ Manual exit logged successfully! Entry ID: ${entry.id.substring(0, 8)}...`);
       await loadActiveEntries();
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
     } catch (err: any) {
       setError(err.message || 'Failed to log manual exit');
     } finally {
@@ -224,6 +232,12 @@ export const ExitPage: React.FC = () => {
           {error && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
               {error}
+            </Alert>
+          )}
+
+          {success && (
+            <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+              {success}
             </Alert>
           )}
 

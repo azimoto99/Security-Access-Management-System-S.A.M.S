@@ -32,15 +32,17 @@ export const getAuditLogs = async (
     } = req.query;
 
     const filters: any = {
-      user_id: user_id as string,
-      action: action as string,
-      resource_type: resource_type as string,
-      resource_id: resource_id as string,
-      date_from: date_from as string,
-      date_to: date_to as string,
       page: parseInt(page as string) || 1,
       limit: Math.min(parseInt(limit as string) || 50, 100),
     };
+
+    // Only add filters if they have values
+    if (user_id) filters.user_id = user_id as string;
+    if (action) filters.action = action as string;
+    if (resource_type) filters.resource_type = resource_type as string;
+    if (resource_id) filters.resource_id = resource_id as string;
+    if (date_from) filters.date_from = date_from as string;
+    if (date_to) filters.date_to = date_to as string;
 
     // For guards, filter by their accessible job sites
     // Admins see all logs
@@ -85,15 +87,17 @@ export const exportAuditLogs = async (
     } = req.query;
 
     const filters: any = {
-      user_id: user_id as string,
-      action: action as string,
-      resource_type: resource_type as string,
-      resource_id: resource_id as string,
-      date_from: date_from as string,
-      date_to: date_to as string,
       page: 1,
       limit: 10000, // Large limit for export
     };
+
+    // Only add filters if they have values
+    if (user_id) filters.user_id = user_id as string;
+    if (action) filters.action = action as string;
+    if (resource_type) filters.resource_type = resource_type as string;
+    if (resource_id) filters.resource_id = resource_id as string;
+    if (date_from) filters.date_from = date_from as string;
+    if (date_to) filters.date_to = date_to as string;
 
     // For guards, filter by their accessible job sites
     // Admins see all logs
