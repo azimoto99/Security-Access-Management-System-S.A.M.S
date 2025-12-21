@@ -125,9 +125,57 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
       params.push(date_to);
     }
 
-    // Get total count
-    const countQuery = query.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM');
-    const countResult = await pool.query(countQuery, params);
+    // Get total count - build count query properly
+    let countQuery = `
+      SELECT COUNT(${needsJobSiteFilter ? 'DISTINCT al.id' : '*'}) as total
+      FROM audit_logs al
+      ${needsJobSiteFilter ? 'LEFT JOIN entries e ON al.resource_type = \'entry\' AND al.resource_id = e.id::text' : ''}
+      WHERE 1=1
+    `;
+    const countParams: any[] = [];
+    let countParamCount = 1;
+
+    // Apply same filters to count query
+    if (needsJobSiteFilter) {
+      countQuery += ` AND (
+        al.resource_type != 'entry' 
+        OR e.job_site_id = ANY($${countParamCount})
+      )`;
+      countParams.push(filters.job_site_ids);
+      countParamCount++;
+    }
+
+    if (user_id) {
+      countQuery += ` AND al.user_id = $${countParamCount++}::uuid`;
+      countParams.push(user_id);
+    }
+
+    if (action) {
+      countQuery += ` AND al.action = $${countParamCount++}`;
+      countParams.push(action);
+    }
+
+    if (resource_type) {
+      countQuery += ` AND al.resource_type = $${countParamCount++}`;
+      countParams.push(resource_type);
+    }
+
+    if (resource_id) {
+      countQuery += ` AND al.resource_id = $${countParamCount++}`;
+      countParams.push(resource_id);
+    }
+
+    if (date_from) {
+      countQuery += ` AND al.timestamp >= $${countParamCount++}`;
+      countParams.push(date_from);
+    }
+
+    if (date_to) {
+      countQuery += ` AND al.timestamp <= $${countParamCount++}`;
+      countParams.push(date_to);
+    }
+
+    const countResult = await pool.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].total);
 
     // Add pagination
