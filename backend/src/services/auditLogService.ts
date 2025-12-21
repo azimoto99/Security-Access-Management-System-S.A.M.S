@@ -77,7 +77,7 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
         u.username
       FROM audit_logs al
       LEFT JOIN users u ON al.user_id = u.id
-      ${needsJobSiteFilter ? 'LEFT JOIN entries e ON al.resource_type = \'entry\' AND al.resource_id = e.id::text' : ''}
+      ${needsJobSiteFilter ? 'LEFT JOIN entries e ON al.resource_type = \'entry\' AND al.resource_id IS NOT NULL AND al.resource_id::text = e.id::text' : ''}
       WHERE 1=1
     `;
     const params: any[] = [];
@@ -131,7 +131,7 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
       ? `
         SELECT COUNT(DISTINCT al.id) as total
         FROM audit_logs al
-        LEFT JOIN entries e ON al.resource_type = 'entry' AND al.resource_id = e.id::text
+        LEFT JOIN entries e ON al.resource_type = 'entry' AND al.resource_id IS NOT NULL AND al.resource_id::text = e.id::text
         WHERE 1=1
       `
       : `

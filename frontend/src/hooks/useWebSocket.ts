@@ -144,7 +144,10 @@ export const useWebSocket = (onMessage?: (message: WebSocketMessage) => void) =>
       reconnectTimeoutRef.current = null;
     }
     if (wsRef.current) {
-      wsRef.current.close();
+      // Only close if not already closed
+      if (wsRef.current.readyState !== WebSocket.CLOSED && wsRef.current.readyState !== WebSocket.CLOSING) {
+        wsRef.current.close(1000, 'Client disconnect');
+      }
       wsRef.current = null;
     }
     setIsConnected(false);
@@ -158,15 +161,34 @@ export const useWebSocket = (onMessage?: (message: WebSocketMessage) => void) =>
     }
   }, []);
 
+  // Use a ref to track the previous auth state
+  const prevAuthRef = useRef({ isAuthenticated, userId: user?.id });
+
   useEffect(() => {
-    if (isAuthenticated) {
-      connect();
+    const prevAuth = prevAuthRef.current;
+    const currentAuth = { isAuthenticated, userId: user?.id };
+
+    // Only connect/disconnect if auth state actually changed
+    if (isAuthenticated && user) {
+      // Only connect if we weren't authenticated before or user changed
+      if (!prevAuth.isAuthenticated || prevAuth.userId !== currentAuth.userId) {
+        connect();
+      }
+    } else if (prevAuth.isAuthenticated) {
+      // Only disconnect if we were authenticated before
+      disconnect();
     }
 
+    prevAuthRef.current = currentAuth;
+
     return () => {
-      disconnect();
+      // Only disconnect on unmount if we're still authenticated
+      if (isAuthenticated && user) {
+        disconnect();
+      }
     };
-  }, [isAuthenticated, connect, disconnect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.id]); // Only depend on auth state, not on connect/disconnect callbacks
 
   return {
     isConnected,

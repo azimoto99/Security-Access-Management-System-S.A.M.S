@@ -352,17 +352,22 @@ export const createManualExit = async (
       }
     }
     
-    await pool.query(
-      `INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [
-        req.user.id,
-        'manual_exit',
-        'entry',
-        entry.id,
-        JSON.stringify(auditData),
-      ]
-    );
+    try {
+      await pool.query(
+        `INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          req.user.id,
+          'manual_exit',
+          'entry',
+          entry.id,
+          JSON.stringify(auditData),
+        ]
+      );
+    } catch (auditError: any) {
+      // Log audit error but don't fail the manual exit creation
+      logger.error('Error creating audit log for manual exit:', auditError);
+    }
 
     logger.info(`Manual exit created: ${entry_type} (${entry.id}) by ${req.user.username}`);
 
@@ -375,7 +380,15 @@ export const createManualExit = async (
         entry,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error('Error creating manual exit:', error);
+    logger.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      user: req.user?.username,
+      role: req.user?.role,
+      body: req.body,
+    });
     next(error);
   }
 };
