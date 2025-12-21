@@ -218,7 +218,40 @@ export const getEntryPhotos = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
     const { entryId } = req.params;
+
+    // Verify entry exists and check job site access for guards
+    const entryResult = await pool.query(
+      'SELECT id, job_site_id FROM entries WHERE id = $1',
+      [entryId]
+    );
+    
+    if (entryResult.rows.length === 0) {
+      const error: AppError = new Error('Entry not found');
+      error.statusCode = 404;
+      error.code = 'ENTRY_NOT_FOUND';
+      return next(error);
+    }
+
+    const entry = entryResult.rows[0];
+
+    // Check job site access if not admin
+    if (req.user.role !== 'admin') {
+      const jobSiteAccess = req.user.job_site_access || [];
+      if (!jobSiteAccess.includes(entry.job_site_id)) {
+        const error: AppError = new Error('Access denied to this job site');
+        error.statusCode = 403;
+        error.code = 'JOB_SITE_ACCESS_DENIED';
+        return next(error);
+      }
+    }
 
     const photos = await photoService.getPhotosByEntryId(entryId);
 
