@@ -28,10 +28,11 @@ export interface TruckEntryData extends BaseEntryData {
   license_plate: string;
   truck_number?: string;
   trailer_number?: string;
-  company: string;
-  driver_name: string;
+  company?: string;
+  driver_name?: string;
   cargo_description?: string;
-  delivery_pickup: 'delivery' | 'pickup';
+  delivery_pickup?: 'delivery' | 'pickup';
+  destination?: 'north' | 'south'; // For manual exits
   expected_duration?: number;
 }
 

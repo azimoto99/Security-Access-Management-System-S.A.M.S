@@ -178,6 +178,24 @@ For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 For production configuration, see [PRODUCTION.md](./PRODUCTION.md)
 
+## Training Documentation
+
+Comprehensive training guides are available for different user roles:
+
+- **[Guard Training Guide](./TRAINING_GUARD.md)** - Complete guide for security guards covering entry/exit logging, search, reports, and all guard-specific features
+- **[Administrator Training Guide](./TRAINING_ADMIN.md)** - Complete guide for administrators covering user management, job site configuration, security features, and all administrative functions
+
+These guides are designed for creating external training materials and include step-by-step instructions, best practices, troubleshooting, and quick reference guides.
+
+## Training Documentation
+
+Comprehensive training guides are available for different user roles:
+
+- **[Guard Training Guide](./TRAINING_GUARD.md)** - Complete guide for security guards covering entry/exit logging, search, reports, and all guard-specific features
+- **[Administrator Training Guide](./TRAINING_ADMIN.md)** - Complete guide for administrators covering user management, job site configuration, security features, and all administrative functions
+
+These guides are designed for creating external training materials and include step-by-step instructions, best practices, troubleshooting, and quick reference guides.
+
 ## Features
 
 - ✅ Real-time entry/exit logging for vehicles, visitors, and trucks

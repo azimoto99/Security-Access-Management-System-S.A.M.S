@@ -263,19 +263,24 @@ export const createManualExit = async (
       return next(error);
     }
 
-    // Validate required fields
-    if (!entry_data.license_plate) {
+    // Validate required fields - use type assertion since we've validated entry_type
+    const vehicleOrTruckData = entry_data as VehicleEntryData | TruckEntryData;
+    
+    if (!vehicleOrTruckData.license_plate) {
       const error: AppError = new Error('License plate is required');
       error.statusCode = 400;
       error.code = 'VALIDATION_ERROR';
       return next(error);
     }
 
-    if (entry_type === 'truck' && !entry_data.truck_number) {
-      const error: AppError = new Error('Truck number is required for trucks');
-      error.statusCode = 400;
-      error.code = 'VALIDATION_ERROR';
-      return next(error);
+    if (entry_type === 'truck') {
+      const truckData = entry_data as TruckEntryData;
+      if (!truckData.truck_number) {
+        const error: AppError = new Error('Truck number is required for trucks');
+        error.statusCode = 400;
+        error.code = 'VALIDATION_ERROR';
+        return next(error);
+      }
     }
 
     // Check job site exists and is active
@@ -328,7 +333,23 @@ export const createManualExit = async (
 
     const entry = result.rows[0];
 
-    // Log action
+    // Log action - use type assertions for audit log
+    const auditData: any = {
+      entry_type,
+      job_site_id,
+      license_plate: vehicleOrTruckData.license_plate,
+      created_by: req.user.username,
+    };
+    
+    if (entry_type === 'truck') {
+      const truckData = entry_data as TruckEntryData;
+      auditData.truck_number = truckData.truck_number;
+      // destination is not in TruckEntryData type, but may be in entry_data as additional field
+      if ('destination' in entry_data && entry_data.destination) {
+        auditData.destination = (entry_data as any).destination;
+      }
+    }
+    
     await pool.query(
       `INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details)
        VALUES ($1, $2, $3, $4, $5)`,
@@ -337,14 +358,7 @@ export const createManualExit = async (
         'manual_exit',
         'entry',
         entry.id,
-        JSON.stringify({
-          entry_type,
-          job_site_id,
-          license_plate: entry_data.license_plate,
-          truck_number: entry_data.truck_number,
-          destination: entry_data.destination,
-          created_by: req.user.username,
-        }),
+        JSON.stringify(auditData),
       ]
     );
 
