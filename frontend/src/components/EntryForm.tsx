@@ -188,7 +188,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
         // Silently fail - autofill is a convenience feature
         console.log('Autofill search failed:', error);
       }
-    }, 500); // 500ms debounce
+    }, 4000); // 4 second delay for autocomplete
 
     return () => {
       if (autofillTimeoutRef.current) {
