@@ -4,7 +4,6 @@ import {
   TextField,
   Button,
   Grid,
-  Typography,
   FormControl,
   InputLabel,
   Select,
@@ -12,7 +11,6 @@ import {
   Alert,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import type { EntryType } from '../types/entry';
 
 interface ManualExitFormProps {
   jobSiteId: string;
