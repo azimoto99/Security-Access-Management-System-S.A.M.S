@@ -47,7 +47,7 @@ export const ReportsPage: React.FC = () => {
   const { user } = useAuth();
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [filters, setFilters] = useState<ReportFilters>({
-    date_from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
+    date_from: new Date().toISOString().split('T')[0], // Today
     date_to: new Date().toISOString().split('T')[0], // Today
     time_from: '00:00',
     time_to: '23:59',
