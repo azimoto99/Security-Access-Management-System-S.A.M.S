@@ -83,7 +83,6 @@ export const generateAuditLogsPDF = (logs: AuditLog[], filters?: any): jsPDF => 
   });
 
   // Footer
-  const finalY = (doc as any).lastAutoTable.finalY || yPosition;
   doc.setFontSize(8);
   doc.text(
     `Total Logs: ${logs.length} | Page ${doc.getCurrentPageInfo().pageNumber}`,
