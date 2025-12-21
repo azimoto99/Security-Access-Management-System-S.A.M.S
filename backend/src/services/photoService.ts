@@ -15,13 +15,20 @@ const THUMBNAIL_QUALITY = 80;
  */
 export const generateThumbnail = async (filePath: string): Promise<string> => {
   try {
+    const uploadDir = path.resolve(config.upload.dir);
     const fileDir = path.dirname(filePath);
     const fileName = path.basename(filePath, path.extname(filePath));
     const ext = path.extname(filePath);
-    const thumbnailPath = path.join(fileDir, '..', '..', 'thumbnails', path.basename(fileDir), `${fileName}_thumb${ext}`);
+    
+    // Get relative path from uploads directory
+    const relativePath = path.relative(path.join(uploadDir, 'photos'), fileDir);
+    
+    // Create thumbnail path: uploads/thumbnails/YYYY/MM/DD/filename_thumb.jpg
+    // This matches the photo directory structure
+    const thumbnailDir = path.join(uploadDir, 'thumbnails', relativePath);
+    const thumbnailPath = path.join(thumbnailDir, `${fileName}_thumb.jpg`);
 
     // Ensure thumbnail directory exists
-    const thumbnailDir = path.dirname(thumbnailPath);
     if (!fs.existsSync(thumbnailDir)) {
       fs.mkdirSync(thumbnailDir, { recursive: true });
     }
@@ -34,6 +41,7 @@ export const generateThumbnail = async (filePath: string): Promise<string> => {
       .jpeg({ quality: THUMBNAIL_QUALITY })
       .toFile(thumbnailPath);
 
+    logger.debug(`Generated thumbnail: ${thumbnailPath}`);
     return thumbnailPath;
   } catch (error) {
     logger.error('Error generating thumbnail:', error);
