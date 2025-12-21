@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -23,7 +23,9 @@ import {
   Toolbar,
   Tabs,
   Tab,
+  InputAdornment,
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import { entryService, type Entry } from '../services/entryService';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
@@ -41,6 +43,7 @@ export const ExitPage: React.FC = () => {
   const [exitDialog, setExitDialog] = useState<Entry | null>(null);
   const [overrideReason, setOverrideReason] = useState('');
   const [useOverride, setUseOverride] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadJobSites();
@@ -134,6 +137,30 @@ export const ExitPage: React.FC = () => {
     }
   };
 
+  // Filter entries based on search term
+  const filteredEntries = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return entries;
+    }
+
+    const searchLower = searchTerm.toLowerCase().trim();
+    return entries.filter((entry) => {
+      const data = entry.entry_data;
+      
+      if (entry.entry_type === 'vehicle' || entry.entry_type === 'truck') {
+        // Search in license plate and driver name
+        const licensePlate = (data.license_plate || '').toLowerCase();
+        const driverName = (data.driver_name || '').toLowerCase();
+        return licensePlate.includes(searchLower) || driverName.includes(searchLower);
+      } else {
+        // Search in visitor name and company
+        const name = (data.name || '').toLowerCase();
+        const company = (data.company || '').toLowerCase();
+        return name.includes(searchLower) || company.includes(searchLower);
+      }
+    });
+  }, [entries, searchTerm]);
+
   if (loading && entries.length === 0) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -181,6 +208,23 @@ export const ExitPage: React.FC = () => {
             </Tabs>
           </Box>
 
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              fullWidth
+              placeholder="Search by license plate, driver name, visitor name, or company..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ maxWidth: 600 }}
+            />
+          </Box>
+
           <TableContainer>
             <Table>
               <TableHead>
@@ -193,14 +237,16 @@ export const ExitPage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {entries.length === 0 ? (
+                {filteredEntries.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
-                      No active entries found
+                      {entries.length === 0
+                        ? 'No active entries found'
+                        : 'No entries match your search'}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  entries.map((entry) => (
+                  filteredEntries.map((entry) => (
                     <TableRow key={entry.id}>
                       <TableCell>
                         <Chip label={entry.entry_type} size="small" />
