@@ -4,9 +4,8 @@ import { authenticateToken, authorizeRole } from '../middleware/auth';
 
 const router = Router();
 
-// All routes require authentication and admin role
+// All routes require authentication (guards and admins)
 router.use(authenticateToken);
-router.use(authorizeRole('admin'));
 
 // Routes
 router.get('/', auditLogController.getAuditLogs);

@@ -13,6 +13,13 @@ export const getAuditLogs = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
     const {
       user_id,
       action,
@@ -24,7 +31,7 @@ export const getAuditLogs = async (
       limit = '50',
     } = req.query;
 
-    const filters = {
+    const filters: any = {
       user_id: user_id as string,
       action: action as string,
       resource_type: resource_type as string,
@@ -34,6 +41,12 @@ export const getAuditLogs = async (
       page: parseInt(page as string) || 1,
       limit: Math.min(parseInt(limit as string) || 50, 100),
     };
+
+    // For guards, filter by their accessible job sites
+    // Admins see all logs
+    if (req.user.role !== 'admin' && req.user.job_site_access) {
+      filters.job_site_ids = req.user.job_site_access;
+    }
 
     const result = await auditLogService.getAuditLogs(filters);
 
@@ -55,6 +68,13 @@ export const exportAuditLogs = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
     const {
       user_id,
       action,
@@ -64,7 +84,7 @@ export const exportAuditLogs = async (
       date_to,
     } = req.query;
 
-    const filters = {
+    const filters: any = {
       user_id: user_id as string,
       action: action as string,
       resource_type: resource_type as string,
@@ -74,6 +94,12 @@ export const exportAuditLogs = async (
       page: 1,
       limit: 10000, // Large limit for export
     };
+
+    // For guards, filter by their accessible job sites
+    // Admins see all logs
+    if (req.user.role !== 'admin' && req.user.job_site_access) {
+      filters.job_site_ids = req.user.job_site_access;
+    }
 
     const result = await auditLogService.getAuditLogs(filters);
     const csv = exportLogsToCSV(result.logs);

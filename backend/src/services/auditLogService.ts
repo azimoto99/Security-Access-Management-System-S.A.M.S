@@ -21,6 +21,7 @@ export interface AuditLogFilters {
   date_to?: string;
   page?: number;
   limit?: number;
+  job_site_ids?: string[]; // For filtering by accessible job sites (guards)
 }
 
 /**
@@ -67,16 +68,32 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
       limit = 50,
     } = filters;
 
+    // Build base query - need to join with entries if filtering by job sites
+    const needsJobSiteFilter = filters.job_site_ids && filters.job_site_ids.length > 0;
+    
     let query = `
-      SELECT 
+      SELECT ${needsJobSiteFilter ? 'DISTINCT' : ''}
         al.*,
         u.username
       FROM audit_logs al
       LEFT JOIN users u ON al.user_id = u.id
+      ${needsJobSiteFilter ? 'LEFT JOIN entries e ON al.resource_type = \'entry\' AND al.resource_id = e.id::text' : ''}
       WHERE 1=1
     `;
     const params: any[] = [];
     let paramCount = 1;
+
+    // Filter by job site access for guards
+    // For entry-related logs, filter by job_site_id
+    // For other resource types, guards can see all logs (or we can restrict further if needed)
+    if (needsJobSiteFilter) {
+      query += ` AND (
+        al.resource_type != 'entry' 
+        OR e.job_site_id = ANY($${paramCount})
+      )`;
+      params.push(filters.job_site_ids);
+      paramCount++;
+    }
 
     if (user_id) {
       query += ` AND al.user_id = $${paramCount++}`;
