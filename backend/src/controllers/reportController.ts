@@ -31,6 +31,7 @@ export const generateReport = async (
     }
 
     // Build datetime strings if time is provided
+    // Convert to Central Time (Texas timezone: America/Chicago)
     let datetime_from = date_from;
     let datetime_to = date_to;
     
@@ -45,6 +46,9 @@ export const generateReport = async (
     } else {
       datetime_to = `${date_to} 23:59:59`;
     }
+
+    // datetime_from and datetime_to will be interpreted as Central Time in the SQL query
+    // The reportService will append ' America/Chicago' and convert to UTC for comparison
 
     // Check job site access if not admin
     if (req.user.role !== 'admin') {
@@ -111,6 +115,7 @@ export const exportReport = async (
     }
 
     // Build datetime strings if time is provided
+    // Convert to Central Time (Texas timezone: America/Chicago)
     let datetime_from = date_from;
     let datetime_to = date_to;
     
@@ -125,6 +130,9 @@ export const exportReport = async (
     } else {
       datetime_to = `${date_to} 23:59:59`;
     }
+
+    // datetime_from and datetime_to will be interpreted as Central Time in the SQL query
+    // The reportService will append ' America/Chicago' and convert to UTC for comparison
 
     // Check job site access if not admin
     if (req.user.role !== 'admin') {
@@ -185,6 +193,7 @@ export const exportEntries = async (
     } = req.query;
 
     // Build datetime strings if time is provided
+    // Convert to Central Time (Texas timezone: America/Chicago)
     let datetime_from = date_from as string;
     let datetime_to = date_to as string;
     
@@ -199,6 +208,9 @@ export const exportEntries = async (
     } else if (date_to) {
       datetime_to = `${date_to} 23:59:59`;
     }
+
+    // datetime_from and datetime_to are already in the correct format
+    // They will be interpreted as Central Time in the query
 
     // Build query similar to searchEntries
     let query = `
@@ -247,12 +259,12 @@ export const exportEntries = async (
     }
 
     if (datetime_from) {
-      query += ` AND e.entry_time >= $${paramCount++}`;
+      query += ` AND e.entry_time >= (($${paramCount++}::text || ' America/Chicago')::timestamptz AT TIME ZONE 'UTC')`;
       params.push(datetime_from);
     }
 
     if (datetime_to) {
-      query += ` AND e.entry_time <= $${paramCount++}`;
+      query += ` AND e.entry_time <= (($${paramCount++}::text || ' America/Chicago')::timestamptz AT TIME ZONE 'UTC')`;
       params.push(datetime_to);
     }
 

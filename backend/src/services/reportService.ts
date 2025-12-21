@@ -44,10 +44,13 @@ export const generateReport = async (filters: ReportFilters): Promise<ReportData
   try {
     const { job_site_id, date_from, date_to, entry_type } = filters;
 
+    // Convert date strings to timestamps in Central Time for comparison
+    // PostgreSQL stores timestamps in UTC, so we convert the filter times (assumed Central Time) to UTC
     let baseQuery = `
       FROM entries e
       LEFT JOIN job_sites js ON e.job_site_id = js.id
-      WHERE e.entry_time >= $1 AND e.entry_time <= $2
+      WHERE e.entry_time >= (($1::text || ' America/Chicago')::timestamptz AT TIME ZONE 'UTC')
+        AND e.entry_time <= (($2::text || ' America/Chicago')::timestamptz AT TIME ZONE 'UTC')
     `;
     const params: any[] = [date_from, date_to];
     let paramCount = 3;
@@ -77,13 +80,13 @@ export const generateReport = async (filters: ReportFilters): Promise<ReportData
     const summaryResult = await pool.query(summaryQuery, params);
     const summary = summaryResult.rows[0];
 
-    // Get peak hours
+    // Get peak hours (in Central Time)
     const peakHoursQuery = `
       SELECT 
-        EXTRACT(HOUR FROM entry_time) as hour,
+        EXTRACT(HOUR FROM (entry_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Chicago')) as hour,
         COUNT(*) as count
       ${baseQuery}
-      GROUP BY EXTRACT(HOUR FROM entry_time)
+      GROUP BY EXTRACT(HOUR FROM (entry_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Chicago'))
       ORDER BY count DESC
       LIMIT 10
     `;
@@ -130,14 +133,14 @@ export const generateReport = async (filters: ReportFilters): Promise<ReportData
       }));
     }
 
-    // Get daily breakdown
+    // Get daily breakdown (in Central Time)
     const dailyQuery = `
       SELECT 
-        DATE(entry_time) as date,
+        DATE(entry_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Chicago') as date,
         COUNT(*) as entries,
         COUNT(CASE WHEN status != 'active' THEN 1 END) as exits
       ${baseQuery}
-      GROUP BY DATE(entry_time)
+      GROUP BY DATE(entry_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Chicago')
       ORDER BY date ASC
     `;
 
