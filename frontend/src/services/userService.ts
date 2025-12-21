@@ -14,14 +14,14 @@ export interface User {
 export interface CreateUserData {
   username: string;
   password: string;
-  role: 'guard' | 'admin' | 'employee';
+  role: 'guard' | 'admin' | 'employee' | 'client';
   job_site_access?: string[];
   employee_id?: string;
 }
 
 export interface UpdateUserData {
   username?: string;
-  role?: 'guard' | 'admin' | 'employee';
+  role?: 'guard' | 'admin' | 'employee' | 'client';
   job_site_access?: string[];
   employee_id?: string;
   onboarding_status?: 'pending' | 'in_progress' | 'completed' | null;
