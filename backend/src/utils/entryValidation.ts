@@ -11,7 +11,16 @@ import {
 import { AppError } from '../middleware/errorHandler';
 
 // Re-export types for convenience
-export type { EntryType, EntryStatus, CreateEntryRequest, ExitEntryRequest, SearchEntriesRequest };
+export type {
+  EntryType,
+  EntryStatus,
+  CreateEntryRequest,
+  ExitEntryRequest,
+  SearchEntriesRequest,
+  VehicleEntryData,
+  VisitorEntryData,
+  TruckEntryData,
+};
 
 /**
  * Validate vehicle entry data

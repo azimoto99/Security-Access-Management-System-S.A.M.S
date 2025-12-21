@@ -10,6 +10,8 @@ import {
   ExitEntryRequest,
   SearchEntriesRequest,
   validateEntryData,
+  VehicleEntryData,
+  TruckEntryData,
 } from '../utils/entryValidation';
 import { authorizeJobSite } from '../middleware/auth';
 import { webSocketService } from '../services/websocketService';
