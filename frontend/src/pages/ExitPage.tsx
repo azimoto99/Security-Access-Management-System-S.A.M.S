@@ -145,6 +145,7 @@ export const ExitPage: React.FC = () => {
   };
 
   const formatDuration = (entry: Entry): string => {
+    if (!entry.entry_time) return 'N/A';
     const entryTime = new Date(entry.entry_time);
     const now = new Date();
     const diffMs = now.getTime() - entryTime.getTime();
@@ -320,7 +321,7 @@ export const ExitPage: React.FC = () => {
                       </TableCell>
                       <TableCell>{getEntryDisplayName(entry)}</TableCell>
                       <TableCell>
-                        {new Date(entry.entry_time).toLocaleString()}
+                        {entry.entry_time ? new Date(entry.entry_time).toLocaleString() : 'N/A'}
                       </TableCell>
                       <TableCell>{formatDuration(entry)}</TableCell>
                       <TableCell align="right">
@@ -387,7 +388,7 @@ export const ExitPage: React.FC = () => {
                 <strong>Details:</strong> {getEntryDisplayName(exitDialog)}
               </Typography>
               <Typography variant="body1" gutterBottom>
-                <strong>Entry Time:</strong> {new Date(exitDialog.entry_time).toLocaleString()}
+                <strong>Entry Time:</strong> {exitDialog.entry_time ? new Date(exitDialog.entry_time).toLocaleString() : 'N/A'}
               </Typography>
               <Typography variant="body1" gutterBottom>
                 <strong>Duration:</strong> {formatDuration(exitDialog)}

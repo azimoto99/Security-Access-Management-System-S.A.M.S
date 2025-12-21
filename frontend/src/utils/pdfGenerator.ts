@@ -306,7 +306,7 @@ export const generateEntriesPDF = (entries: any[], filters?: any): jsPDF => {
 
   // Calculate duration helper
   const calculateDuration = (entry: any): string => {
-    if (!entry.exit_time) return 'N/A';
+    if (!entry.exit_time || !entry.entry_time) return 'N/A';
     try {
       const entryTime = new Date(entry.entry_time);
       const exitTime = new Date(entry.exit_time);

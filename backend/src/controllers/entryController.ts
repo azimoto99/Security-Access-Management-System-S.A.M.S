@@ -313,10 +313,10 @@ export const createManualExit = async (
       }
     }
 
-    // Set entry_time to current time and exit_time to current time (immediate exit)
+    // Set entry_time to NULL (N/A) and exit_time to current time for manual exits
     const now = new Date();
 
-    // Insert entry with exit_time set immediately
+    // Insert entry with entry_time as NULL and exit_time set immediately
     const result = await pool.query(
       `INSERT INTO entries (job_site_id, entry_type, entry_data, guard_id, photos, status, entry_time, exit_time)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -328,7 +328,7 @@ export const createManualExit = async (
         req.user.id,
         JSON.stringify([]),
         'exited',
-        now,
+        null, // entry_time is NULL for manual exits
         now,
       ]
     );

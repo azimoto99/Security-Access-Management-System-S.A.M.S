@@ -143,7 +143,8 @@ export const SearchPage: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string): string => {
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString();
   };
 
