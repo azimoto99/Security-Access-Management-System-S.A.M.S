@@ -43,11 +43,11 @@ const manualExitSchema = Joi.object({
 
 // Routes
 // Create entry - guards and admins only (clients can only view)
-router.post('/', authorizeRole(['guard', 'admin']), validate(createEntrySchema), entryController.createEntry);
+router.post('/', authorizeRole('guard', 'admin'), validate(createEntrySchema), entryController.createEntry);
 // Manual exit - guards and admins only
-router.post('/manual-exit', authorizeRole(['guard', 'admin']), validate(manualExitSchema), entryController.createManualExit);
+router.post('/manual-exit', authorizeRole('guard', 'admin'), validate(manualExitSchema), entryController.createManualExit);
 // Process exit - guards and admins only
-router.post('/exit', authorizeRole(['guard', 'admin']), validate(exitEntrySchema), entryController.processExit);
+router.post('/exit', authorizeRole('guard', 'admin'), validate(exitEntrySchema), entryController.processExit);
 // View routes - all authenticated users (guards, admins, clients)
 router.get('/active/:jobSiteId', entryController.getActiveEntries);
 router.get('/search', entryController.searchEntries);

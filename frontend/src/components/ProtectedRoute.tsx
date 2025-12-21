@@ -5,7 +5,7 @@ import { Box, CircularProgress } from '@mui/material';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles?: ('guard' | 'admin' | 'employee')[];
+  allowedRoles?: ('guard' | 'admin' | 'employee' | 'client')[];
   requireAuth?: boolean;
 }
 

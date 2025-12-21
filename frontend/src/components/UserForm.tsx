@@ -27,7 +27,7 @@ export const UserForm: React.FC<UserFormProps> = ({ user, jobSites, onSubmit, on
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    role: 'guard' as 'guard' | 'admin' | 'employee',
+    role: 'guard' as 'guard' | 'admin' | 'employee' | 'client',
     job_site_access: [] as string[],
     employee_id: '',
   });
@@ -153,6 +153,7 @@ export const UserForm: React.FC<UserFormProps> = ({ user, jobSites, onSubmit, on
               <MenuItem value="guard">Guard</MenuItem>
               <MenuItem value="admin">Admin</MenuItem>
               <MenuItem value="employee">Employee</MenuItem>
+              <MenuItem value="client">Client</MenuItem>
             </Select>
             {errors.role && (
               <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
