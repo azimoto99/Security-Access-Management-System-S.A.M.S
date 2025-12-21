@@ -6,15 +6,16 @@ import Joi from 'joi';
 
 const router = Router();
 
-// All routes require authentication and admin role
+// All routes require authentication (guards and admins)
 router.use(authenticateToken);
-router.use(authorizeRole('admin'));
 
 // Validation schemas
 const generateReportSchema = Joi.object({
   job_site_id: Joi.string().uuid().optional(),
   date_from: Joi.string().required(),
   date_to: Joi.string().required(),
+  time_from: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).optional(),
+  time_to: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).optional(),
   entry_type: Joi.string().valid('vehicle', 'visitor', 'truck').optional(),
 });
 
@@ -24,6 +25,7 @@ router.post('/export', validate(generateReportSchema), reportController.exportRe
 router.get('/export-entries', reportController.exportEntries);
 
 export default router;
+
 
 
 

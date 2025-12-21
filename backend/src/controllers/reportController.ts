@@ -14,7 +14,14 @@ export const generateReport = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { job_site_id, date_from, date_to, entry_type } = req.body;
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
+    const { job_site_id, date_from, date_to, time_from, time_to, entry_type } = req.body;
 
     if (!date_from || !date_to) {
       const error: AppError = new Error('date_from and date_to are required');
@@ -23,9 +30,26 @@ export const generateReport = async (
       return next(error);
     }
 
+    // Build datetime strings if time is provided
+    let datetime_from = date_from;
+    let datetime_to = date_to;
+    
+    if (time_from) {
+      datetime_from = `${date_from} ${time_from}`;
+    } else {
+      datetime_from = `${date_from} 00:00:00`;
+    }
+    
+    if (time_to) {
+      datetime_to = `${date_to} ${time_to}`;
+    } else {
+      datetime_to = `${date_to} 23:59:59`;
+    }
+
     // Check job site access if not admin
-    if (req.user && req.user.role !== 'admin' && req.user.job_site_access) {
-      if (job_site_id && !req.user.job_site_access.includes(job_site_id)) {
+    if (req.user.role !== 'admin') {
+      const jobSiteAccess = req.user.job_site_access || [];
+      if (job_site_id && !jobSiteAccess.includes(job_site_id)) {
         const error: AppError = new Error('Access denied to this job site');
         error.statusCode = 403;
         error.code = 'JOB_SITE_ACCESS_DENIED';
@@ -35,8 +59,8 @@ export const generateReport = async (
 
     const filters = {
       job_site_id,
-      date_from,
-      date_to,
+      date_from: datetime_from,
+      date_to: datetime_to,
       entry_type,
     };
 
@@ -46,7 +70,14 @@ export const generateReport = async (
       success: true,
       data: {
         report,
-        filters,
+        filters: {
+          job_site_id,
+          date_from,
+          date_to,
+          time_from,
+          time_to,
+          entry_type,
+        },
       },
     });
   } catch (error) {
@@ -63,7 +94,14 @@ export const exportReport = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { job_site_id, date_from, date_to, entry_type } = req.body;
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
+    const { job_site_id, date_from, date_to, time_from, time_to, entry_type } = req.body;
 
     if (!date_from || !date_to) {
       const error: AppError = new Error('date_from and date_to are required');
@@ -72,15 +110,42 @@ export const exportReport = async (
       return next(error);
     }
 
+    // Build datetime strings if time is provided
+    let datetime_from = date_from;
+    let datetime_to = date_to;
+    
+    if (time_from) {
+      datetime_from = `${date_from} ${time_from}`;
+    } else {
+      datetime_from = `${date_from} 00:00:00`;
+    }
+    
+    if (time_to) {
+      datetime_to = `${date_to} ${time_to}`;
+    } else {
+      datetime_to = `${date_to} 23:59:59`;
+    }
+
+    // Check job site access if not admin
+    if (req.user.role !== 'admin') {
+      const jobSiteAccess = req.user.job_site_access || [];
+      if (job_site_id && !jobSiteAccess.includes(job_site_id)) {
+        const error: AppError = new Error('Access denied to this job site');
+        error.statusCode = 403;
+        error.code = 'JOB_SITE_ACCESS_DENIED';
+        return next(error);
+      }
+    }
+
     const filters = {
       job_site_id,
-      date_from,
-      date_to,
+      date_from: datetime_from,
+      date_to: datetime_to,
       entry_type,
     };
 
     const report = await reportService.generateReport(filters);
-    const csv = exportReportToCSV(report, filters);
+    const csv = exportReportToCSV(report, { ...filters, date_from, date_to, time_from, time_to });
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=report-${Date.now()}.csv`);
@@ -99,6 +164,13 @@ export const exportEntries = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
     const {
       job_site_id,
       entry_type,
@@ -108,22 +180,25 @@ export const exportEntries = async (
       company,
       date_from,
       date_to,
+      time_from,
+      time_to,
     } = req.query;
 
-    // Use the search entries functionality
-    const searchParams: any = {
-      page: '1',
-      limit: '10000', // Large limit for export
-    };
-
-    if (job_site_id) searchParams.job_site_id = job_site_id;
-    if (entry_type) searchParams.entry_type = entry_type;
-    if (status) searchParams.status = status;
-    if (license_plate) searchParams.license_plate = license_plate;
-    if (name) searchParams.name = name;
-    if (company) searchParams.company = company;
-    if (date_from) searchParams.date_from = date_from;
-    if (date_to) searchParams.date_to = date_to;
+    // Build datetime strings if time is provided
+    let datetime_from = date_from as string;
+    let datetime_to = date_to as string;
+    
+    if (date_from && time_from) {
+      datetime_from = `${date_from} ${time_from}`;
+    } else if (date_from) {
+      datetime_from = `${date_from} 00:00:00`;
+    }
+    
+    if (date_to && time_to) {
+      datetime_to = `${date_to} ${time_to}`;
+    } else if (date_to) {
+      datetime_to = `${date_to} 23:59:59`;
+    }
 
     // Build query similar to searchEntries
     let query = `
@@ -139,7 +214,24 @@ export const exportEntries = async (
     const params: any[] = [];
     let paramCount = 1;
 
-    if (job_site_id) {
+    // Check job site access if not admin
+    if (req.user.role !== 'admin') {
+      const jobSiteAccess = req.user.job_site_access || [];
+      if (job_site_id) {
+        if (!jobSiteAccess.includes(job_site_id as string)) {
+          const error: AppError = new Error('Access denied to this job site');
+          error.statusCode = 403;
+          error.code = 'JOB_SITE_ACCESS_DENIED';
+          return next(error);
+        }
+        query += ` AND e.job_site_id = $${paramCount++}`;
+        params.push(job_site_id);
+      } else {
+        // Filter by accessible job sites (non-admins only)
+        query += ` AND e.job_site_id = ANY($${paramCount++})`;
+        params.push(jobSiteAccess);
+      }
+    } else if (job_site_id) {
       query += ` AND e.job_site_id = $${paramCount++}`;
       params.push(job_site_id);
     }
@@ -154,14 +246,14 @@ export const exportEntries = async (
       params.push(status);
     }
 
-    if (date_from) {
+    if (datetime_from) {
       query += ` AND e.entry_time >= $${paramCount++}`;
-      params.push(date_from);
+      params.push(datetime_from);
     }
 
-    if (date_to) {
+    if (datetime_to) {
       query += ` AND e.entry_time <= $${paramCount++}`;
-      params.push(date_to);
+      params.push(datetime_to);
     }
 
     if (license_plate) {

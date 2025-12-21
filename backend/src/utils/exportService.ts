@@ -35,11 +35,29 @@ export const exportEntriesToCSV = (entries: any[]): string => {
     'Status',
     'Entry Time',
     'Exit Time',
+    'Duration (minutes)',
     'Guard',
-    'License Plate/Name',
+    'License Plate',
+    'Driver Name',
+    'Visitor Name',
     'Company',
     'Purpose',
+    'Vehicle Make',
+    'Vehicle Model',
+    'Vehicle Color',
+    'Phone Number',
+    'Email',
+    'Notes',
   ];
+
+  const calculateDuration = (entry: any): string => {
+    if (!entry.exit_time) return 'N/A';
+    const entryTime = new Date(entry.entry_time);
+    const exitTime = new Date(entry.exit_time);
+    const diffMs = exitTime.getTime() - entryTime.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    return diffMins.toString();
+  };
 
   const rows = entries.map((entry) => {
     const data = entry.entry_data || {};
@@ -48,12 +66,21 @@ export const exportEntriesToCSV = (entries: any[]): string => {
       (entry as any).job_site_name || 'N/A',
       entry.entry_type,
       entry.status,
-      new Date(entry.entry_time).toISOString(),
-      entry.exit_time ? new Date(entry.exit_time).toISOString() : 'N/A',
+      new Date(entry.entry_time).toLocaleString('en-US', { timeZone: 'UTC' }),
+      entry.exit_time ? new Date(entry.exit_time).toLocaleString('en-US', { timeZone: 'UTC' }) : 'N/A',
+      calculateDuration(entry),
       (entry as any).guard_username || 'N/A',
-      data.license_plate || data.name || data.driver_name || 'N/A',
+      data.license_plate || 'N/A',
+      data.driver_name || 'N/A',
+      data.name || 'N/A',
       data.company || 'N/A',
       data.purpose || 'N/A',
+      data.vehicle_make || 'N/A',
+      data.vehicle_model || 'N/A',
+      data.vehicle_color || 'N/A',
+      data.phone || data.phone_number || 'N/A',
+      data.email || 'N/A',
+      data.notes || data.additional_notes || 'N/A',
     ];
   });
 
@@ -73,7 +100,11 @@ export const exportReportToCSV = (report: ReportData, filters: any): string => {
 
   lines.push('Security Access Management System - Report');
   lines.push(`Generated: ${new Date().toISOString()}`);
-  lines.push(`Date Range: ${filters.date_from} to ${filters.date_to}`);
+  let dateRange = `Date Range: ${filters.date_from} to ${filters.date_to}`;
+  if (filters.time_from || filters.time_to) {
+    dateRange += ` (${filters.time_from || '00:00'} to ${filters.time_to || '23:59'})`;
+  }
+  lines.push(dateRange);
   lines.push('');
 
   // Summary
@@ -106,6 +137,7 @@ export const exportReportToCSV = (report: ReportData, filters: any): string => {
 
   return lines.join('\n');
 };
+
 
 
 

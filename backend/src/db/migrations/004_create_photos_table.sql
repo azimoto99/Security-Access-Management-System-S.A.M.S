@@ -21,3 +21,4 @@ COMMENT ON TABLE photos IS 'Photo files associated with entry/exit records';
 
 
 
+

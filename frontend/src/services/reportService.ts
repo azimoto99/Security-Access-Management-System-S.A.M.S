@@ -5,6 +5,8 @@ export interface ReportFilters {
   job_site_id?: string;
   date_from: string;
   date_to: string;
+  time_from?: string;
+  time_to?: string;
   entry_type?: 'vehicle' | 'visitor' | 'truck';
 }
 

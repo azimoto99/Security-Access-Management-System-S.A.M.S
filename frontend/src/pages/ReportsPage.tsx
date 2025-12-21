@@ -27,6 +27,7 @@ import {
 import { Download, Assessment } from '@mui/icons-material';
 import { reportService, type ReportData, type ReportFilters } from '../services/reportService';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
+import { useAuth } from '../contexts/AuthContext';
 import {
   BarChart,
   Bar,
@@ -41,15 +42,19 @@ import {
 } from 'recharts';
 
 export const ReportsPage: React.FC = () => {
+  const { user } = useAuth();
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [filters, setFilters] = useState<ReportFilters>({
     date_from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
     date_to: new Date().toISOString().split('T')[0], // Today
+    time_from: '00:00',
+    time_to: '23:59',
   });
   const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [exportingDetailed, setExportingDetailed] = useState(false);
 
   useEffect(() => {
     loadJobSites();
@@ -96,6 +101,47 @@ export const ReportsPage: React.FC = () => {
     }
   };
 
+  const handleExportDetailed = async () => {
+    try {
+      setExportingDetailed(true);
+      setError(null);
+      const exportFilters: Record<string, any> = {
+        date_from: filters.date_from,
+        date_to: filters.date_to,
+      };
+      
+      if (filters.time_from) {
+        exportFilters.time_from = filters.time_from;
+      }
+      if (filters.time_to) {
+        exportFilters.time_to = filters.time_to;
+      }
+      if (filters.job_site_id) {
+        exportFilters.job_site_id = filters.job_site_id;
+      }
+      if (filters.entry_type) {
+        exportFilters.entry_type = filters.entry_type;
+      }
+
+      const blob = await reportService.exportEntries(exportFilters);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = filters.date_from === filters.date_to 
+        ? filters.date_from 
+        : `${filters.date_from}_to_${filters.date_to}`;
+      a.download = `detailed-logs-${dateStr}-${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      setError(err.message || 'Failed to export detailed logs');
+    } finally {
+      setExportingDetailed(false);
+    }
+  };
+
   const formatHour = (hour: number): string => {
     return `${hour}:00`;
   };
@@ -133,7 +179,10 @@ export const ReportsPage: React.FC = () => {
                   label="Job Site"
                 >
                   <MenuItem value="">All Job Sites</MenuItem>
-                  {jobSites.map((site) => (
+                  {(user?.role === 'admin'
+                    ? jobSites
+                    : jobSites.filter((site) => user?.job_site_access?.includes(site.id))
+                  ).map((site) => (
                     <MenuItem key={site.id} value={site.id}>
                       {site.name}
                     </MenuItem>
@@ -178,8 +227,30 @@ export const ReportsPage: React.FC = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                label="Time From"
+                type="time"
+                value={filters.time_from || '00:00'}
+                onChange={(e) => setFilters({ ...filters, time_from: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ step: 60 }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                label="Time To"
+                type="time"
+                value={filters.time_to || '23:59'}
+                onChange={(e) => setFilters({ ...filters, time_to: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ step: 60 }}
+              />
+            </Grid>
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                 <Button
                   variant="contained"
                   startIcon={<Assessment />}
@@ -189,14 +260,25 @@ export const ReportsPage: React.FC = () => {
                   {loading ? 'Generating...' : 'Generate Report'}
                 </Button>
                 {report && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<Download />}
-                    onClick={handleExport}
-                    disabled={exporting}
-                  >
-                    {exporting ? 'Exporting...' : 'Export CSV'}
-                  </Button>
+                  <>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Download />}
+                      onClick={handleExport}
+                      disabled={exporting}
+                    >
+                      {exporting ? 'Exporting...' : 'Export Summary CSV'}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      startIcon={<Download />}
+                      onClick={handleExportDetailed}
+                      disabled={exportingDetailed}
+                    >
+                      {exportingDetailed ? 'Exporting...' : 'Download Detailed Logs'}
+                    </Button>
+                  </>
                 )}
               </Box>
             </Grid>
