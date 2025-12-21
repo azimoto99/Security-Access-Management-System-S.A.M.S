@@ -92,16 +92,15 @@ export const DashboardPage: React.FC = () => {
           { title: 'Log Entry', desc: 'Record entry', path: '/entry', icon: 'entry' },
           { title: 'Process Exit', desc: 'Process exits', path: '/exit', icon: 'exit' },
           { title: 'Search Entries', desc: 'Search history', path: '/search', icon: 'search' },
+          { title: 'Audit Logs', desc: 'View logs', path: '/audit-logs', icon: 'audit-logs' },
+          { title: 'Reports', desc: 'Analytics', path: '/reports', icon: 'reports' },
         ]
       : []),
     ...(user?.role === 'admin'
       ? [
           { title: 'Job Sites', desc: 'Manage sites', path: '/job-sites', icon: 'job-sites' },
           { title: 'Users', desc: 'Manage users', path: '/users', icon: 'users' },
-          { title: 'Audit Logs', desc: 'View logs', path: '/audit-logs', icon: 'audit-logs' },
-          { title: 'Reports', desc: 'Analytics', path: '/reports', icon: 'reports' },
           { title: 'Watchlist', desc: 'Manage list', path: '/watchlist', icon: 'watchlist' },
-          { title: 'Alerts', desc: 'Security alerts', path: '/alerts', icon: 'alerts' },
           { title: 'HR Docs', desc: 'DocuSign', path: '/hr/manage', icon: 'hr/manage' },
         ]
       : []),
