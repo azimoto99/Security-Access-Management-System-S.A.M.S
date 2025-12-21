@@ -583,13 +583,24 @@ export const searchEntries = async (
     }
 
     if (date_from) {
-      query += ` AND e.entry_time >= $${paramCount++}`;
+      // Include manual exits (entry_time IS NULL) by checking exit_time instead
+      // For normal entries, use entry_time; for manual exits, use exit_time
+      query += ` AND (
+        (e.entry_time IS NOT NULL AND e.entry_time >= $${paramCount}) OR
+        (e.entry_time IS NULL AND e.exit_time >= $${paramCount})
+      )`;
       params.push(date_from);
+      paramCount++;
     }
 
     if (date_to) {
-      query += ` AND e.entry_time <= $${paramCount++}`;
+      // Include manual exits (entry_time IS NULL) by checking exit_time instead
+      query += ` AND (
+        (e.entry_time IS NOT NULL AND e.entry_time <= $${paramCount}) OR
+        (e.entry_time IS NULL AND e.exit_time <= $${paramCount})
+      )`;
       params.push(date_to);
+      paramCount++;
     }
 
     // JSONB search for license_plate, name, company, or general search_term
@@ -637,14 +648,18 @@ export const searchEntries = async (
     }
 
     // Get total count for pagination
-    const countQuery = query.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM');
+    // Build count query by replacing SELECT...FROM with COUNT
+    const countQuery = query
+      .replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM')
+      .replace(/ORDER BY[\s\S]*$/, ''); // Remove ORDER BY and LIMIT/OFFSET for count
     const countResult = await pool.query(countQuery, params);
     const total = parseInt(countResult.rows[0].total);
 
     // Add ordering and pagination
+    // For manual exits (entry_time IS NULL), use exit_time for ordering
     query += ` ORDER BY 
       CASE WHEN e.status = 'active' THEN 0 ELSE 1 END,
-      e.entry_time DESC
+      COALESCE(e.entry_time, e.exit_time) DESC
       LIMIT $${paramCount++} OFFSET $${paramCount++}`;
     params.push(limitNum, offset);
 
