@@ -835,8 +835,7 @@ export const updateEntry = async (
       return next(error);
     }
 
-    // Add updated timestamp
-    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    // updated_at is automatically updated by trigger
 
     params.push(id);
     const query = `UPDATE entries SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
