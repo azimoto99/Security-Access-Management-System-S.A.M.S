@@ -95,8 +95,8 @@ export const createUser = async (
     }
 
     // Validate role
-    if (!['guard', 'admin', 'employee'].includes(role)) {
-      const error: AppError = new Error('Invalid role. Must be guard, admin, or employee');
+    if (!['guard', 'admin', 'employee', 'client'].includes(role)) {
+      const error: AppError = new Error('Invalid role. Must be guard, admin, employee, or client');
       error.statusCode = 400;
       error.code = 'VALIDATION_ERROR';
       return next(error);
@@ -227,7 +227,7 @@ export const updateUser = async (
     }
 
     if (role !== undefined && role !== existing.role) {
-      if (!['guard', 'admin', 'employee'].includes(role)) {
+      if (!['guard', 'admin', 'employee', 'client'].includes(role)) {
         const error: AppError = new Error('Invalid role');
         error.statusCode = 400;
         error.code = 'VALIDATION_ERROR';

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as entryController from '../controllers/entryController';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, authorizeRole } from '../middleware/auth';
 import { validate } from '../middleware/validator';
 import Joi from 'joi';
 
@@ -42,10 +42,14 @@ const manualExitSchema = Joi.object({
 });
 
 // Routes
-router.post('/', validate(createEntrySchema), entryController.createEntry);
-router.post('/manual-exit', validate(manualExitSchema), entryController.createManualExit);
+// Create entry - guards and admins only (clients can only view)
+router.post('/', authorizeRole(['guard', 'admin']), validate(createEntrySchema), entryController.createEntry);
+// Manual exit - guards and admins only
+router.post('/manual-exit', authorizeRole(['guard', 'admin']), validate(manualExitSchema), entryController.createManualExit);
+// Process exit - guards and admins only
+router.post('/exit', authorizeRole(['guard', 'admin']), validate(exitEntrySchema), entryController.processExit);
+// View routes - all authenticated users (guards, admins, clients)
 router.get('/active/:jobSiteId', entryController.getActiveEntries);
-router.post('/exit', validate(exitEntrySchema), entryController.processExit);
 router.get('/search', entryController.searchEntries);
 router.get('/:id', entryController.getEntryById);
 

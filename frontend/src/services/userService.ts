@@ -3,7 +3,7 @@ import api from './api';
 export interface User {
   id: string;
   username: string;
-  role: 'guard' | 'admin' | 'employee';
+  role: 'guard' | 'admin' | 'employee' | 'client';
   job_site_access: string[];
   employee_id?: string;
   onboarding_status?: 'pending' | 'in_progress' | 'completed';

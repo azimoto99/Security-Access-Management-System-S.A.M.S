@@ -96,6 +96,13 @@ export const DashboardPage: React.FC = () => {
           { title: 'Reports', desc: 'Analytics', path: '/reports', icon: 'reports' },
         ]
       : []),
+    ...(user?.role === 'client'
+      ? [
+          { title: 'Search Entries', desc: 'Search history', path: '/search', icon: 'search' },
+          { title: 'Audit Logs', desc: 'View logs', path: '/audit-logs', icon: 'audit-logs' },
+          { title: 'Reports', desc: 'Analytics', path: '/reports', icon: 'reports' },
+        ]
+      : []),
     ...(user?.role === 'admin'
       ? [
           { title: 'Job Sites', desc: 'Manage sites', path: '/job-sites', icon: 'job-sites' },
