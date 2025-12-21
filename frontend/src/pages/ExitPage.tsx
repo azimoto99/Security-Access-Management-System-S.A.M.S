@@ -30,10 +30,12 @@ import {
   MenuItem,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import { Add } from '@mui/icons-material';
 import { entryService, type Entry } from '../services/entryService';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
 import type { EntryType } from '../types/entry';
+import { ManualExitForm } from '../components/ManualExitForm';
 
 export const ExitPage: React.FC = () => {
   const { user } = useAuth();
@@ -48,6 +50,7 @@ export const ExitPage: React.FC = () => {
   const [overrideReason, setOverrideReason] = useState('');
   const [useOverride, setUseOverride] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [manualExitDialog, setManualExitDialog] = useState(false);
 
   useEffect(() => {
     loadJobSites();
@@ -122,6 +125,22 @@ export const ExitPage: React.FC = () => {
     }
   };
 
+  const handleManualExit = async (data: any) => {
+    try {
+      setProcessing(true);
+      setError(null);
+
+      await entryService.createManualExit(data);
+
+      setManualExitDialog(false);
+      await loadActiveEntries();
+    } catch (err: any) {
+      setError(err.message || 'Failed to log manual exit');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const formatDuration = (entry: Entry): string => {
     const entryTime = new Date(entry.entry_time);
     const now = new Date();
@@ -184,9 +203,19 @@ export const ExitPage: React.FC = () => {
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Paper sx={{ p: 3 }}>
-          <Typography variant="h5" gutterBottom>
-            Process Exits
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h5">
+              Process Exits
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setManualExitDialog(true)}
+              disabled={!selectedJobSiteId}
+            >
+              Log Manual Exit
+            </Button>
+          </Box>
 
           {error && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -309,6 +338,27 @@ export const ExitPage: React.FC = () => {
           </TableContainer>
         </Paper>
       </Container>
+
+      {/* Manual Exit Dialog */}
+      <Dialog
+        open={manualExitDialog}
+        onClose={() => setManualExitDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Log Manual Exit</DialogTitle>
+        <DialogContent>
+          {selectedJobSiteId ? (
+            <ManualExitForm
+              jobSiteId={selectedJobSiteId}
+              onSubmit={handleManualExit}
+              onCancel={() => setManualExitDialog(false)}
+            />
+          ) : (
+            <Alert severity="warning">Please select a job site first</Alert>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Exit Confirmation Dialog */}
       <Dialog open={!!exitDialog} onClose={() => setExitDialog(null)} maxWidth="sm" fullWidth>

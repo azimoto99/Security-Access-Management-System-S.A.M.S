@@ -230,6 +230,143 @@ export const getActiveEntries = async (
 };
 
 /**
+ * Create manual exit (for vehicles/trucks not logged in)
+ */
+export const createManualExit = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
+    const { job_site_id, entry_type, entry_data } = req.body as CreateEntryRequest;
+
+    // Validate required fields
+    if (!job_site_id || !entry_type || !entry_data) {
+      const error: AppError = new Error('job_site_id, entry_type, and entry_data are required');
+      error.statusCode = 400;
+      error.code = 'VALIDATION_ERROR';
+      return next(error);
+    }
+
+    // Only allow vehicle and truck types for manual exits
+    if (!['vehicle', 'truck'].includes(entry_type)) {
+      const error: AppError = new Error('Manual exit only allowed for vehicles and trucks');
+      error.statusCode = 400;
+      error.code = 'VALIDATION_ERROR';
+      return next(error);
+    }
+
+    // Validate required fields
+    if (!entry_data.license_plate) {
+      const error: AppError = new Error('License plate is required');
+      error.statusCode = 400;
+      error.code = 'VALIDATION_ERROR';
+      return next(error);
+    }
+
+    if (entry_type === 'truck' && !entry_data.truck_number) {
+      const error: AppError = new Error('Truck number is required for trucks');
+      error.statusCode = 400;
+      error.code = 'VALIDATION_ERROR';
+      return next(error);
+    }
+
+    // Check job site exists and is active
+    const jobSiteResult = await pool.query('SELECT * FROM job_sites WHERE id = $1', [job_site_id]);
+    if (jobSiteResult.rows.length === 0) {
+      const error: AppError = new Error('Job site not found');
+      error.statusCode = 404;
+      error.code = 'JOB_SITE_NOT_FOUND';
+      return next(error);
+    }
+
+    const jobSite = jobSiteResult.rows[0];
+    if (!jobSite.is_active) {
+      const error: AppError = new Error('Job site is not active');
+      error.statusCode = 400;
+      error.code = 'JOB_SITE_INACTIVE';
+      return next(error);
+    }
+
+    // Check job site access (unless admin)
+    if (req.user.role !== 'admin') {
+      const jobSiteAccess = req.user.job_site_access || [];
+      if (!jobSiteAccess.includes(job_site_id)) {
+        const error: AppError = new Error('Access denied to this job site');
+        error.statusCode = 403;
+        error.code = 'JOB_SITE_ACCESS_DENIED';
+        return next(error);
+      }
+    }
+
+    // Set entry_time to current time and exit_time to current time (immediate exit)
+    const now = new Date();
+
+    // Insert entry with exit_time set immediately
+    const result = await pool.query(
+      `INSERT INTO entries (job_site_id, entry_type, entry_data, guard_id, photos, status, entry_time, exit_time)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [
+        job_site_id,
+        entry_type,
+        JSON.stringify(entry_data),
+        req.user.id,
+        JSON.stringify([]),
+        'exited',
+        now,
+        now,
+      ]
+    );
+
+    const entry = result.rows[0];
+
+    // Log action
+    await pool.query(
+      `INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        req.user.id,
+        'manual_exit',
+        'entry',
+        entry.id,
+        JSON.stringify({
+          entry_type,
+          job_site_id,
+          license_plate: entry_data.license_plate,
+          truck_number: entry_data.truck_number,
+          destination: entry_data.destination,
+          created_by: req.user.username,
+        }),
+      ]
+    );
+
+    logger.info(`Manual exit created: ${entry_type} (${entry.id}) by ${req.user.username}`);
+
+    // Broadcast occupancy update (though this won't affect occupancy since it's immediately exited)
+    webSocketService.broadcastOccupancyUpdate(job_site_id).catch((err) => {
+      logger.error('Error broadcasting occupancy update:', err);
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        entry,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Process exit
  */
 export const processExit = async (

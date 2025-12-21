@@ -23,8 +23,27 @@ const exitEntrySchema = Joi.object({
   override_reason: Joi.string().optional(),
 });
 
+const manualExitSchema = Joi.object({
+  job_site_id: Joi.string().uuid().required(),
+  entry_type: Joi.string().valid('vehicle', 'truck').required(),
+  entry_data: Joi.object({
+    license_plate: Joi.string().required(),
+    truck_number: Joi.string().when('entry_type', {
+      is: 'truck',
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    }),
+    trailer_number: Joi.string().optional(),
+    destination: Joi.string().valid('north', 'south').optional(),
+    driver_name: Joi.string().optional(),
+    company: Joi.string().optional(),
+    cargo_description: Joi.string().optional(),
+  }).required(),
+});
+
 // Routes
 router.post('/', validate(createEntrySchema), entryController.createEntry);
+router.post('/manual-exit', validate(manualExitSchema), entryController.createManualExit);
 router.get('/active/:jobSiteId', entryController.getActiveEntries);
 router.post('/exit', validate(exitEntrySchema), entryController.processExit);
 router.get('/search', entryController.searchEntries);

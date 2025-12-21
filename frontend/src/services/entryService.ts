@@ -28,6 +28,20 @@ export interface ExitEntryData {
   override_reason?: string;
 }
 
+export interface ManualExitData {
+  job_site_id: string;
+  entry_type: 'vehicle' | 'truck';
+  entry_data: {
+    license_plate: string;
+    truck_number?: string; // Required for trucks
+    trailer_number?: string;
+    destination?: 'north' | 'south'; // For trucks
+    driver_name?: string;
+    company?: string;
+    cargo_description?: string;
+  };
+}
+
 export interface SearchEntriesParams {
   job_site_id?: string;
   entry_type?: EntryType;
@@ -92,6 +106,17 @@ export const entryService = {
       return response.data.data;
     }
     throw new Error(response.data.error?.message || 'Failed to process exit');
+  },
+
+  /**
+   * Create manual exit (for vehicles/trucks not logged in)
+   */
+  async createManualExit(data: ManualExitData): Promise<Entry> {
+    const response = await api.post<ApiResponse<{ entry: Entry }>>('/entries/manual-exit', data);
+    if (response.data.success && response.data.data) {
+      return response.data.data.entry;
+    }
+    throw new Error(response.data.error?.message || 'Failed to create manual exit');
   },
 
   /**
