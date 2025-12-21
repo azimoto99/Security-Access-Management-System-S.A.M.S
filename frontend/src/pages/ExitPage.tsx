@@ -364,12 +364,18 @@ export const ExitPage: React.FC = () => {
       </Dialog>
 
       {/* Exit Confirmation Dialog */}
-      <Dialog open={!!exitDialog} onClose={() => {
-        setExitDialog(null);
-        setExitTrailerNumber('');
-        setOverrideReason('');
-        setUseOverride(false);
-      }} maxWidth="sm" fullWidth>
+      <Dialog 
+        open={!!exitDialog} 
+        onClose={processing ? undefined : () => {
+          setExitDialog(null);
+          setExitTrailerNumber('');
+          setOverrideReason('');
+          setUseOverride(false);
+        }} 
+        maxWidth="sm" 
+        fullWidth
+        disableEscapeKeyDown={processing}
+      >
         <DialogTitle>Process Exit</DialogTitle>
         <DialogContent>
           {exitDialog && (
@@ -427,14 +433,25 @@ export const ExitPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => {
-            setExitDialog(null);
-            setExitTrailerNumber('');
-            setOverrideReason('');
-            setUseOverride(false);
-          }}>Cancel</Button>
+          <Button 
+            onClick={() => {
+              if (!processing) {
+                setExitDialog(null);
+                setExitTrailerNumber('');
+                setOverrideReason('');
+                setUseOverride(false);
+              }
+            }}
+            disabled={processing}
+          >
+            Cancel
+          </Button>
           <Button
-            onClick={() => exitDialog && handleExit(exitDialog, useOverride)}
+            onClick={() => {
+              if (exitDialog && !processing) {
+                handleExit(exitDialog, useOverride);
+              }
+            }}
             variant="contained"
             disabled={processing || (useOverride && !overrideReason.trim())}
           >

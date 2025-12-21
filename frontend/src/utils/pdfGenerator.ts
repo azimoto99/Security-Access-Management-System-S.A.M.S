@@ -297,19 +297,43 @@ export const generateEntriesPDF = (entries: any[], filters?: any): jsPDF => {
 
   yPosition += 5;
 
+  // Handle empty entries
+  if (!entries || entries.length === 0) {
+    doc.setFontSize(12);
+    doc.text('No entries found for the selected date range.', pageWidth / 2, yPosition + 20, { align: 'center' });
+    return doc;
+  }
+
   // Calculate duration helper
   const calculateDuration = (entry: any): string => {
     if (!entry.exit_time) return 'N/A';
-    const entryTime = new Date(entry.entry_time);
-    const exitTime = new Date(entry.exit_time);
-    const diffMs = exitTime.getTime() - entryTime.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    return diffMins.toString();
+    try {
+      const entryTime = new Date(entry.entry_time);
+      const exitTime = new Date(entry.exit_time);
+      const diffMs = exitTime.getTime() - entryTime.getTime();
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      return diffMins.toString();
+    } catch (e) {
+      return 'N/A';
+    }
+  };
+
+  // Helper to parse entry_data (might be string or object)
+  const parseEntryData = (entryData: any): any => {
+    if (!entryData) return {};
+    if (typeof entryData === 'string') {
+      try {
+        return JSON.parse(entryData);
+      } catch (e) {
+        return {};
+      }
+    }
+    return entryData || {};
   };
 
   // Table data
   const tableData = entries.map((entry) => {
-    const data = entry.entry_data || {};
+    const data = parseEntryData(entry.entry_data);
     // Get entry trailer (original) and exit trailer (if updated on exit)
     const entryTrailer = data.entry_trailer_number || data.trailer_number || 'N/A';
     // Exit trailer: use exit_trailer_number if set, otherwise use entry trailer if exited, or 'N/A' if not exited
@@ -317,22 +341,42 @@ export const generateEntriesPDF = (entries: any[], filters?: any): jsPDF => {
       ? data.exit_trailer_number 
       : (entry.exit_time ? entryTrailer : 'N/A');
     
-    return [
-      entry.entry_type,
-      (entry as any).job_site_name || 'N/A',
-      entry.status,
-      new Date(entry.entry_time).toLocaleString(),
-      entry.exit_time ? new Date(entry.exit_time).toLocaleString() : 'N/A',
-      calculateDuration(entry),
-      (entry as any).guard_username || 'N/A',
-      data.license_plate || data.name || 'N/A',
-      data.truck_number || 'N/A',
-      entryTrailer,
-      exitTrailer,
-      data.driver_name || 'N/A',
-      data.company || 'N/A',
-      data.purpose || 'N/A',
-    ];
+    try {
+      return [
+        entry.entry_type || 'N/A',
+        (entry as any).job_site_name || 'N/A',
+        entry.status || 'N/A',
+        entry.entry_time ? new Date(entry.entry_time).toLocaleString() : 'N/A',
+        entry.exit_time ? new Date(entry.exit_time).toLocaleString() : 'N/A',
+        calculateDuration(entry),
+        (entry as any).guard_username || 'N/A',
+        data.license_plate || data.name || 'N/A',
+        data.truck_number || 'N/A',
+        entryTrailer,
+        exitTrailer,
+        data.driver_name || 'N/A',
+        data.company || 'N/A',
+        data.purpose || 'N/A',
+      ];
+    } catch (e) {
+      // Return a row with error indicator if something goes wrong
+      return [
+        'ERROR',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+      ];
+    }
   });
 
   // Generate table

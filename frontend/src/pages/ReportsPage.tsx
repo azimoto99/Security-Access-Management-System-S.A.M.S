@@ -166,17 +166,29 @@ export const ReportsPage: React.FC = () => {
     try {
       setExportingDetailedPDF(true);
       setError(null);
-      const exportFilters: Record<string, any> = {
-        date_from: filters.date_from,
-        date_to: filters.date_to,
-      };
+      
+      // Build date filters with time if provided
+      let dateFrom = filters.date_from;
+      let dateTo = filters.date_to;
       
       if (filters.time_from) {
-        exportFilters.time_from = filters.time_from;
+        dateFrom = `${filters.date_from} ${filters.time_from}`;
+      } else {
+        dateFrom = `${filters.date_from} 00:00:00`;
       }
+      
       if (filters.time_to) {
-        exportFilters.time_to = filters.time_to;
+        dateTo = `${filters.date_to} ${filters.time_to}`;
+      } else {
+        dateTo = `${filters.date_to} 23:59:59`;
       }
+      
+      const exportFilters: Record<string, any> = {
+        date_from: dateFrom,
+        date_to: dateTo,
+        limit: '1000', // Request more entries for PDF export
+      };
+      
       if (filters.job_site_id) {
         exportFilters.job_site_id = filters.job_site_id;
       }
@@ -186,7 +198,17 @@ export const ReportsPage: React.FC = () => {
 
       // Fetch entries for PDF
       const response = await entryService.searchEntries(exportFilters);
-      const doc = generateEntriesPDF(response.entries, exportFilters);
+      
+      if (!response || !response.entries || response.entries.length === 0) {
+        setError('No entries found for the selected date range');
+        return;
+      }
+      
+      const doc = generateEntriesPDF(response.entries, {
+        ...filters,
+        date_from: filters.date_from,
+        date_to: filters.date_to,
+      });
       const dateStr = filters.date_from === filters.date_to 
         ? filters.date_from 
         : `${filters.date_from}_to_${filters.date_to}`;
