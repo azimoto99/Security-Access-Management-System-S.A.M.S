@@ -24,6 +24,10 @@ import {
   Tabs,
   Tab,
   InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { entryService, type Entry } from '../services/entryService';
@@ -191,9 +195,29 @@ export const ExitPage: React.FC = () => {
           )}
 
           <Box sx={{ mb: 3 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Job Site: {jobSites.find((s) => s.id === selectedJobSiteId)?.name || 'Not selected'}
-            </Typography>
+            <FormControl fullWidth sx={{ maxWidth: 400 }}>
+              <InputLabel>Job Site</InputLabel>
+              <Select
+                value={selectedJobSiteId}
+                onChange={(e) => setSelectedJobSiteId(e.target.value)}
+                label="Job Site"
+                required
+              >
+                {user?.role === 'admin'
+                  ? jobSites.map((site) => (
+                      <MenuItem key={site.id} value={site.id}>
+                        {site.name}
+                      </MenuItem>
+                    ))
+                  : jobSites
+                      .filter((site) => user?.job_site_access?.includes(site.id))
+                      .map((site) => (
+                        <MenuItem key={site.id} value={site.id}>
+                          {site.name}
+                        </MenuItem>
+                      ))}
+              </Select>
+            </FormControl>
           </Box>
 
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
