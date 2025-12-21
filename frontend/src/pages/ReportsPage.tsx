@@ -24,10 +24,12 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { Download, Assessment } from '@mui/icons-material';
+import { Download, Assessment, PictureAsPdf } from '@mui/icons-material';
 import { reportService, type ReportData, type ReportFilters } from '../services/reportService';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
+import { generateReportPDF, generateEntriesPDF } from '../utils/pdfGenerator';
+import { entryService } from '../services/entryService';
 import {
   BarChart,
   Bar,
@@ -55,6 +57,8 @@ export const ReportsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportingDetailed, setExportingDetailed] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
+  const [exportingDetailedPDF, setExportingDetailedPDF] = useState(false);
 
   useEffect(() => {
     loadJobSites();
@@ -139,6 +143,58 @@ export const ReportsPage: React.FC = () => {
       setError(err.message || 'Failed to export detailed logs');
     } finally {
       setExportingDetailed(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!report) return;
+    try {
+      setExportingPDF(true);
+      const doc = generateReportPDF(report, filters);
+      const dateStr = filters.date_from === filters.date_to 
+        ? filters.date_from 
+        : `${filters.date_from}_to_${filters.date_to}`;
+      doc.save(`report-${dateStr}-${Date.now()}.pdf`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to export PDF');
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
+  const handleExportDetailedPDF = async () => {
+    try {
+      setExportingDetailedPDF(true);
+      setError(null);
+      const exportFilters: Record<string, any> = {
+        date_from: filters.date_from,
+        date_to: filters.date_to,
+      };
+      
+      if (filters.time_from) {
+        exportFilters.time_from = filters.time_from;
+      }
+      if (filters.time_to) {
+        exportFilters.time_to = filters.time_to;
+      }
+      if (filters.job_site_id) {
+        exportFilters.job_site_id = filters.job_site_id;
+      }
+      if (filters.entry_type) {
+        exportFilters.entry_type = filters.entry_type;
+      }
+
+      // Fetch entries for PDF
+      const response = await entryService.searchEntries(exportFilters);
+      const doc = generateEntriesPDF(response.entries, exportFilters);
+      const dateStr = filters.date_from === filters.date_to 
+        ? filters.date_from 
+        : `${filters.date_from}_to_${filters.date_to}`;
+      doc.save(`detailed-logs-${dateStr}-${Date.now()}.pdf`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to export detailed PDF');
+    } finally {
+      setExportingDetailedPDF(false);
     }
   };
 
@@ -265,18 +321,35 @@ export const ReportsPage: React.FC = () => {
                       variant="outlined"
                       startIcon={<Download />}
                       onClick={handleExport}
-                      disabled={exporting}
+                      disabled={exporting || exportingPDF || exportingDetailedPDF}
                     >
                       {exporting ? 'Exporting...' : 'Export Summary CSV'}
+                    </Button>
+                    <Button
+                      variant="contained"
+                      startIcon={<PictureAsPdf />}
+                      onClick={handleExportPDF}
+                      disabled={exporting || exportingPDF || exportingDetailedPDF}
+                    >
+                      {exportingPDF ? 'Exporting...' : 'Export Summary PDF'}
                     </Button>
                     <Button
                       variant="outlined"
                       color="secondary"
                       startIcon={<Download />}
                       onClick={handleExportDetailed}
-                      disabled={exportingDetailed}
+                      disabled={exporting || exportingPDF || exportingDetailed || exportingDetailedPDF}
                     >
-                      {exportingDetailed ? 'Exporting...' : 'Download Detailed Logs'}
+                      {exportingDetailed ? 'Exporting...' : 'Download Detailed Logs CSV'}
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      startIcon={<PictureAsPdf />}
+                      onClick={handleExportDetailedPDF}
+                      disabled={exporting || exportingPDF || exportingDetailed || exportingDetailedPDF}
+                    >
+                      {exportingDetailedPDF ? 'Exporting...' : 'Download Detailed Logs PDF'}
                     </Button>
                   </>
                 )}

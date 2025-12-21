@@ -67,6 +67,24 @@ export const alertService = {
       throw new Error('Failed to trigger alert checks');
     }
   },
+
+  /**
+   * Create a new alert (admin only)
+   */
+  createAlert: async (data: {
+    type: AlertType;
+    severity?: AlertSeverity;
+    title: string;
+    message: string;
+    job_site_id?: string;
+    entry_id?: string;
+    watchlist_id?: string;
+    user_id?: string;
+    metadata?: Record<string, any>;
+  }): Promise<Alert> => {
+    const response = await api.post<{ success: boolean; data: { alert: Alert } }>('/alerts', data);
+    return response.data.data.alert;
+  },
 };
 
 

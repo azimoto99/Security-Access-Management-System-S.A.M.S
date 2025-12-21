@@ -113,6 +113,55 @@ export const triggerAlertChecks = async (
   }
 };
 
+/**
+ * Create a new alert (admin only)
+ */
+export const createAlert = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      const error: AppError = new Error('Admin access required');
+      error.statusCode = 403;
+      error.code = 'FORBIDDEN';
+      return next(error);
+    }
+
+    const { type, severity, title, message, job_site_id, entry_id, watchlist_id, user_id, metadata } = req.body;
+
+    if (!type || !title || !message) {
+      const error: AppError = new Error('type, title, and message are required');
+      error.statusCode = 400;
+      error.code = 'VALIDATION_ERROR';
+      return next(error);
+    }
+
+    const alert = await alertService.createAlert({
+      type,
+      severity: severity || 'medium',
+      title,
+      message,
+      job_site_id,
+      entry_id,
+      watchlist_id,
+      user_id,
+      metadata: metadata || {},
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        alert,
+      },
+      message: 'Alert created successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 
 

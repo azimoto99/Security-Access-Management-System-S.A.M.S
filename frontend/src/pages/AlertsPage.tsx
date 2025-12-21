@@ -29,11 +29,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   CheckCircle,
   Refresh,
   Visibility,
+  Add,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -59,7 +61,16 @@ export const AlertsPage: React.FC = () => {
   });
   const [selectedAlert, setSelectedAlert] = useState<AlertType | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [total, setTotal] = useState(0);
+  const [creating, setCreating] = useState(false);
+  const [newAlert, setNewAlert] = useState({
+    type: '' as AlertTypeEnum | '',
+    severity: 'medium' as AlertSeverity,
+    title: '',
+    message: '',
+    job_site_id: '',
+  });
 
   const isAdmin = user?.role === 'admin';
 
@@ -118,6 +129,38 @@ export const AlertsPage: React.FC = () => {
     setDetailDialogOpen(true);
   };
 
+  const handleCreateAlert = async () => {
+    try {
+      setError(null);
+      if (!newAlert.type || !newAlert.title || !newAlert.message) {
+        setError('Type, title, and message are required');
+        return;
+      }
+      setCreating(true);
+      await alertService.createAlert({
+        type: newAlert.type as AlertTypeEnum,
+        severity: newAlert.severity,
+        title: newAlert.title,
+        message: newAlert.message,
+        job_site_id: newAlert.job_site_id || undefined,
+      });
+      setSuccess('Alert created successfully');
+      setCreateDialogOpen(false);
+      setNewAlert({
+        type: '' as AlertTypeEnum | '',
+        severity: 'medium' as AlertSeverity,
+        title: '',
+        message: '',
+        job_site_id: '',
+      });
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create alert');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const getSeverityColor = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical':
@@ -164,9 +207,14 @@ export const AlertsPage: React.FC = () => {
             Security Alerts
           </Typography>
           {isAdmin && (
-            <Button color="inherit" startIcon={<Refresh />} onClick={handleTriggerChecks}>
-              Trigger Checks
-            </Button>
+            <>
+              <Button color="inherit" startIcon={<Add />} onClick={() => setCreateDialogOpen(true)}>
+                Create Alert
+              </Button>
+              <Button color="inherit" startIcon={<Refresh />} onClick={handleTriggerChecks}>
+                Trigger Checks
+              </Button>
+            </>
           )}
         </Toolbar>
       </AppBar>
@@ -464,6 +512,98 @@ export const AlertsPage: React.FC = () => {
               </Button>
             )}
             <Button onClick={() => setDetailDialogOpen(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Create Alert Dialog */}
+        <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Create New Alert</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth required>
+                    <InputLabel>Alert Type</InputLabel>
+                    <Select
+                      value={newAlert.type}
+                      onChange={(e) => setNewAlert({ ...newAlert, type: e.target.value as AlertTypeEnum | '' })}
+                      label="Alert Type"
+                    >
+                      <MenuItem value="overstay">Overstay</MenuItem>
+                      <MenuItem value="capacity_warning">Capacity Warning</MenuItem>
+                      <MenuItem value="watchlist_match">Watchlist Match</MenuItem>
+                      <MenuItem value="invalid_exit">Invalid Exit</MenuItem>
+                      <MenuItem value="failed_login">Failed Login</MenuItem>
+                      <MenuItem value="account_locked">Account Locked</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Severity</InputLabel>
+                    <Select
+                      value={newAlert.severity}
+                      onChange={(e) => setNewAlert({ ...newAlert, severity: e.target.value as AlertSeverity })}
+                      label="Severity"
+                    >
+                      <MenuItem value="low">Low</MenuItem>
+                      <MenuItem value="medium">Medium</MenuItem>
+                      <MenuItem value="high">High</MenuItem>
+                      <MenuItem value="critical">Critical</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Title"
+                    value={newAlert.title}
+                    onChange={(e) => setNewAlert({ ...newAlert, title: e.target.value })}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Message"
+                    value={newAlert.message}
+                    onChange={(e) => setNewAlert({ ...newAlert, message: e.target.value })}
+                    multiline
+                    rows={4}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Job Site (Optional)</InputLabel>
+                    <Select
+                      value={newAlert.job_site_id}
+                      onChange={(e) => setNewAlert({ ...newAlert, job_site_id: e.target.value })}
+                      label="Job Site (Optional)"
+                    >
+                      <MenuItem value="">None</MenuItem>
+                      {jobSites.map((site) => (
+                        <MenuItem key={site.id} value={site.id}>
+                          {site.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCreateDialogOpen(false)} disabled={creating}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateAlert}
+              variant="contained"
+              disabled={creating || !newAlert.type || !newAlert.title || !newAlert.message}
+            >
+              {creating ? 'Creating...' : 'Create Alert'}
+            </Button>
           </DialogActions>
         </Dialog>
       </Container>

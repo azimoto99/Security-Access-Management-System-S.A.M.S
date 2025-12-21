@@ -26,10 +26,11 @@ import {
   CardContent,
   Grid,
 } from '@mui/material';
-import { Clear, Download } from '@mui/icons-material';
+import { Clear, Download, PictureAsPdf } from '@mui/icons-material';
 import { auditLogService, type AuditLog, type AuditLogFilters } from '../services/auditLogService';
 import { entryService, type Entry } from '../services/entryService';
 import { PhotoGallery } from '../components/PhotoGallery';
+import { generateAuditLogsPDF } from '../utils/pdfGenerator';
 
 export const AuditLogsPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -44,6 +45,7 @@ export const AuditLogsPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
   const [relatedEntry, setRelatedEntry] = useState<Entry | null>(null);
   const [loadingEntry, setLoadingEntry] = useState(false);
 
@@ -105,6 +107,20 @@ export const AuditLogsPage: React.FC = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    try {
+      setExportingPDF(true);
+      // Load all logs for PDF (or use current page logs)
+      const allLogs = logs; // You could fetch all logs here if needed
+      const doc = generateAuditLogsPDF(allLogs, filters);
+      doc.save(`audit-logs-${Date.now()}.pdf`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to export PDF');
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleString();
   };
@@ -142,12 +158,21 @@ export const AuditLogsPage: React.FC = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h5">Audit Logs</Typography>
             <Button
-              variant="contained"
+              variant="outlined"
               startIcon={<Download />}
               onClick={handleExport}
-              disabled={exporting}
+              disabled={exporting || exportingPDF}
+              sx={{ mr: 1 }}
             >
               {exporting ? 'Exporting...' : 'Export CSV'}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<PictureAsPdf />}
+              onClick={handleExportPDF}
+              disabled={exporting || exportingPDF}
+            >
+              {exportingPDF ? 'Exporting...' : 'Export PDF'}
             </Button>
           </Box>
 
