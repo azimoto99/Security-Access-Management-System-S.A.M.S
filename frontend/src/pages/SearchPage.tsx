@@ -31,12 +31,13 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import { Search, Visibility, Clear } from '@mui/icons-material';
+import { Search, Visibility, Clear, Edit, Delete } from '@mui/icons-material';
 import { entryService, type Entry } from '../services/entryService';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
 import type { EntryType, EntryStatus } from '../types/entry';
 import { PhotoGallery } from '../components/PhotoGallery';
+import { EntryForm } from '../components/EntryForm';
 
 export const SearchPage: React.FC = () => {
   const { user } = useAuth();
@@ -55,6 +56,9 @@ export const SearchPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
+  const [editEntry, setEditEntry] = useState<Entry | null>(null);
+  const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -146,6 +150,49 @@ export const SearchPage: React.FC = () => {
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString();
+  };
+
+  const handleUpdateEntry = async (entryId: string, data: any) => {
+    try {
+      setProcessing(true);
+      setError(null);
+      // Format data for update (only send changed fields)
+      const updateData: any = {};
+      if (data.job_site_id && data.job_site_id !== editEntry?.job_site_id) {
+        updateData.job_site_id = data.job_site_id;
+      }
+      if (data.entry_type && data.entry_type !== editEntry?.entry_type) {
+        updateData.entry_type = data.entry_type;
+      }
+      if (data.entry_data) {
+        updateData.entry_data = data.entry_data;
+      }
+      if (data.photos !== undefined) {
+        updateData.photos = data.photos;
+      }
+      await entryService.updateEntry(entryId, updateData);
+      setEditEntry(null);
+      await handleSearch(page); // Refresh the list
+    } catch (err: any) {
+      setError(err.message || 'Failed to update entry');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDeleteEntry = async () => {
+    if (!deleteEntryId) return;
+    try {
+      setProcessing(true);
+      setError(null);
+      await entryService.deleteEntry(deleteEntryId);
+      setDeleteEntryId(null);
+      await handleSearch(page); // Refresh the list
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete entry');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const highlightText = (text: string, searchTerm: string): React.ReactNode => {
@@ -391,9 +438,30 @@ export const SearchPage: React.FC = () => {
                           size="small"
                           onClick={() => setSelectedEntry(entry)}
                           color="primary"
+                          title="View Details"
                         >
                           <Visibility />
                         </IconButton>
+                        {(user?.role === 'admin' || user?.role === 'guard') && (
+                          <>
+                            <IconButton
+                              size="small"
+                              onClick={() => setEditEntry(entry)}
+                              color="primary"
+                              title="Edit Entry"
+                            >
+                              <Edit />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => setDeleteEntryId(entry.id)}
+                              color="error"
+                              title="Delete Entry"
+                            >
+                              <Delete />
+                            </IconButton>
+                          </>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -509,6 +577,58 @@ export const SearchPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSelectedEntry(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Entry Dialog */}
+      {editEntry && (
+        <Dialog
+          open={!!editEntry}
+          onClose={() => !processing && setEditEntry(null)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>Edit Entry</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <EntryForm
+                entryType={editEntry.entry_type}
+                jobSiteId={editEntry.job_site_id}
+                initialData={editEntry.entry_data}
+                onSubmit={(data) => handleUpdateEntry(editEntry.id, data)}
+                onCancel={() => setEditEntry(null)}
+                entryId={editEntry.id}
+              />
+            </Box>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={!!deleteEntryId}
+        onClose={() => !processing && setDeleteEntryId(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Delete Entry</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this entry? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteEntryId(null)} disabled={processing}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteEntry}
+            color="error"
+            variant="contained"
+            disabled={processing}
+          >
+            {processing ? 'Deleting...' : 'Delete'}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

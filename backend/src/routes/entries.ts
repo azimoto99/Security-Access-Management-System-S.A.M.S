@@ -38,6 +38,13 @@ const manualExitSchema = Joi.object({
   }).required(),
 });
 
+const updateEntrySchema = Joi.object({
+  job_site_id: Joi.string().uuid().optional(),
+  entry_type: Joi.string().valid('vehicle', 'visitor', 'truck').optional(),
+  entry_data: Joi.object().optional(),
+  photos: Joi.array().items(Joi.string()).optional(),
+});
+
 // Routes
 // Create entry - guards and admins only (clients can only view)
 router.post('/', authorizeRole('guard', 'admin'), validate(createEntrySchema), entryController.createEntry);
@@ -45,6 +52,10 @@ router.post('/', authorizeRole('guard', 'admin'), validate(createEntrySchema), e
 router.post('/manual-exit', authorizeRole('guard', 'admin'), validate(manualExitSchema), entryController.createManualExit);
 // Process exit - guards and admins only
 router.post('/exit', authorizeRole('guard', 'admin'), validate(exitEntrySchema), entryController.processExit);
+// Update entry - guards and admins only
+router.put('/:id', authorizeRole('guard', 'admin'), validate(updateEntrySchema), entryController.updateEntry);
+// Delete entry - guards and admins only
+router.delete('/:id', authorizeRole('guard', 'admin'), entryController.deleteEntry);
 // View routes - all authenticated users (guards, admins, clients)
 router.get('/active/:jobSiteId', entryController.getActiveEntries);
 router.get('/search', entryController.searchEntries);

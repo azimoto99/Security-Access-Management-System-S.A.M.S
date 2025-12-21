@@ -736,3 +736,237 @@ export const getEntryById = async (
   }
 };
 
+/**
+ * Update entry
+ */
+export const updateEntry = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
+    const { id } = req.params;
+    const { job_site_id, entry_type, entry_data, photos } = req.body;
+
+    // Get existing entry
+    const existingResult = await pool.query('SELECT * FROM entries WHERE id = $1', [id]);
+    if (existingResult.rows.length === 0) {
+      const error: AppError = new Error('Entry not found');
+      error.statusCode = 404;
+      error.code = 'ENTRY_NOT_FOUND';
+      return next(error);
+    }
+
+    const existingEntry = existingResult.rows[0];
+
+    // Check job site access (unless admin)
+    if (req.user.role !== 'admin') {
+      const jobSiteAccess = req.user.job_site_access || [];
+      const targetJobSiteId = job_site_id || existingEntry.job_site_id;
+      if (!jobSiteAccess.includes(targetJobSiteId)) {
+        const error: AppError = new Error('Access denied to this job site');
+        error.statusCode = 403;
+        error.code = 'JOB_SITE_ACCESS_DENIED';
+        return next(error);
+      }
+    }
+
+    // Build update query dynamically
+    const updates: string[] = [];
+    const params: any[] = [];
+    let paramCount = 1;
+
+    if (job_site_id) {
+      // Verify job site exists
+      const jobSiteResult = await pool.query('SELECT * FROM job_sites WHERE id = $1', [job_site_id]);
+      if (jobSiteResult.rows.length === 0) {
+        const error: AppError = new Error('Job site not found');
+        error.statusCode = 404;
+        error.code = 'JOB_SITE_NOT_FOUND';
+        return next(error);
+      }
+      updates.push(`job_site_id = $${paramCount++}`);
+      params.push(job_site_id);
+    }
+
+    if (entry_type) {
+      if (!['vehicle', 'visitor', 'truck'].includes(entry_type)) {
+        const error: AppError = new Error('Invalid entry type. Must be vehicle, visitor, or truck');
+        error.statusCode = 400;
+        error.code = 'VALIDATION_ERROR';
+        return next(error);
+      }
+      updates.push(`entry_type = $${paramCount++}`);
+      params.push(entry_type);
+    }
+
+    if (entry_data) {
+      // Validate entry data if entry_type is provided or use existing
+      const targetEntryType = entry_type || existingEntry.entry_type;
+      let validatedData;
+      try {
+        validatedData = validateEntryData(targetEntryType as EntryType, entry_data);
+      } catch (validationError: any) {
+        const error: AppError = new Error(validationError.message);
+        error.statusCode = 400;
+        error.code = 'VALIDATION_ERROR';
+        return next(error);
+      }
+      updates.push(`entry_data = $${paramCount++}`);
+      params.push(JSON.stringify(validatedData));
+    }
+
+    if (photos !== undefined) {
+      updates.push(`photos = $${paramCount++}`);
+      params.push(JSON.stringify(photos || []));
+    }
+
+    if (updates.length === 0) {
+      const error: AppError = new Error('No fields to update');
+      error.statusCode = 400;
+      error.code = 'VALIDATION_ERROR';
+      return next(error);
+    }
+
+    // Add updated timestamp
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+
+    params.push(id);
+    const query = `UPDATE entries SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
+
+    const result = await pool.query(query, params);
+    const updatedEntry = result.rows[0];
+
+    // Log action
+    await pool.query(
+      `INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        req.user.id,
+        'update_entry',
+        'entry',
+        updatedEntry.id,
+        JSON.stringify({
+          entry_type: updatedEntry.entry_type,
+          job_site_id: updatedEntry.job_site_id,
+          updated_by: req.user.username,
+          changes: {
+            job_site_id: job_site_id ? 'changed' : undefined,
+            entry_type: entry_type ? 'changed' : undefined,
+            entry_data: entry_data ? 'changed' : undefined,
+            photos: photos !== undefined ? 'changed' : undefined,
+          },
+        }),
+      ]
+    );
+
+    logger.info(`Entry updated: ${updatedEntry.entry_type} (${updatedEntry.id}) by ${req.user.username}`);
+
+    // Broadcast occupancy update if job site changed
+    if (job_site_id && job_site_id !== existingEntry.job_site_id) {
+      webSocketService.broadcastOccupancyUpdate(job_site_id).catch((err) => {
+        logger.error('Error broadcasting occupancy update:', err);
+      });
+      webSocketService.broadcastOccupancyUpdate(existingEntry.job_site_id).catch((err) => {
+        logger.error('Error broadcasting occupancy update:', err);
+      });
+    } else if (!job_site_id) {
+      webSocketService.broadcastOccupancyUpdate(existingEntry.job_site_id).catch((err) => {
+        logger.error('Error broadcasting occupancy update:', err);
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        entry: updatedEntry,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Delete entry
+ */
+export const deleteEntry = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
+    const { id } = req.params;
+
+    // Get existing entry
+    const existingResult = await pool.query('SELECT * FROM entries WHERE id = $1', [id]);
+    if (existingResult.rows.length === 0) {
+      const error: AppError = new Error('Entry not found');
+      error.statusCode = 404;
+      error.code = 'ENTRY_NOT_FOUND';
+      return next(error);
+    }
+
+    const existingEntry = existingResult.rows[0];
+
+    // Check job site access (unless admin)
+    if (req.user.role !== 'admin') {
+      const jobSiteAccess = req.user.job_site_access || [];
+      if (!jobSiteAccess.includes(existingEntry.job_site_id)) {
+        const error: AppError = new Error('Access denied to this job site');
+        error.statusCode = 403;
+        error.code = 'JOB_SITE_ACCESS_DENIED';
+        return next(error);
+      }
+    }
+
+    // Delete entry
+    await pool.query('DELETE FROM entries WHERE id = $1', [id]);
+
+    // Log action
+    await pool.query(
+      `INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        req.user.id,
+        'delete_entry',
+        'entry',
+        id,
+        JSON.stringify({
+          entry_type: existingEntry.entry_type,
+          job_site_id: existingEntry.job_site_id,
+          deleted_by: req.user.username,
+        }),
+      ]
+    );
+
+    logger.info(`Entry deleted: ${existingEntry.entry_type} (${id}) by ${req.user.username}`);
+
+    // Broadcast occupancy update
+    webSocketService.broadcastOccupancyUpdate(existingEntry.job_site_id).catch((err) => {
+      logger.error('Error broadcasting occupancy update:', err);
+    });
+
+    res.json({
+      success: true,
+      message: 'Entry deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

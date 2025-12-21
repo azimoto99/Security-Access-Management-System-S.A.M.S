@@ -22,6 +22,13 @@ export interface CreateEntryData {
   photos?: string[];
 }
 
+export interface UpdateEntryData {
+  job_site_id?: string;
+  entry_type?: EntryType;
+  entry_data?: Record<string, any>;
+  photos?: string[];
+}
+
 export interface ExitEntryData {
   entry_id: string;
   override?: boolean;
@@ -142,6 +149,27 @@ export const entryService = {
       return response.data.data.entry;
     }
     throw new Error(response.data.error?.message || 'Failed to fetch entry');
+  },
+
+  /**
+   * Update entry
+   */
+  async updateEntry(id: string, data: UpdateEntryData): Promise<Entry> {
+    const response = await api.put<ApiResponse<{ entry: Entry }>>(`/entries/${id}`, data);
+    if (response.data.success && response.data.data) {
+      return response.data.data.entry;
+    }
+    throw new Error(response.data.error?.message || 'Failed to update entry');
+  },
+
+  /**
+   * Delete entry
+   */
+  async deleteEntry(id: string): Promise<void> {
+    const response = await api.delete<ApiResponse<{ message: string }>>(`/entries/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete entry');
+    }
   },
 };
 
