@@ -112,6 +112,8 @@ export const validateTruckEntry = (data: any): TruckEntryData => {
 
   return {
     license_plate: data.license_plate.trim().toUpperCase(),
+    truck_number: data.truck_number?.trim(),
+    trailer_number: data.trailer_number?.trim(),
     company: data.company.trim(),
     driver_name: data.driver_name.trim(),
     cargo_description: data.cargo_description?.trim(),

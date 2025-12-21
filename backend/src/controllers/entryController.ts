@@ -366,10 +366,8 @@ export const createManualExit = async (
 
     logger.info(`Manual exit created: ${entry_type} (${entry.id}) by ${req.user.username}`);
 
-    // Broadcast occupancy update (though this won't affect occupancy since it's immediately exited)
-    webSocketService.broadcastOccupancyUpdate(job_site_id).catch((err) => {
-      logger.error('Error broadcasting occupancy update:', err);
-    });
+    // Don't broadcast occupancy update for manual exits - they don't affect occupancy
+    // since they're created with status='exited' and won't be counted in occupancy calculations
 
     res.status(201).json({
       success: true,
@@ -398,7 +396,7 @@ export const processExit = async (
       return next(error);
     }
 
-    const { entry_id, override, override_reason } = req.body as ExitEntryRequest;
+    const { entry_id, override, override_reason, trailer_number } = req.body as ExitEntryRequest;
 
     if (!entry_id) {
       const error: AppError = new Error('entry_id is required');
@@ -442,10 +440,27 @@ export const processExit = async (
     const exitTime = new Date();
     const durationMinutes = Math.floor((exitTime.getTime() - entryTime.getTime()) / (1000 * 60));
 
+    // Update entry_data if trailer_number is provided (for trucks)
+    // Store both entry_trailer_number (original) and exit_trailer_number (new)
+    let updatedEntryData = entry.entry_data;
+    if (trailer_number !== undefined && entry.entry_type === 'truck') {
+      const entryTrailerNumber = entry.entry_data.trailer_number;
+      updatedEntryData = {
+        ...entry.entry_data,
+        entry_trailer_number: entryTrailerNumber, // Store original entry trailer number
+        exit_trailer_number: trailer_number.trim() || undefined, // Store exit trailer number
+      };
+    }
+
     // Update entry
     const updateResult = await pool.query(
-      'UPDATE entries SET exit_time = $1, status = $2 WHERE id = $3 RETURNING *',
-      [exitTime, override ? 'emergency_exit' : 'exited', entry_id]
+      'UPDATE entries SET exit_time = $1, status = $2, entry_data = $3 WHERE id = $4 RETURNING *',
+      [
+        exitTime,
+        override ? 'emergency_exit' : 'exited',
+        JSON.stringify(updatedEntryData),
+        entry_id,
+      ]
     );
 
     const updatedEntry = updateResult.rows[0];
@@ -464,6 +479,9 @@ export const processExit = async (
           override,
           override_reason,
           processed_by: req.user.username,
+          ...(trailer_number !== undefined && entry.entry_type === 'truck' ? {
+            exit_trailer_number: trailer_number.trim() || undefined,
+          } : {}),
         }),
       ]
     );

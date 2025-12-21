@@ -26,6 +26,7 @@ export interface ExitEntryData {
   entry_id: string;
   override?: boolean;
   override_reason?: string;
+  trailer_number?: string; // Optional: update trailer number on exit (for trucks)
 }
 
 export interface ManualExitData {

@@ -310,6 +310,13 @@ export const generateEntriesPDF = (entries: any[], filters?: any): jsPDF => {
   // Table data
   const tableData = entries.map((entry) => {
     const data = entry.entry_data || {};
+    // Get entry trailer (original) and exit trailer (if updated on exit)
+    const entryTrailer = data.entry_trailer_number || data.trailer_number || 'N/A';
+    // Exit trailer: use exit_trailer_number if set, otherwise use entry trailer if exited, or 'N/A' if not exited
+    const exitTrailer = data.exit_trailer_number 
+      ? data.exit_trailer_number 
+      : (entry.exit_time ? entryTrailer : 'N/A');
+    
     return [
       entry.entry_type,
       (entry as any).job_site_name || 'N/A',
@@ -319,6 +326,9 @@ export const generateEntriesPDF = (entries: any[], filters?: any): jsPDF => {
       calculateDuration(entry),
       (entry as any).guard_username || 'N/A',
       data.license_plate || data.name || 'N/A',
+      data.truck_number || 'N/A',
+      entryTrailer,
+      exitTrailer,
       data.driver_name || 'N/A',
       data.company || 'N/A',
       data.purpose || 'N/A',
@@ -326,33 +336,37 @@ export const generateEntriesPDF = (entries: any[], filters?: any): jsPDF => {
   });
 
   // Generate table
+  // Use compact column widths that fit within landscape page
   autoTable(doc, {
     startY: yPosition,
-    head: [['Type', 'Job Site', 'Status', 'Entry Time', 'Exit Time', 'Duration (min)', 'Guard', 'License/Name', 'Driver', 'Company', 'Purpose']],
+    head: [['Type', 'Job Site', 'Status', 'Entry Time', 'Exit Time', 'Dur', 'Guard', 'License/Name', 'Truck', 'Entry Trailer', 'Exit Trailer', 'Driver', 'Company', 'Purpose']],
     body: tableData,
     theme: 'striped',
     headStyles: {
       fillColor: [25, 118, 210],
       textColor: 255,
       fontStyle: 'bold',
-      fontSize: 7,
+      fontSize: 6,
     },
     styles: {
-      fontSize: 7,
-      cellPadding: 1.5,
+      fontSize: 6,
+      cellPadding: 0.8,
     },
     columnStyles: {
-      0: { cellWidth: 15 },
-      1: { cellWidth: 25 },
-      2: { cellWidth: 15 },
-      3: { cellWidth: 30 },
-      4: { cellWidth: 30 },
-      5: { cellWidth: 18 },
-      6: { cellWidth: 20 },
-      7: { cellWidth: 25 },
-      8: { cellWidth: 20 },
-      9: { cellWidth: 25 },
-      10: { cellWidth: 30 },
+      0: { cellWidth: 7 }, // Type
+      1: { cellWidth: 14 }, // Job Site
+      2: { cellWidth: 7 }, // Status
+      3: { cellWidth: 18 }, // Entry Time
+      4: { cellWidth: 18 }, // Exit Time
+      5: { cellWidth: 8 }, // Duration
+      6: { cellWidth: 10 }, // Guard
+      7: { cellWidth: 14 }, // License/Name
+      8: { cellWidth: 10 }, // Truck #
+      9: { cellWidth: 10 }, // Entry Trailer
+      10: { cellWidth: 10 }, // Exit Trailer
+      11: { cellWidth: 10 }, // Driver
+      12: { cellWidth: 14 }, // Company
+      13: { cellWidth: 18 }, // Purpose
     },
     margin: { top: yPosition, left: 14, right: 14 },
   });

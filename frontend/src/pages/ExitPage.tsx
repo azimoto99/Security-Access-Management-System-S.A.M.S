@@ -51,6 +51,7 @@ export const ExitPage: React.FC = () => {
   const [useOverride, setUseOverride] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [manualExitDialog, setManualExitDialog] = useState(false);
+  const [exitTrailerNumber, setExitTrailerNumber] = useState('');
 
   useEffect(() => {
     loadJobSites();
@@ -112,11 +113,13 @@ export const ExitPage: React.FC = () => {
         entry_id: entry.id,
         override,
         override_reason: override ? overrideReason : undefined,
+        trailer_number: entry.entry_type === 'truck' && exitTrailerNumber.trim() ? exitTrailerNumber.trim() : undefined,
       });
 
       setExitDialog(null);
       setOverrideReason('');
       setUseOverride(false);
+      setExitTrailerNumber('');
       await loadActiveEntries();
     } catch (err: any) {
       setError(err.message || 'Failed to process exit');
@@ -361,7 +364,12 @@ export const ExitPage: React.FC = () => {
       </Dialog>
 
       {/* Exit Confirmation Dialog */}
-      <Dialog open={!!exitDialog} onClose={() => setExitDialog(null)} maxWidth="sm" fullWidth>
+      <Dialog open={!!exitDialog} onClose={() => {
+        setExitDialog(null);
+        setExitTrailerNumber('');
+        setOverrideReason('');
+        setUseOverride(false);
+      }} maxWidth="sm" fullWidth>
         <DialogTitle>Process Exit</DialogTitle>
         <DialogContent>
           {exitDialog && (
@@ -378,6 +386,22 @@ export const ExitPage: React.FC = () => {
               <Typography variant="body1" gutterBottom>
                 <strong>Duration:</strong> {formatDuration(exitDialog)}
               </Typography>
+              {exitDialog.entry_type === 'truck' && (
+                <>
+                  <Typography variant="body2" sx={{ mt: 2, mb: 1, color: 'text.secondary' }}>
+                    <strong>Entry Trailer:</strong> {exitDialog.entry_data.trailer_number || 'None'}
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    label="Exit Trailer Number (Optional)"
+                    value={exitTrailerNumber}
+                    onChange={(e) => setExitTrailerNumber(e.target.value)}
+                    placeholder="Enter trailer number if different from entry"
+                    sx={{ mt: 1 }}
+                    helperText="Leave blank if same as entry trailer"
+                  />
+                </>
+              )}
               <Box sx={{ mt: 2 }}>
                 <Button
                   variant={useOverride ? 'contained' : 'outlined'}
@@ -403,7 +427,12 @@ export const ExitPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setExitDialog(null)}>Cancel</Button>
+          <Button onClick={() => {
+            setExitDialog(null);
+            setExitTrailerNumber('');
+            setOverrideReason('');
+            setUseOverride(false);
+          }}>Cancel</Button>
           <Button
             onClick={() => exitDialog && handleExit(exitDialog, useOverride)}
             variant="contained"

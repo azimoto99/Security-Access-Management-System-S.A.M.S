@@ -21,6 +21,7 @@ const exitEntrySchema = Joi.object({
   entry_id: Joi.string().uuid().required(),
   override: Joi.boolean().optional(),
   override_reason: Joi.string().optional(),
+  trailer_number: Joi.string().optional(),
 });
 
 const manualExitSchema = Joi.object({

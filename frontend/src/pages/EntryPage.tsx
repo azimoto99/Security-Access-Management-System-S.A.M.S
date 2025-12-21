@@ -30,6 +30,7 @@ export const EntryPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [createdEntryId, setCreatedEntryId] = useState<string | null>(null);
+  const [formKey, setFormKey] = useState(0); // Key to force form reset
 
   useEffect(() => {
     loadJobSites();
@@ -84,12 +85,14 @@ export const EntryPage: React.FC = () => {
       });
 
       setCreatedEntryId(entry.id);
-      setSuccess('Entry logged successfully! You can now upload photos if needed.');
-      // Reset form after a delay
+      setSuccess(`✓ Entry logged successfully! Entry ID: ${entry.id.substring(0, 8)}... You can now upload photos if needed.`);
+      
+      // Reset form after a delay to allow user to see success message
       setTimeout(() => {
         setSuccess(null);
         setCreatedEntryId(null);
-        // Optionally navigate or reset form
+        // Reset form by changing the key, which will remount the component
+        setFormKey((prev) => prev + 1);
       }, 5000);
     } catch (err: any) {
       setError(err.message || 'Failed to create entry');
@@ -203,6 +206,7 @@ export const EntryPage: React.FC = () => {
 
           {selectedJobSiteId && (
             <EntryForm
+              key={formKey}
               entryType={entryType}
               jobSiteId={selectedJobSiteId}
               onSubmit={handleSubmit}

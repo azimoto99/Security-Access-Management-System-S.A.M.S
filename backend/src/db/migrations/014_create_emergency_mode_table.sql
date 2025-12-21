@@ -26,3 +26,6 @@ COMMENT ON COLUMN emergency_mode.summary_report IS 'Summary report generated whe
 
 
 
+
+
+

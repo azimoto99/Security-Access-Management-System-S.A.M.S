@@ -5,3 +5,6 @@ ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('guard', 'admi
 -- Update comment
 COMMENT ON TABLE users IS 'User accounts for security guards, administrators, employees, and clients';
 
+
+
+
