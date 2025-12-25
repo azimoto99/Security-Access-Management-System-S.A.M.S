@@ -14,6 +14,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
 import { EntryForm } from '../components/EntryForm';
 import { Translate } from '@mui/icons-material';
