@@ -157,9 +157,9 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
 
   return (
     <>
-      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2, minHeight: 0, overflow: 'hidden' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexShrink: 0 }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Vehicles On Site
             </Typography>
@@ -178,7 +178,7 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
             onChange={(e) => setSearchTerm(e.target.value)}
             size="small"
             fullWidth
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, flexShrink: 0 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -193,9 +193,11 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
             sx={{
               flexGrow: 1,
               overflowY: 'auto',
+              overflowX: 'hidden',
               display: 'flex',
               flexDirection: 'column',
               gap: 1.5,
+              minHeight: 0,
             }}
           >
             {error ? (
