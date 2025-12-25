@@ -45,8 +45,8 @@ export const AdminDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month'>('today');
-  const [siteFilter, setSiteFilter] = useState<string>('all');
-  const [clientFilter, setClientFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [jobSiteFilter, setJobSiteFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
 
