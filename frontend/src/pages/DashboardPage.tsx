@@ -23,6 +23,11 @@ import {
   Tab,
   useMediaQuery,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
 } from '@mui/material';
 import {
   Logout,
@@ -38,6 +43,7 @@ import {
   Dashboard as DashboardIcon,
   Login as LoginIcon,
   Logout as LogoutIcon,
+  ExitToApp,
 } from '@mui/icons-material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
@@ -50,6 +56,7 @@ import { RecentActivityList } from '../components/RecentActivityList';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { QuickEntryForm } from '../components/QuickEntryForm';
 import { OnSiteVehiclesList } from '../components/OnSiteVehiclesList';
+import { ManualExitForm } from '../components/ManualExitForm';
 import { entryService, type Entry } from '../services/entryService';
 
 export const DashboardPage: React.FC = () => {
@@ -68,6 +75,9 @@ export const DashboardPage: React.FC = () => {
   const [onSiteError, setOnSiteError] = useState<string | null>(null);
   const [guardSelectedSiteId, setGuardSelectedSiteId] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState(0);
+  const [manualExitDialogOpen, setManualExitDialogOpen] = useState(false);
+  const [manualExitSuccess, setManualExitSuccess] = useState<string | null>(null);
+  const [manualExitError, setManualExitError] = useState<string | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -145,6 +155,26 @@ export const DashboardPage: React.FC = () => {
       setTimeout(() => {
         loadOnSiteEntries(guardSelectedSiteId);
       }, 500);
+    }
+  };
+
+  // Handle manual exit
+  const handleManualExit = async (data: any) => {
+    try {
+      setManualExitError(null);
+      setManualExitSuccess(null);
+      
+      const entry = await entryService.createManualExit(data);
+      
+      setManualExitDialogOpen(false);
+      setManualExitSuccess(`✓ Manual exit logged successfully! Entry ID: ${entry.id.substring(0, 8)}...`);
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setManualExitSuccess(null);
+      }, 5000);
+    } catch (err: any) {
+      setManualExitError(err.message || 'Failed to log manual exit');
     }
   };
 
@@ -341,9 +371,9 @@ export const DashboardPage: React.FC = () => {
             </IconButton>
           </Toolbar>
         </AppBar>
-        <Container maxWidth="xl" sx={{ py: 2, height: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column' }}>
+        <Container maxWidth="xl" sx={{ py: 2, height: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Header Section */}
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2, flexShrink: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
               <Box>
                 <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
@@ -353,39 +383,50 @@ export const DashboardPage: React.FC = () => {
                   {user?.username} • Currently On Site: <strong>{guardCurrentOccupancy}</strong> vehicles
                 </Typography>
               </Box>
-              {jobSites.length > 1 && (
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Job Site</InputLabel>
-                  <Select
-                    value={guardSelectedSiteId}
-                    onChange={(e) => {
-                      const newSiteId = e.target.value;
-                      setGuardSelectedSiteId(newSiteId);
-                      loadOnSiteEntries(newSiteId);
-                    }}
-                    label="Job Site"
-                  >
-                    {jobSites
-                      .filter((site) => user?.role === 'admin' || user?.job_site_access?.includes(site.id))
-                      .map((site) => (
-                        <MenuItem key={site.id} value={site.id}>
-                          {site.name}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
-              )}
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  startIcon={<ExitToApp />}
+                  onClick={() => setManualExitDialogOpen(true)}
+                  size="small"
+                >
+                  Manual Exit
+                </Button>
+                {jobSites.length > 1 && (
+                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Job Site</InputLabel>
+                    <Select
+                      value={guardSelectedSiteId}
+                      onChange={(e) => {
+                        const newSiteId = e.target.value;
+                        setGuardSelectedSiteId(newSiteId);
+                        loadOnSiteEntries(newSiteId);
+                      }}
+                      label="Job Site"
+                    >
+                      {jobSites
+                        .filter((site) => user?.role === 'admin' || user?.job_site_access?.includes(site.id))
+                        .map((site) => (
+                          <MenuItem key={site.id} value={site.id}>
+                            {site.name}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+                )}
+              </Box>
             </Box>
           </Box>
 
           {/* Mobile: Tabbed Interface */}
           {isMobile ? (
-            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-              <Tabs value={mobileTab} onChange={(_, newValue) => setMobileTab(newValue)} sx={{ mb: 2 }}>
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+              <Tabs value={mobileTab} onChange={(_, newValue) => setMobileTab(newValue)} sx={{ mb: 2, flexShrink: 0 }}>
                 <Tab label="Log Entry" />
                 <Tab label={`On Site (${guardCurrentOccupancy})`} />
               </Tabs>
-              <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+              <Box sx={{ flexGrow: 1, overflow: 'auto', minHeight: 0 }}>
                 {mobileTab === 0 ? (
                   <QuickEntryForm
                     jobSiteId={guardSelectedSiteId}
@@ -403,10 +444,10 @@ export const DashboardPage: React.FC = () => {
             </Box>
           ) : (
             /* Desktop: Split-Screen Layout */
-            <Grid container spacing={2} sx={{ flexGrow: 1, overflow: 'hidden' }}>
+            <Grid container spacing={2} sx={{ flexGrow: 1, minHeight: 0, overflow: 'hidden' }}>
               {/* Left Column: Entry Form (40%) */}
               <Grid item xs={12} md={4.8} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <Box sx={{ height: '100%', overflow: 'auto' }}>
+                <Box sx={{ height: '100%', overflow: 'auto', minHeight: 0 }}>
                   <QuickEntryForm
                     jobSiteId={guardSelectedSiteId}
                     onEntryCreated={handleEntryCreated}
@@ -416,7 +457,7 @@ export const DashboardPage: React.FC = () => {
 
               {/* Right Column: On-Site List (60%) */}
               <Grid item xs={12} md={7.2} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <Box sx={{ height: '100%', overflow: 'hidden' }}>
+                <Box sx={{ height: '100%', overflow: 'auto', minHeight: 0 }}>
                   <OnSiteVehiclesList
                     entries={onSiteEntries}
                     loading={onSiteLoading}
@@ -428,6 +469,48 @@ export const DashboardPage: React.FC = () => {
             </Grid>
           )}
         </Container>
+
+        {/* Manual Exit Dialog */}
+        <Dialog
+          open={manualExitDialogOpen}
+          onClose={() => {
+            setManualExitDialogOpen(false);
+            setManualExitError(null);
+          }}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Log Manual Exit</DialogTitle>
+          <DialogContent>
+            {manualExitError && (
+              <Alert severity="error" sx={{ mb: 2 }} onClose={() => setManualExitError(null)}>
+                {manualExitError}
+              </Alert>
+            )}
+            {guardSelectedSiteId && (
+              <ManualExitForm
+                jobSiteId={guardSelectedSiteId}
+                onSubmit={handleManualExit}
+                onCancel={() => {
+                  setManualExitDialogOpen(false);
+                  setManualExitError(null);
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Success Snackbar */}
+        <Snackbar
+          open={!!manualExitSuccess}
+          autoHideDuration={5000}
+          onClose={() => setManualExitSuccess(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setManualExitSuccess(null)} severity="success" sx={{ width: '100%' }}>
+            {manualExitSuccess}
+          </Alert>
+        </Snackbar>
       </Box>
     );
   }

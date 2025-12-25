@@ -13,6 +13,7 @@ import {
   Collapse,
   IconButton,
   CircularProgress,
+  Grid,
 } from '@mui/material';
 import {
   CameraAlt,
@@ -43,55 +44,210 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
     severity: 'success',
   });
   const [entryType, setEntryType] = useState<EntryType>('vehicle');
-  const [identifier, setIdentifier] = useState('');
-  const [company, setCompany] = useState('');
-  const [notes, setNotes] = useState('');
-  const [showNotes, setShowNotes] = useState(false);
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdEntryId, setCreatedEntryId] = useState<string | null>(null);
   const identifierInputRef = useRef<HTMLInputElement>(null);
   const photoUploadRef = useRef<PhotoUploadRef>(null);
+  const autofillTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasAutofilledRef = useRef(false);
 
-  // Auto-focus identifier field on mount and after submission
+  // Initialize form data when entry type changes
   useEffect(() => {
-    identifierInputRef.current?.focus();
+    switch (entryType) {
+      case 'vehicle':
+        setFormData({
+          license_plate: '',
+          vehicle_type: '',
+          driver_name: '',
+          company: '',
+          purpose: '',
+          expected_duration: '',
+        });
+        break;
+      case 'visitor':
+        setFormData({
+          name: '',
+          company: '',
+          contact_phone: '',
+          purpose: '',
+          host_contact: '',
+          expected_duration: '',
+        });
+        break;
+      case 'truck':
+        setFormData({
+          license_plate: '',
+          truck_number: '',
+          trailer_number: '',
+          company: '',
+          driver_name: '',
+          cargo_description: '',
+          delivery_pickup: 'delivery',
+          expected_duration: '',
+        });
+        break;
+    }
+    setErrors({});
+    hasAutofilledRef.current = false;
+    setTimeout(() => identifierInputRef.current?.focus(), 100);
   }, [entryType]);
 
-  const getIdentifierLabel = () => {
-    switch (entryType) {
-      case 'vehicle':
-      case 'truck':
-        return 'License Plate';
-      case 'visitor':
-        return 'Visitor Name';
-      default:
-        return 'Identifier';
+  // Autofill from previous entries
+  useEffect(() => {
+    if (entryType !== 'vehicle' && entryType !== 'truck') {
+      return;
     }
-  };
 
-  const getIdentifierPlaceholder = () => {
-    switch (entryType) {
-      case 'vehicle':
-        return 'ABC-123';
-      case 'truck':
-        return 'TRK-456';
-      case 'visitor':
-        return 'John Doe';
-      default:
-        return '';
+    const licensePlate = formData.license_plate?.trim().toUpperCase();
+    const truckNumber = entryType === 'truck' ? formData.truck_number?.trim() : null;
+    
+    const hasSearchValue = 
+      (licensePlate && licensePlate.length >= 2) || 
+      (truckNumber && truckNumber.length >= 2);
+    
+    if (!hasSearchValue) {
+      return;
     }
-  };
+
+    if (autofillTimeoutRef.current) {
+      clearTimeout(autofillTimeoutRef.current);
+    }
+
+    autofillTimeoutRef.current = setTimeout(async () => {
+      try {
+        const searchParams: any = {
+          entry_type: entryType,
+          limit: '1',
+        };
+
+        if (licensePlate && licensePlate.length >= 2) {
+          searchParams.license_plate = licensePlate;
+        }
+
+        if (entryType === 'truck' && truckNumber && truckNumber.length >= 2) {
+          searchParams.search_term = truckNumber;
+        }
+
+        const response = await entryService.searchEntries(searchParams);
+
+        if (response.entries && response.entries.length > 0) {
+          const previousEntry = response.entries[0];
+          const entryData = previousEntry.entry_data || {};
+
+          setFormData((prev) => {
+            const updated = { ...prev };
+            let hasChanges = false;
+
+            if (entryType === 'vehicle') {
+              if (!prev.driver_name && entryData.driver_name) {
+                updated.driver_name = entryData.driver_name;
+                hasChanges = true;
+              }
+              if (!prev.company && entryData.company) {
+                updated.company = entryData.company;
+                hasChanges = true;
+              }
+              if (!prev.vehicle_type && entryData.vehicle_type) {
+                updated.vehicle_type = entryData.vehicle_type;
+                hasChanges = true;
+              }
+            } else if (entryType === 'truck') {
+              if (!prev.license_plate && entryData.license_plate) {
+                updated.license_plate = entryData.license_plate;
+                hasChanges = true;
+              }
+              if (!prev.truck_number && entryData.truck_number) {
+                updated.truck_number = entryData.truck_number;
+                hasChanges = true;
+              }
+              if (!prev.driver_name && entryData.driver_name) {
+                updated.driver_name = entryData.driver_name;
+                hasChanges = true;
+              }
+              if (!prev.company && entryData.company) {
+                updated.company = entryData.company;
+                hasChanges = true;
+              }
+            }
+
+            if (hasChanges) {
+              hasAutofilledRef.current = true;
+            }
+
+            return updated;
+          });
+        }
+      } catch (error) {
+        console.log('Autofill search failed:', error);
+      }
+    }, 4000);
+
+    return () => {
+      if (autofillTimeoutRef.current) {
+        clearTimeout(autofillTimeoutRef.current);
+      }
+    };
+  }, [formData.license_plate, formData.truck_number, entryType]);
 
   const showSnackbar = (message: string, severity: 'success' | 'error' = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
 
   const validate = (): boolean => {
-    if (!identifier.trim()) {
-      showSnackbar(`${getIdentifierLabel()} is required`, 'error');
+    const newErrors: Record<string, string> = {};
+
+    if (entryType === 'vehicle') {
+      if (!formData.license_plate?.trim()) newErrors.license_plate = 'License plate is required';
+      if (!formData.vehicle_type?.trim()) newErrors.vehicle_type = 'Vehicle type is required';
+      if (!formData.driver_name?.trim()) newErrors.driver_name = 'Driver name is required';
+      if (!formData.purpose?.trim()) newErrors.purpose = 'Purpose is required';
+    } else if (entryType === 'visitor') {
+      if (!formData.name?.trim()) newErrors.name = 'Name is required';
+      if (!formData.purpose?.trim()) newErrors.purpose = 'Purpose is required';
+    } else if (entryType === 'truck') {
+      if (!formData.license_plate?.trim()) newErrors.license_plate = 'License plate is required';
+      if (!formData.company?.trim()) newErrors.company = 'Company is required';
+      if (!formData.driver_name?.trim()) newErrors.driver_name = 'Driver name is required';
+      if (!formData.delivery_pickup) newErrors.delivery_pickup = 'Delivery/pickup type is required';
+    }
+
+    if (formData.expected_duration && (isNaN(formData.expected_duration) || formData.expected_duration < 0)) {
+      newErrors.expected_duration = 'Expected duration must be a non-negative number';
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      showSnackbar('Please fill in all required fields', 'error');
       return false;
     }
     return true;
+  };
+
+  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSelectChange = (field: string) => (e: any) => {
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,26 +260,18 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Build entry_data based on entry type
-      const entryData: Record<string, any> = {
-        company: company.trim() || undefined,
-        purpose: notes.trim() || 'Site visit',
-      };
+      const entryData: Record<string, any> = { ...formData };
 
-      if (entryType === 'vehicle') {
-        entryData.license_plate = identifier.trim().toUpperCase();
-        entryData.vehicle_type = 'car';
-        entryData.driver_name = '';
-      } else if (entryType === 'truck') {
-        entryData.license_plate = identifier.trim().toUpperCase();
-        entryData.truck_number = '';
-      } else if (entryType === 'visitor') {
-        entryData.name = identifier.trim();
+      // Clean up expected_duration
+      if (entryData.expected_duration === '') {
+        delete entryData.expected_duration;
+      } else if (entryData.expected_duration) {
+        entryData.expected_duration = parseInt(entryData.expected_duration);
       }
 
-      // Remove undefined values
+      // Remove empty optional fields
       Object.keys(entryData).forEach((key) => {
-        if (entryData[key] === undefined || entryData[key] === '') {
+        if (entryData[key] === '') {
           delete entryData[key];
         }
       });
@@ -137,8 +285,10 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
       setCreatedEntryId(entry.id);
       
       // Show success message
-      const identifierValue = identifier.trim().toUpperCase();
-      showSnackbar(`✓ ${identifierValue} logged successfully`, 'success');
+      const identifier = entryType === 'visitor' 
+        ? formData.name 
+        : formData.license_plate?.toUpperCase() || '';
+      showSnackbar(`✓ ${identifier} logged successfully`, 'success');
 
       // Upload photos if any
       if (photoUploadRef.current?.hasPhotos()) {
@@ -146,7 +296,6 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
           await photoUploadRef.current.uploadPhotos();
         } catch (photoError) {
           console.error('Photo upload error:', photoError);
-          // Don't fail the whole submission if photos fail
         }
       }
 
@@ -156,10 +305,8 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
       }
 
       // Reset form
-      setIdentifier('');
-      setCompany('');
-      setNotes('');
-      setShowNotes(false);
+      setEntryType('vehicle');
+      setShowOptionalFields(false);
       setCreatedEntryId(null);
       
       // Refocus identifier field
@@ -175,8 +322,8 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Submit on Enter key (unless in textarea)
-    if (e.key === 'Enter' && e.target instanceof HTMLInputElement && !e.shiftKey) {
+    // Submit on Enter key (unless in textarea or multiline field)
+    if (e.key === 'Enter' && e.target instanceof HTMLInputElement && !e.shiftKey && !(e.target as HTMLInputElement).multiline) {
       e.preventDefault();
       handleSubmit(e as any);
     }
@@ -184,7 +331,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2, overflow: 'auto' }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           Log New Entry
         </Typography>
@@ -200,11 +347,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
             <InputLabel>Entry Type</InputLabel>
             <Select
               value={entryType}
-              onChange={(e) => {
-                setEntryType(e.target.value as EntryType);
-                setIdentifier('');
-                setTimeout(() => identifierInputRef.current?.focus(), 100);
-              }}
+              onChange={(e) => setEntryType(e.target.value as EntryType)}
               label="Entry Type"
             >
               <MenuItem value="vehicle">Vehicle</MenuItem>
@@ -213,44 +356,248 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
             </Select>
           </FormControl>
 
-          {/* Identifier */}
-          <TextField
-            inputRef={identifierInputRef}
-            label={getIdentifierLabel()}
-            placeholder={getIdentifierPlaceholder()}
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            required
-            fullWidth
-            size="small"
-            autoFocus
-            autoComplete="off"
-          />
+          {/* Vehicle Fields */}
+          {entryType === 'vehicle' && (
+            <>
+              <TextField
+                inputRef={identifierInputRef}
+                label="License Plate"
+                placeholder="ABC-123"
+                value={formData.license_plate || ''}
+                onChange={handleChange('license_plate')}
+                error={!!errors.license_plate}
+                helperText={errors.license_plate}
+                required
+                fullWidth
+                size="small"
+                autoFocus
+                autoComplete="off"
+              />
+              <TextField
+                label="Vehicle Type"
+                placeholder="Car, SUV, Van, etc."
+                value={formData.vehicle_type || ''}
+                onChange={handleChange('vehicle_type')}
+                error={!!errors.vehicle_type}
+                helperText={errors.vehicle_type}
+                required
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              <TextField
+                label="Driver Name"
+                value={formData.driver_name || ''}
+                onChange={handleChange('driver_name')}
+                error={!!errors.driver_name}
+                helperText={errors.driver_name}
+                required
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              <TextField
+                label="Company"
+                value={formData.company || ''}
+                onChange={handleChange('company')}
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              <TextField
+                label="Purpose"
+                value={formData.purpose || ''}
+                onChange={handleChange('purpose')}
+                error={!!errors.purpose}
+                helperText={errors.purpose}
+                required
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+            </>
+          )}
 
-          {/* Company */}
-          <TextField
-            label="Company/Organization"
-            placeholder="Optional"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            fullWidth
-            size="small"
-            autoComplete="off"
-          />
+          {/* Visitor Fields */}
+          {entryType === 'visitor' && (
+            <>
+              <TextField
+                inputRef={identifierInputRef}
+                label="Name"
+                placeholder="John Doe"
+                value={formData.name || ''}
+                onChange={handleChange('name')}
+                error={!!errors.name}
+                helperText={errors.name}
+                required
+                fullWidth
+                size="small"
+                autoFocus
+                autoComplete="off"
+              />
+              <TextField
+                label="Company"
+                value={formData.company || ''}
+                onChange={handleChange('company')}
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              <TextField
+                label="Contact Phone"
+                value={formData.contact_phone || ''}
+                onChange={handleChange('contact_phone')}
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              <TextField
+                label="Host Contact"
+                value={formData.host_contact || ''}
+                onChange={handleChange('host_contact')}
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              <TextField
+                label="Purpose"
+                value={formData.purpose || ''}
+                onChange={handleChange('purpose')}
+                error={!!errors.purpose}
+                helperText={errors.purpose}
+                required
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+            </>
+          )}
+
+          {/* Truck Fields */}
+          {entryType === 'truck' && (
+            <>
+              <TextField
+                inputRef={identifierInputRef}
+                label="License Plate"
+                placeholder="TRK-456"
+                value={formData.license_plate || ''}
+                onChange={handleChange('license_plate')}
+                error={!!errors.license_plate}
+                helperText={errors.license_plate}
+                required
+                fullWidth
+                size="small"
+                autoFocus
+                autoComplete="off"
+              />
+              <TextField
+                label="Truck Number"
+                value={formData.truck_number || ''}
+                onChange={handleChange('truck_number')}
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              <TextField
+                label="Trailer Number"
+                value={formData.trailer_number || ''}
+                onChange={handleChange('trailer_number')}
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              <TextField
+                label="Company"
+                value={formData.company || ''}
+                onChange={handleChange('company')}
+                error={!!errors.company}
+                helperText={errors.company}
+                required
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              <TextField
+                label="Driver Name"
+                value={formData.driver_name || ''}
+                onChange={handleChange('driver_name')}
+                error={!!errors.driver_name}
+                helperText={errors.driver_name}
+                required
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              <FormControl fullWidth size="small" required error={!!errors.delivery_pickup}>
+                <InputLabel>Delivery/Pickup</InputLabel>
+                <Select
+                  value={formData.delivery_pickup || 'delivery'}
+                  onChange={handleSelectChange('delivery_pickup')}
+                  label="Delivery/Pickup"
+                >
+                  <MenuItem value="delivery">Delivery</MenuItem>
+                  <MenuItem value="pickup">Pickup</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label="Cargo Description"
+                value={formData.cargo_description || ''}
+                onChange={handleChange('cargo_description')}
+                fullWidth
+                size="small"
+                multiline
+                rows={2}
+                autoComplete="off"
+              />
+            </>
+          )}
+
+          {/* Optional Fields (Collapsible) */}
+          <Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                mb: showOptionalFields ? 1 : 0,
+              }}
+              onClick={() => setShowOptionalFields(!showOptionalFields)}
+            >
+              <Typography variant="body2" sx={{ color: '#b0b0b0', flexGrow: 1 }}>
+                Additional Information (Optional)
+              </Typography>
+              <IconButton size="small">
+                {showOptionalFields ? <ExpandLess /> : <ExpandMore />}
+              </IconButton>
+            </Box>
+            <Collapse in={showOptionalFields}>
+              <TextField
+                label="Expected Duration (minutes)"
+                type="number"
+                value={formData.expected_duration || ''}
+                onChange={handleChange('expected_duration')}
+                error={!!errors.expected_duration}
+                helperText={errors.expected_duration}
+                fullWidth
+                size="small"
+                inputProps={{ min: 0 }}
+                autoComplete="off"
+              />
+            </Collapse>
+          </Box>
 
           {/* Photo Upload */}
           <Box>
             <Typography variant="body2" sx={{ mb: 1, color: '#b0b0b0' }}>
               Photos (Optional)
             </Typography>
-            {createdEntryId && (
+            {createdEntryId ? (
               <PhotoUpload
                 ref={photoUploadRef}
                 entryId={createdEntryId}
                 maxPhotos={5}
               />
-            )}
-            {!createdEntryId && (
+            ) : (
               <Button
                 variant="outlined"
                 startIcon={<CameraAlt />}
@@ -264,45 +611,12 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
             )}
           </Box>
 
-          {/* Notes (Collapsible) */}
-          <Box>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                mb: showNotes ? 1 : 0,
-              }}
-              onClick={() => setShowNotes(!showNotes)}
-            >
-              <Typography variant="body2" sx={{ color: '#b0b0b0', flexGrow: 1 }}>
-                Notes (Optional)
-              </Typography>
-              <IconButton size="small">
-                {showNotes ? <ExpandLess /> : <ExpandMore />}
-              </IconButton>
-            </Box>
-            <Collapse in={showNotes}>
-              <TextField
-                label="Notes"
-                placeholder="Additional information..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                fullWidth
-                size="small"
-                multiline
-                rows={2}
-                autoComplete="off"
-              />
-            </Collapse>
-          </Box>
-
           {/* Submit Button */}
           <Button
             type="submit"
             variant="contained"
             size="large"
-            disabled={isSubmitting || !identifier.trim()}
+            disabled={isSubmitting}
             startIcon={isSubmitting ? <CircularProgress size={20} /> : <CheckCircle />}
             sx={{
               mt: 'auto',
@@ -333,4 +647,3 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
     </Card>
   );
 };
-

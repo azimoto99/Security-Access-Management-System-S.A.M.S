@@ -44,10 +44,14 @@ export const getAuditLogs = async (
     if (date_from) filters.date_from = date_from as string;
     if (date_to) filters.date_to = date_to as string;
 
-    // For guards, filter by their accessible job sites
+    // For guards and clients, filter by their accessible job sites
     // Admins see all logs
     if (req.user.role !== 'admin' && req.user.job_site_access) {
       filters.job_site_ids = req.user.job_site_access;
+      // Clients should only see entry and job_site logs (exclude admin actions)
+      if (req.user.role === 'client') {
+        filters.is_client = true;
+      }
     }
 
     const result = await auditLogService.getAuditLogs(filters);
@@ -99,10 +103,14 @@ export const exportAuditLogs = async (
     if (date_from) filters.date_from = date_from as string;
     if (date_to) filters.date_to = date_to as string;
 
-    // For guards, filter by their accessible job sites
+    // For guards and clients, filter by their accessible job sites
     // Admins see all logs
     if (req.user.role !== 'admin' && req.user.job_site_access) {
       filters.job_site_ids = req.user.job_site_access;
+      // Clients should only see entry and job_site logs (exclude admin actions)
+      if (req.user.role === 'client') {
+        filters.is_client = true;
+      }
     }
 
     const result = await auditLogService.getAuditLogs(filters);

@@ -53,10 +53,21 @@ export const AuditLogsPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<AuditLogFilters>({
-    page: 1,
-    limit: 50,
-  });
+  
+  // Initialize filters with default resource_type for clients
+  const getInitialFilters = (): AuditLogFilters => {
+    const baseFilters: AuditLogFilters = {
+      page: 1,
+      limit: 50,
+    };
+    // If user is already loaded and is a client, set default resource_type
+    if (user?.role === 'client') {
+      baseFilters.resource_type = 'entry';
+    }
+    return baseFilters;
+  };
+  
+  const [filters, setFilters] = useState<AuditLogFilters>(getInitialFilters);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -65,6 +76,7 @@ export const AuditLogsPage: React.FC = () => {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [relatedEntry, setRelatedEntry] = useState<Entry | null>(null);
   const [loadingEntry, setLoadingEntry] = useState(false);
+  const [filtersInitialized, setFiltersInitialized] = useState(false);
 
   // Set default resource type to 'entry' for clients when user is loaded
   useEffect(() => {
@@ -73,13 +85,22 @@ export const AuditLogsPage: React.FC = () => {
         ...prev,
         resource_type: 'entry',
       }));
+      setFiltersInitialized(true);
+    } else if (user && user.role !== 'client') {
+      // For non-clients, mark as initialized immediately
+      setFiltersInitialized(true);
+    } else if (!user) {
+      // User not loaded yet, wait
+      setFiltersInitialized(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, filters.resource_type]);
 
   useEffect(() => {
-    loadLogs();
-  }, [filters]);
+    // Only load logs after filters are properly initialized
+    if (filtersInitialized || (user && user.role !== 'client')) {
+      loadLogs();
+    }
+  }, [filters, filtersInitialized, user]);
 
   const loadLogs = async () => {
     try {

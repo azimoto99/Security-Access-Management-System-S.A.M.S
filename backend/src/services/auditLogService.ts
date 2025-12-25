@@ -22,6 +22,7 @@ export interface AuditLogFilters {
   page?: number;
   limit?: number;
   job_site_ids?: string[]; // For filtering by accessible job sites (guards)
+  is_client?: boolean; // Flag to indicate if this is a client request (for stricter filtering)
 }
 
 /**
@@ -70,6 +71,8 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
 
     // Build base query - need to join with entries if filtering by job sites
     const needsJobSiteFilter = filters.job_site_ids && filters.job_site_ids.length > 0;
+    // For clients, only show entry and job_site logs (exclude admin actions)
+    const isClientFilter = filters.is_client === true;
     
     let query = `
       SELECT ${needsJobSiteFilter ? 'DISTINCT' : ''}
@@ -85,15 +88,23 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
     let paramCount = 1;
 
     // Filter by job site access for guards and clients
-    // For entry-related logs, filter by job_site_id
-    // For job_site-related logs, filter by job_site_id
-    // For other resource types, clients/guards can see them (they're typically admin actions or system-wide)
+    // For clients: ONLY show entry and job_site logs related to their sites (exclude admin actions)
+    // For guards: Show entry and job_site logs related to their sites, but also allow other resource types
     if (needsJobSiteFilter) {
-      query += ` AND (
-        (al.resource_type = 'entry' AND e.job_site_id = ANY($${paramCount}))
-        OR (al.resource_type = 'job_site' AND js.id = ANY($${paramCount}))
-        OR (al.resource_type NOT IN ('entry', 'job_site'))
-      )`;
+      if (isClientFilter) {
+        // Clients: ONLY entry and job_site logs for their sites
+        query += ` AND (
+          (al.resource_type = 'entry' AND e.job_site_id = ANY($${paramCount}))
+          OR (al.resource_type = 'job_site' AND js.id = ANY($${paramCount}))
+        )`;
+      } else {
+        // Guards: entry and job_site logs for their sites, plus other resource types
+        query += ` AND (
+          (al.resource_type = 'entry' AND e.job_site_id = ANY($${paramCount}))
+          OR (al.resource_type = 'job_site' AND js.id = ANY($${paramCount}))
+          OR (al.resource_type NOT IN ('entry', 'job_site'))
+        )`;
+      }
       params.push(filters.job_site_ids);
       paramCount++;
     }
@@ -148,11 +159,20 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
 
     // Apply same filters to count query
     if (needsJobSiteFilter) {
-      countQuery += ` AND (
-        (al.resource_type = 'entry' AND e.job_site_id = ANY($${countParamCount}))
-        OR (al.resource_type = 'job_site' AND js.id = ANY($${countParamCount}))
-        OR (al.resource_type NOT IN ('entry', 'job_site'))
-      )`;
+      if (isClientFilter) {
+        // Clients: ONLY entry and job_site logs for their sites
+        countQuery += ` AND (
+          (al.resource_type = 'entry' AND e.job_site_id = ANY($${countParamCount}))
+          OR (al.resource_type = 'job_site' AND js.id = ANY($${countParamCount}))
+        )`;
+      } else {
+        // Guards: entry and job_site logs for their sites, plus other resource types
+        countQuery += ` AND (
+          (al.resource_type = 'entry' AND e.job_site_id = ANY($${countParamCount}))
+          OR (al.resource_type = 'job_site' AND js.id = ANY($${countParamCount}))
+          OR (al.resource_type NOT IN ('entry', 'job_site'))
+        )`;
+      }
       countParams.push(filters.job_site_ids);
       countParamCount++;
     }
