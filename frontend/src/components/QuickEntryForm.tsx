@@ -13,7 +13,6 @@ import {
   Collapse,
   IconButton,
   CircularProgress,
-  Grid,
 } from '@mui/material';
 import {
   CameraAlt,
@@ -323,9 +322,13 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Submit on Enter key (unless in textarea or multiline field)
-    if (e.key === 'Enter' && e.target instanceof HTMLInputElement && !e.shiftKey && !(e.target as HTMLInputElement).multiline) {
-      e.preventDefault();
-      handleSubmit(e as any);
+    if (e.key === 'Enter' && e.target instanceof HTMLInputElement && !e.shiftKey) {
+      // Check if it's a textarea by checking the tagName
+      const target = e.target as HTMLElement;
+      if (target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        handleSubmit(e as any);
+      }
     }
   };
 
