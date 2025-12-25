@@ -424,6 +424,47 @@ export const DashboardPage: React.FC = () => {
             </Box>
           </Box>
 
+          {/* Quick Actions Section */}
+          <Box sx={{ mb: 2, flexShrink: 0 }}>
+            <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
+              Quick Actions
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                startIcon={<Assessment />}
+                onClick={() => navigate('/reports')}
+                sx={{
+                  borderColor: '#ffd700',
+                  color: '#ffd700',
+                  '&:hover': {
+                    borderColor: '#ffed4e',
+                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                  },
+                }}
+                size="small"
+              >
+                Reports
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<Search />}
+                onClick={() => navigate('/audit-logs')}
+                sx={{
+                  borderColor: '#ffd700',
+                  color: '#ffd700',
+                  '&:hover': {
+                    borderColor: '#ffed4e',
+                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                  },
+                }}
+                size="small"
+              >
+                Audit Logs
+              </Button>
+            </Box>
+          </Box>
+
           {/* Mobile: Tabbed Interface */}
           {isMobile ? (
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
