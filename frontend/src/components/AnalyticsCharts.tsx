@@ -44,9 +44,59 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
   period,
   onPeriodChange,
 }) => {
-  const handleExport = (chartType: string) => {
-    // TODO: Implement chart export functionality
-    console.log(`Export ${chartType} chart`);
+  const handleExport = async (chartType: string) => {
+    try {
+      // Get chart element by type
+      const chartId = `chart-${chartType}`;
+      const chartElement = document.getElementById(chartId);
+      
+      if (!chartElement) {
+        console.error(`Chart element not found: ${chartId}`);
+        return;
+      }
+
+      // Create canvas from SVG (Recharts renders SVG)
+      const svgElement = chartElement.querySelector('svg');
+      if (!svgElement) {
+        console.error('SVG element not found in chart');
+        return;
+      }
+
+      // Convert SVG to canvas
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      canvas.width = svgElement.clientWidth || 800;
+      canvas.height = svgElement.clientHeight || 600;
+
+      img.onload = () => {
+        if (ctx) {
+          ctx.fillStyle = '#1a1a1a';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          
+          // Download as PNG
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `chart-${chartType}-${new Date().toISOString().split('T')[0]}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }
+          });
+        }
+      };
+
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    } catch (error) {
+      console.error('Error exporting chart:', error);
+    }
   };
 
   if (loading) {
@@ -123,7 +173,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         </Box>
 
         {/* Site Activity Comparison */}
-        <Box sx={{ mb: 3 }}>
+        <Box id="chart-entriesBySite" sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography variant="subtitle2" sx={{ color: '#b0b0b0' }}>
               Site Activity Comparison
@@ -151,7 +201,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         </Box>
 
         {/* Entry Type Breakdown */}
-        <Box>
+        <Box id="chart-entryTypeBreakdown">
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography variant="subtitle2" sx={{ color: '#b0b0b0' }}>
               Entry Type Breakdown
