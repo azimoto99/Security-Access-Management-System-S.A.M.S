@@ -25,14 +25,31 @@ import {
   Card,
   CardContent,
   Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { Clear, Download, PictureAsPdf } from '@mui/icons-material';
 import { auditLogService, type AuditLog, type AuditLogFilters } from '../services/auditLogService';
 import { entryService, type Entry } from '../services/entryService';
 import { PhotoGallery } from '../components/PhotoGallery';
 import { generateAuditLogsPDF } from '../utils/pdfGenerator';
+import { useAuth } from '../contexts/AuthContext';
+
+// Available resource types in the system
+const RESOURCE_TYPES = [
+  { value: 'entry', label: 'Entry' },
+  { value: 'job_site', label: 'Job Site' },
+  { value: 'user', label: 'User' },
+  { value: 'watchlist', label: 'Watchlist' },
+  { value: 'hr_document', label: 'HR Document' },
+  { value: 'document_assignment', label: 'Document Assignment' },
+  { value: 'emergency_mode', label: 'Emergency Mode' },
+];
 
 export const AuditLogsPage: React.FC = () => {
+  const { user } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +65,17 @@ export const AuditLogsPage: React.FC = () => {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [relatedEntry, setRelatedEntry] = useState<Entry | null>(null);
   const [loadingEntry, setLoadingEntry] = useState(false);
+
+  // Set default resource type to 'entry' for clients when user is loaded
+  useEffect(() => {
+    if (user?.role === 'client' && !filters.resource_type) {
+      setFilters((prev) => ({
+        ...prev,
+        resource_type: 'entry',
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   useEffect(() => {
     loadLogs();
@@ -79,7 +107,12 @@ export const AuditLogsPage: React.FC = () => {
   };
 
   const handleClear = () => {
-    setFilters({ page: 1, limit: 50 });
+    const clearedFilters: AuditLogFilters = {
+      page: 1,
+      limit: 50,
+      ...(user?.role === 'client' ? { resource_type: 'entry' } : {}),
+    };
+    setFilters(clearedFilters);
     setPage(1);
   };
 
@@ -189,12 +222,23 @@ export const AuditLogsPage: React.FC = () => {
               onChange={(e) => handleFilterChange('action', e.target.value)}
               size="small"
             />
-            <TextField
-              label="Resource Type"
-              value={filters.resource_type || ''}
-              onChange={(e) => handleFilterChange('resource_type', e.target.value)}
-              size="small"
-            />
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel>Resource Type</InputLabel>
+              <Select
+                value={filters.resource_type || ''}
+                label="Resource Type"
+                onChange={(e) => handleFilterChange('resource_type', e.target.value || undefined)}
+              >
+                <MenuItem value="">
+                  <em>All Types</em>
+                </MenuItem>
+                {RESOURCE_TYPES.map((type) => (
+                  <MenuItem key={type.value} value={type.value}>
+                    {type.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               label="Date From"
               type="date"
