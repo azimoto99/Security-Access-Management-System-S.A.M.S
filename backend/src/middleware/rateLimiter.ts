@@ -84,7 +84,7 @@ class RateLimiter {
 
 // Create rate limiters for different endpoints
 export const generalRateLimiter = new RateLimiter(15 * 60 * 1000, 100); // 100 requests per 15 minutes
-export const authRateLimiter = new RateLimiter(15 * 60 * 1000, 5); // 5 requests per 15 minutes for auth
+export const authRateLimiter = new RateLimiter(15 * 60 * 1000, 20); // 20 requests per 15 minutes for auth (allows for multiple attempts and retries)
 export const strictRateLimiter = new RateLimiter(60 * 60 * 1000, 10); // 10 requests per hour for sensitive operations
 
 
