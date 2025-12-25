@@ -27,6 +27,10 @@ const updateUserSchema = Joi.object({
   onboarding_status: Joi.string().valid('pending', 'in_progress', 'completed').optional().allow(null),
 });
 
+const changePasswordSchema = Joi.object({
+  password: Joi.string().required().min(8),
+});
+
 // Routes
 router.get('/', userController.getAllUsers);
 router.get('/:id', userController.getUserById);
@@ -34,6 +38,7 @@ router.post('/', validate(createUserSchema), userController.createUser);
 router.put('/:id', validate(updateUserSchema), userController.updateUser);
 router.post('/:id/activate', userController.activateUser);
 router.post('/:id/deactivate', userController.deactivateUser);
+router.post('/:id/change-password', validate(changePasswordSchema), userController.changeUserPassword);
 router.post('/:id/reset-password', userController.resetUserPassword);
 
 export default router;

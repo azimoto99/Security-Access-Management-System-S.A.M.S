@@ -57,6 +57,10 @@ export const UserManagementPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -148,6 +152,42 @@ export const UserManagementPage: React.FC = () => {
     } catch (err: any) {
       setError(err.message || 'Failed to reset password');
       handleMenuClose();
+    }
+  };
+
+  const handleChangePassword = () => {
+    if (!selectedUser) return;
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError(null);
+    setChangePasswordDialogOpen(true);
+    handleMenuClose();
+  };
+
+  const handleChangePasswordSubmit = async () => {
+    if (!selectedUser) return;
+
+    // Validate passwords
+    if (!newPassword || newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters long');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    try {
+      setError(null);
+      setPasswordError(null);
+      await userService.changeUserPassword(selectedUser.id, newPassword);
+      setSuccess('Password changed successfully');
+      setChangePasswordDialogOpen(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPasswordError(err.message || 'Failed to change password');
     }
   };
 
@@ -336,11 +376,66 @@ export const UserManagementPage: React.FC = () => {
               </>
             )}
           </MenuItem>
+          <MenuItem onClick={handleChangePassword}>
+            <LockReset sx={{ mr: 1 }} fontSize="small" />
+            Change Password
+          </MenuItem>
           <MenuItem onClick={handleResetPassword}>
             <LockReset sx={{ mr: 1 }} fontSize="small" />
-            Reset Password
+            Reset Password (Generate Temp)
           </MenuItem>
         </Menu>
+
+        {/* Change Password Dialog */}
+        <Dialog open={changePasswordDialogOpen} onClose={() => setChangePasswordDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Change Password for {selectedUser?.username}</DialogTitle>
+          <DialogContent>
+            {passwordError && (
+              <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPasswordError(null)}>
+                {passwordError}
+              </Alert>
+            )}
+            <TextField
+              fullWidth
+              label="New Password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                setPasswordError(null);
+              }}
+              margin="normal"
+              required
+              helperText="Password must be at least 8 characters long"
+              autoFocus
+            />
+            <TextField
+              fullWidth
+              label="Confirm Password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setPasswordError(null);
+              }}
+              margin="normal"
+              required
+              error={!!passwordError && confirmPassword !== ''}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setChangePasswordDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChangePasswordSubmit}
+              variant="contained"
+              disabled={!newPassword || !confirmPassword || newPassword.length < 8}
+            >
+              Change Password
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Temporary Password Dialog */}
         <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)}>

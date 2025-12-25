@@ -433,7 +433,78 @@ export const activateUser = async (
 };
 
 /**
- * Reset user password
+ * Change user password (admin only - set specific password)
+ */
+export const changeUserPassword = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
+    const { id } = req.params;
+    const { password } = req.body;
+
+    // Validate password
+    if (!password) {
+      const error: AppError = new Error('Password is required');
+      error.statusCode = 400;
+      error.code = 'VALIDATION_ERROR';
+      return next(error);
+    }
+
+    if (password.length < 8) {
+      const error: AppError = new Error('Password must be at least 8 characters long');
+      error.statusCode = 400;
+      error.code = 'VALIDATION_ERROR';
+      return next(error);
+    }
+
+    // Check if user exists
+    const existingResult = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    if (existingResult.rows.length === 0) {
+      const error: AppError = new Error('User not found');
+      error.statusCode = 404;
+      error.code = 'USER_NOT_FOUND';
+      return next(error);
+    }
+
+    const existing = existingResult.rows[0];
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Update password
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, id]);
+
+    // Log action
+    await createAuditLog(
+      req.user.id,
+      'change_password',
+      'user',
+      id,
+      { username: existing.username, changed_by: req.user.username }
+    );
+
+    logger.info(`Password changed for user: ${existing.username} (${id}) by ${req.user.username}`);
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Reset user password (generate temporary password)
  */
 export const resetUserPassword = async (
   req: AuthRequest,

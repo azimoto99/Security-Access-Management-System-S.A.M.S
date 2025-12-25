@@ -81,7 +81,14 @@ export const userService = {
   },
 
   /**
-   * Reset user password
+   * Change user password (set specific password)
+   */
+  changeUserPassword: async (id: string, password: string): Promise<void> => {
+    await api.post<{ success: boolean; message: string }>(`/users/${id}/change-password`, { password });
+  },
+
+  /**
+   * Reset user password (generate temporary password)
    */
   resetUserPassword: async (id: string): Promise<ResetPasswordResponse> => {
     const response = await api.post<{ success: boolean; data: ResetPasswordResponse }>(`/users/${id}/reset-password`);
