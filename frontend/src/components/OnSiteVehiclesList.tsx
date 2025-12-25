@@ -29,7 +29,7 @@ interface OnSiteVehiclesListProps {
   entries: Entry[];
   loading?: boolean;
   error?: string | null;
-  onExit: (entryId: string, exitNotes?: string) => Promise<void>;
+  onExit: (entryId: string, exitNotes?: string, exitTrailerNumber?: string) => Promise<void>;
   onManualExit?: () => void;
 }
 
@@ -138,12 +138,12 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
     setExitDialogOpen(true);
   };
 
-  const handleExitConfirm = async (exitNotes?: string) => {
+  const handleExitConfirm = async (exitNotes?: string, exitTrailerNumber?: string) => {
     if (!selectedEntry) return;
 
     setProcessingExit(true);
     try {
-      await onExit(selectedEntry.id, exitNotes);
+      await onExit(selectedEntry.id, exitNotes, exitTrailerNumber);
       setExitDialogOpen(false);
       setSelectedEntry(null);
     } catch (error) {

@@ -19,3 +19,4 @@ COMMENT ON COLUMN entries.updated_at IS 'Timestamp of last update to the entry';
 
 
 
+

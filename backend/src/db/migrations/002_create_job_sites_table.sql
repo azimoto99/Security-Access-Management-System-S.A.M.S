@@ -29,3 +29,4 @@ COMMENT ON COLUMN job_sites.contact_info IS 'JSON object containing contact info
 
 
 
+

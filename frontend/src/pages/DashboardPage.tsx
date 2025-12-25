@@ -129,9 +129,12 @@ export const DashboardPage: React.FC = () => {
   };
 
   // Handle exit processing
-  const handleExit = async (entryId: string, _exitNotes?: string) => {
+  const handleExit = async (entryId: string, _exitNotes?: string, exitTrailerNumber?: string) => {
     try {
-      await entryService.processExit({ entry_id: entryId });
+      await entryService.processExit({ 
+        entry_id: entryId,
+        ...(exitTrailerNumber && { trailer_number: exitTrailerNumber })
+      });
       // Remove from list immediately
       setOnSiteEntries((prev) => prev.filter((e) => e.id !== entryId));
       // Reload to ensure consistency
@@ -516,6 +519,7 @@ export const DashboardPage: React.FC = () => {
                     loading={onSiteLoading}
                     error={onSiteError}
                     onExit={handleExit}
+                    onManualExit={() => setManualExitDialogOpen(true)}
                   />
                 </Box>
               </Grid>

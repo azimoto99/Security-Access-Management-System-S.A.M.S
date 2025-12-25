@@ -16,7 +16,7 @@ interface ExitConfirmationDialogProps {
   open: boolean;
   entry: Entry | null;
   onClose: () => void;
-  onConfirm: (exitNotes?: string) => void;
+  onConfirm: (exitNotes?: string, exitTrailerNumber?: string) => void;
   processing?: boolean;
 }
 
@@ -35,17 +35,20 @@ export const ExitConfirmationDialog: React.FC<ExitConfirmationDialogProps> = ({
   processing = false,
 }) => {
   const [exitNotes, setExitNotes] = useState('');
+  const [exitTrailerNumber, setExitTrailerNumber] = useState('');
 
   const handleClose = () => {
     if (!processing) {
       setExitNotes('');
+      setExitTrailerNumber('');
       onClose();
     }
   };
 
   const handleConfirm = () => {
-    onConfirm(exitNotes.trim() || undefined);
+    onConfirm(exitNotes.trim() || undefined, exitTrailerNumber.trim() || undefined);
     setExitNotes('');
+    setExitTrailerNumber('');
   };
 
   if (!entry) return null;
@@ -92,6 +95,26 @@ export const ExitConfirmationDialog: React.FC<ExitConfirmationDialogProps> = ({
             {new Date(entry.entry_time).toLocaleString()}
           </Typography>
         </Box>
+
+        {entry.entry_type === 'truck' && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ color: '#b0b0b0', mb: 1 }}>
+              Entry Trailer
+            </Typography>
+            <Typography variant="body1">
+              {entry.entry_data?.trailer_number || 'None'}
+            </Typography>
+            <TextField
+              label="Exit Trailer Number (Optional)"
+              placeholder="Enter trailer number if different from entry"
+              value={exitTrailerNumber}
+              onChange={(e) => setExitTrailerNumber(e.target.value)}
+              fullWidth
+              sx={{ mt: 2 }}
+              helperText="Leave blank if same as entry trailer"
+            />
+          </Box>
+        )}
 
         <TextField
           label="Exit Notes (Optional)"

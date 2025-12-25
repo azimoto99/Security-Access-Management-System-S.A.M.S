@@ -144,8 +144,21 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
     };
 
     container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [hasMore, loadingMore, loadMore]);
+    
+    // Check if we need to load more immediately (if content doesn't fill container)
+    // Use setTimeout to ensure DOM has updated
+    const checkInitialLoad = setTimeout(() => {
+      const { scrollHeight, clientHeight } = container;
+      if (scrollHeight <= clientHeight && hasMore && !loadingMore && allActivities.length > 0) {
+        loadMore();
+      }
+    }, 100);
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      clearTimeout(checkInitialLoad);
+    };
+  }, [hasMore, loadingMore, loadMore, allActivities.length]);
 
   if (initialLoading) {
     return (
@@ -161,8 +174,8 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
   }
 
   return (
-    <Card sx={{ backgroundColor: '#1a1a1a', maxHeight: 600, display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+    <Card sx={{ backgroundColor: '#1a1a1a', height: '100%', maxHeight: 600, display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2, minHeight: 0 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
           Recent Activity
         </Typography>
@@ -186,7 +199,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
         
         <Box 
           ref={scrollContainerRef}
-          sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}
+          sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0, maxHeight: '100%' }}
         >
           {allActivities.length === 0 && !initialLoading ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>

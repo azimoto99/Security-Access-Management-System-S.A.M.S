@@ -39,3 +39,4 @@ COMMENT ON COLUMN alerts.metadata IS 'JSON object containing additional alert-sp
 
 
 
+
