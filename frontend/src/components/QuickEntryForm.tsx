@@ -18,7 +18,6 @@ import {
   AccordionDetails,
 } from '@mui/material';
 import {
-  CameraAlt,
   ExpandMore,
   ExpandLess,
   CheckCircle,
