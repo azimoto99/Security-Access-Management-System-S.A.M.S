@@ -53,6 +53,15 @@ export const AdminDashboardPage: React.FC = () => {
   const [siteFilter, setSiteFilter] = useState<string>('all');
   const [clientFilter, setClientFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Fetch dashboard metrics
   const { data: metrics, isLoading: metricsLoading, error: metricsError } = useQuery({
@@ -149,7 +158,7 @@ export const AdminDashboardPage: React.FC = () => {
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 2 }}>
             <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-              {new Date().toLocaleString()}
+              {currentTime.toLocaleString()}
             </Typography>
             <Badge badgeContent={activeAlerts?.length || 0} color="error">
               <Notifications sx={{ color: '#ffd700' }} />
