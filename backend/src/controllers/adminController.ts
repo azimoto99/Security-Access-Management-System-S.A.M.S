@@ -84,11 +84,11 @@ export const getDashboardMetrics = async (
     );
     const currentOccupancy = parseInt(currentOccupancyResult.rows[0].count, 10);
 
-    // Active alerts (unresolved alerts from today)
+    // Active alerts (unacknowledged alerts from today)
     const activeAlertsResult = await pool.query(
       `SELECT COUNT(*) as count
        FROM alerts
-       WHERE resolved_at IS NULL
+       WHERE is_acknowledged = false
        AND created_at >= $1`,
       [todayStart]
     );
@@ -107,6 +107,7 @@ export const getDashboardMetrics = async (
       },
     });
   } catch (error) {
+    logger.error('Error in getDashboardMetrics:', error);
     next(error);
   }
 };
@@ -134,10 +135,11 @@ export const getSitesStatus = async (
     todayStart.setUTCHours(0, 0, 0, 0);
 
     // Get all active sites
+    // Note: job_sites table doesn't have client_id column
+    // Clients are associated via job_site_access in users table
     const sitesResult = await pool.query(
-      `SELECT js.*, u.username as client_name
+      `SELECT js.*
        FROM job_sites js
-       LEFT JOIN users u ON js.client_id = u.id
        WHERE js.is_active = true
        ORDER BY js.name`
     );
@@ -180,7 +182,7 @@ export const getSitesStatus = async (
           `SELECT COUNT(*) as count
            FROM alerts
            WHERE job_site_id = $1
-           AND resolved_at IS NULL
+           AND is_acknowledged = false
            AND created_at >= $2`,
           [site.id, todayStart]
         );
@@ -217,6 +219,7 @@ export const getSitesStatus = async (
       data: sites,
     });
   } catch (error) {
+    logger.error('Error in getDashboardMetrics:', error);
     next(error);
   }
 };
@@ -247,7 +250,7 @@ export const getRecentActivity = async (
         a.type as alert_type
        FROM entries e
        LEFT JOIN job_sites js ON e.job_site_id = js.id
-       LEFT JOIN alerts a ON a.entry_id = e.id AND a.resolved_at IS NULL
+       LEFT JOIN alerts a ON a.entry_id = e.id AND a.is_acknowledged = false
        WHERE e.entry_time IS NOT NULL
        ORDER BY e.entry_time DESC
        LIMIT $1`,
@@ -255,15 +258,32 @@ export const getRecentActivity = async (
     );
 
     const activities = result.rows.map((row) => {
-      const entryData = typeof row.entry_data === 'string' ? JSON.parse(row.entry_data) : row.entry_data;
-      const photos = typeof row.photos === 'string' ? JSON.parse(row.photos) : (row.photos || []);
+      let entryData: any = {};
+      try {
+        entryData = typeof row.entry_data === 'string' ? JSON.parse(row.entry_data) : (row.entry_data || {});
+      } catch (e) {
+        logger.error('Error parsing entry_data in getRecentActivity:', e);
+        entryData = {};
+      }
+
+      let photos: string[] = [];
+      try {
+        photos = typeof row.photos === 'string' ? JSON.parse(row.photos) : (row.photos || []);
+      } catch (e) {
+        logger.error('Error parsing photos in getRecentActivity:', e);
+        photos = [];
+      }
+
+      const identifier = row.entry_type === 'visitor' 
+        ? (entryData.name || 'Unknown')
+        : (entryData.license_plate || 'Unknown');
 
       return {
         id: row.id,
         entryType: row.entry_type,
-        identifier: row.entry_type === 'visitor' ? entryData.name : entryData.license_plate,
-        company: entryData.company,
-        siteName: row.site_name,
+        identifier,
+        company: entryData.company || '',
+        siteName: row.site_name || 'Unknown Site',
         entryTime: row.entry_time,
         exitTime: row.exit_time,
         hasAlert: !!row.alert_id,
@@ -277,6 +297,7 @@ export const getRecentActivity = async (
       data: activities,
     });
   } catch (error) {
+    logger.error('Error in getDashboardMetrics:', error);
     next(error);
   }
 };
@@ -396,6 +417,7 @@ export const getAnalytics = async (
       },
     });
   } catch (error) {
+    logger.error('Error in getDashboardMetrics:', error);
     next(error);
   }
 };
@@ -425,21 +447,31 @@ export const getActiveAlerts = async (
        FROM alerts a
        LEFT JOIN job_sites js ON a.job_site_id = js.id
        LEFT JOIN entries e ON a.entry_id = e.id
-       WHERE a.resolved_at IS NULL
+       WHERE a.is_acknowledged = false
        ORDER BY a.created_at DESC
        LIMIT 50`
     );
 
     const alerts = result.rows.map((row) => {
-      const entryData = typeof row.entry_data === 'string' ? JSON.parse(row.entry_data) : row.entry_data;
+      let entryData: any = {};
+      try {
+        entryData = typeof row.entry_data === 'string' ? JSON.parse(row.entry_data) : (row.entry_data || {});
+      } catch (e) {
+        logger.error('Error parsing entry_data in getActiveAlerts:', e);
+        entryData = {};
+      }
+
+      const identifier = row.entry_type === 'visitor' 
+        ? (entryData?.name || 'Unknown')
+        : (entryData?.license_plate || 'Unknown');
       
       return {
         id: row.id,
         type: row.type,
-        siteName: row.site_name,
+        siteName: row.site_name || 'Unknown Site',
         entryId: row.entry_id,
         entryType: row.entry_type,
-        identifier: row.entry_type === 'visitor' ? entryData?.name : entryData?.license_plate,
+        identifier,
         description: row.description || `${row.type} detected`,
         createdAt: row.created_at,
         priority: row.priority || 'medium',
@@ -451,6 +483,7 @@ export const getActiveAlerts = async (
       data: alerts,
     });
   } catch (error) {
+    logger.error('Error in getDashboardMetrics:', error);
     next(error);
   }
 };
@@ -475,16 +508,17 @@ export const getClientUsage = async (
     todayStart.setUTCHours(0, 0, 0, 0);
 
     // Get all client users
+    // Note: Clients are associated with job sites via job_site_access array in users table
+    // Count sites by checking which job sites are in the user's job_site_access array
     const clientsResult = await pool.query(
       `SELECT 
         u.id,
         u.username,
         u.last_login,
-        COUNT(DISTINCT js.id) as site_count
+        u.job_site_access,
+        jsonb_array_length(COALESCE(u.job_site_access, '[]'::jsonb)) as site_count
        FROM users u
-       LEFT JOIN job_sites js ON js.client_id = u.id
        WHERE u.role = 'client' AND u.is_active = true
-       GROUP BY u.id, u.username, u.last_login
        ORDER BY u.username`
     );
 
@@ -531,6 +565,7 @@ export const getClientUsage = async (
       data: clients,
     });
   } catch (error) {
+    logger.error('Error in getDashboardMetrics:', error);
     next(error);
   }
 };
