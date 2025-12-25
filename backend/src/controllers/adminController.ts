@@ -204,7 +204,7 @@ export const getSitesStatus = async (
         return {
           id: site.id,
           name: site.name,
-          clientName: site.client_name || null,
+          clientName: null, // Clients are associated via job_site_access, not a direct column
           status,
           currentOccupancy,
           todayEntries,
