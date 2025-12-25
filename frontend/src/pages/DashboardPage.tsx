@@ -57,6 +57,7 @@ import { QuickEntryForm } from '../components/QuickEntryForm';
 import { OnSiteVehiclesList } from '../components/OnSiteVehiclesList';
 import { ManualExitForm } from '../components/ManualExitForm';
 import { entryService, type Entry } from '../services/entryService';
+import { AdminDashboardPage } from './AdminDashboardPage';
 
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -85,7 +86,7 @@ export const DashboardPage: React.FC = () => {
     if (user?.role === 'client' && user.job_site_access && user.job_site_access.length > 0) {
       setSelectedSiteId(user.job_site_access[0]);
       loadJobSites();
-    } else if ((user?.role === 'guard' || user?.role === 'admin') && user.job_site_access && user.job_site_access.length > 0) {
+    } else if (user?.role === 'guard' && user.job_site_access && user.job_site_access.length > 0) {
       // Guard dashboard - select first accessible site
       const firstSite = user.job_site_access[0];
       setGuardSelectedSiteId(firstSite);
@@ -320,8 +321,13 @@ export const DashboardPage: React.FC = () => {
     new Map(actionCards.map((card) => [card.path, card])).values()
   );
 
+  // Admin Dashboard View
+  if (user?.role === 'admin') {
+    return <AdminDashboardPage />;
+  }
+
   // Guard Dashboard View (Split-Screen)
-  if ((user?.role === 'guard' || user?.role === 'admin')) {
+  if (user?.role === 'guard') {
     // Show loading if site not selected yet
     if (!guardSelectedSiteId) {
       return (

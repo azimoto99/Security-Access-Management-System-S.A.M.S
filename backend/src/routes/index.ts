@@ -13,6 +13,7 @@ import emergencyRoutes from './emergency';
 import hrDocumentsRoutes from './hrDocuments';
 import healthRoutes from './health';
 import clientRoutes from './client';
+import adminRoutes from './admin';
 
 const router = Router();
 
@@ -63,6 +64,9 @@ router.use('/hr', hrDocumentsRoutes);
 
 // Client routes
 router.use('/client', clientRoutes);
+
+// Admin routes
+router.use('/admin', adminRoutes);
 
 // Health check route (no auth required)
 router.use('/health', healthRoutes);
