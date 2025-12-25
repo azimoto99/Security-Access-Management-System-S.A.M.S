@@ -103,9 +103,12 @@ export const AdminMetricCard: React.FC<AdminMetricCardProps> = ({
               backgroundColor: colors.bg,
               color: colors.main,
               mr: 1.5,
+              '& svg': {
+                fontSize: '1.5rem',
+              },
             }}
           >
-            {React.cloneElement(icon, { sx: { fontSize: 'small' } })}
+            {icon}
           </Box>
           <Typography
             variant="body2"
