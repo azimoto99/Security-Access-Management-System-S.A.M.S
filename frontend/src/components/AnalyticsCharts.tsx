@@ -144,7 +144,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         </Box>
 
         {/* Entries Over Time Chart */}
-        <Box sx={{ mb: 3 }}>
+        <Box id="chart-entriesOverTime" sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography variant="subtitle2" sx={{ color: '#b0b0b0' }}>
               Entries Over Time
@@ -158,15 +158,26 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
               Export
             </Button>
           </Box>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={data.entriesOverTime}>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={data.entriesOverTime} margin={{ top: 5, right: 10, left: 0, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-              <XAxis dataKey="time" stroke="#b0b0b0" />
-              <YAxis stroke="#b0b0b0" />
+              <XAxis 
+                dataKey="time" 
+                stroke="#b0b0b0" 
+                tick={{ fill: '#b0b0b0', fontSize: 12 }}
+                angle={-45}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis 
+                stroke="#b0b0b0" 
+                tick={{ fill: '#b0b0b0', fontSize: 12 }}
+                width={40}
+              />
               <Tooltip
                 contentStyle={{ backgroundColor: '#2a2a2a', border: '1px solid #444', color: '#fff' }}
               />
-              <Legend wrapperStyle={{ color: '#b0b0b0' }} />
+              <Legend wrapperStyle={{ color: '#b0b0b0', fontSize: '12px' }} />
               <Line type="monotone" dataKey="entries" stroke="#2196f3" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
@@ -187,11 +198,23 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
               Export
             </Button>
           </Box>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={data.entriesBySite.slice(0, 10)}>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={data.entriesBySite.slice(0, 10)} margin={{ top: 5, right: 10, left: 0, bottom: 80 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-              <XAxis dataKey="site" stroke="#b0b0b0" angle={-45} textAnchor="end" height={80} />
-              <YAxis stroke="#b0b0b0" />
+              <XAxis 
+                dataKey="site" 
+                stroke="#b0b0b0" 
+                angle={-45} 
+                textAnchor="end" 
+                height={80}
+                tick={{ fill: '#b0b0b0', fontSize: 11 }}
+                interval={0}
+              />
+              <YAxis 
+                stroke="#b0b0b0" 
+                tick={{ fill: '#b0b0b0', fontSize: 12 }}
+                width={40}
+              />
               <Tooltip
                 contentStyle={{ backgroundColor: '#2a2a2a', border: '1px solid #444', color: '#fff' }}
               />
@@ -215,15 +238,15 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
               Export
             </Button>
           </Box>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
               <Pie
                 data={data.entryTypeBreakdown}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
                 label={({ type, percent }) => `${type}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
+                outerRadius={70}
                 fill="#8884d8"
                 dataKey="count"
               >
@@ -233,6 +256,11 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
               </Pie>
               <Tooltip
                 contentStyle={{ backgroundColor: '#2a2a2a', border: '1px solid #444', color: '#fff' }}
+              />
+              <Legend 
+                wrapperStyle={{ color: '#b0b0b0', fontSize: '12px' }}
+                verticalAlign="bottom"
+                height={36}
               />
             </PieChart>
           </ResponsiveContainer>

@@ -37,7 +37,6 @@ import { SiteStatusGrid } from '../components/SiteStatusGrid';
 import { RecentActivityFeed } from '../components/RecentActivityFeed';
 import { AnalyticsCharts } from '../components/AnalyticsCharts';
 import { SecurityAlertsPanel } from '../components/SecurityAlertsPanel';
-import { ClientUsageSection } from '../components/ClientUsageSection';
 import { QuickActionsPanel } from '../components/QuickActionsPanel';
 
 export const AdminDashboardPage: React.FC = () => {
@@ -95,14 +94,6 @@ export const AdminDashboardPage: React.FC = () => {
     queryFn: () => adminDashboardService.getActiveAlerts(),
     refetchInterval: 30000,
     staleTime: 10000,
-  });
-
-  // Fetch client usage
-  const { data: clientUsage, isLoading: clientUsageLoading } = useQuery({
-    queryKey: ['adminDashboard', 'clientUsage'],
-    queryFn: () => adminDashboardService.getClientUsage(),
-    refetchInterval: 60000, // Less frequent
-    staleTime: 30000,
   });
 
   // WebSocket for real-time updates
@@ -326,14 +317,6 @@ export const AdminDashboardPage: React.FC = () => {
                 loading={analyticsLoading}
                 period={dateFilter}
                 onPeriodChange={setDateFilter}
-              />
-            </Box>
-
-            <Box sx={{ mt: 3 }}>
-              <ClientUsageSection
-                clients={clientUsage || []}
-                loading={clientUsageLoading}
-                onClientClick={(clientId) => navigate(`/users/${clientId}`)}
               />
             </Box>
 

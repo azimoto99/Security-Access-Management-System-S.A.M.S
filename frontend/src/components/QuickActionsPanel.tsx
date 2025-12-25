@@ -20,7 +20,7 @@ export const QuickActionsPanel: React.FC = () => {
   const navigate = useNavigate();
 
   const actions = [
-    { icon: <PersonAdd />, label: 'Add New User', path: '/users?action=create' },
+    { icon: <PersonAdd />, label: 'Users', path: '/users?action=create' },
     { icon: <Business />, label: 'Create New Site', path: '/job-sites?action=create' },
     { icon: <Assessment />, label: 'Generate Report', path: '/reports' },
     { icon: <Warning />, label: 'View All Alerts', path: '/alerts' },
