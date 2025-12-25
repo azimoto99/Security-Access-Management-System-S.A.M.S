@@ -78,18 +78,21 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
       FROM audit_logs al
       LEFT JOIN users u ON al.user_id = u.id
       ${needsJobSiteFilter ? 'LEFT JOIN entries e ON al.resource_type = \'entry\' AND al.resource_id IS NOT NULL AND al.resource_id::text = e.id::text' : ''}
+      ${needsJobSiteFilter ? 'LEFT JOIN job_sites js ON al.resource_type = \'job_site\' AND al.resource_id IS NOT NULL AND al.resource_id::text = js.id::text' : ''}
       WHERE 1=1
     `;
     const params: any[] = [];
     let paramCount = 1;
 
-    // Filter by job site access for guards
+    // Filter by job site access for guards and clients
     // For entry-related logs, filter by job_site_id
-    // For other resource types, guards can see all logs (or we can restrict further if needed)
+    // For job_site-related logs, filter by job_site_id
+    // For other resource types, clients/guards can see them (they're typically admin actions or system-wide)
     if (needsJobSiteFilter) {
       query += ` AND (
-        al.resource_type != 'entry' 
-        OR e.job_site_id = ANY($${paramCount})
+        (al.resource_type = 'entry' AND e.job_site_id = ANY($${paramCount}))
+        OR (al.resource_type = 'job_site' AND js.id = ANY($${paramCount}))
+        OR (al.resource_type NOT IN ('entry', 'job_site'))
       )`;
       params.push(filters.job_site_ids);
       paramCount++;
@@ -132,6 +135,7 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
         SELECT COUNT(DISTINCT al.id) as total
         FROM audit_logs al
         LEFT JOIN entries e ON al.resource_type = 'entry' AND al.resource_id IS NOT NULL AND al.resource_id::text = e.id::text
+        LEFT JOIN job_sites js ON al.resource_type = 'job_site' AND al.resource_id IS NOT NULL AND al.resource_id::text = js.id::text
         WHERE 1=1
       `
       : `
@@ -145,8 +149,9 @@ export const getAuditLogs = async (filters: AuditLogFilters = {}): Promise<{
     // Apply same filters to count query
     if (needsJobSiteFilter) {
       countQuery += ` AND (
-        al.resource_type != 'entry' 
-        OR e.job_site_id = ANY($${countParamCount})
+        (al.resource_type = 'entry' AND e.job_site_id = ANY($${countParamCount}))
+        OR (al.resource_type = 'job_site' AND js.id = ANY($${countParamCount}))
+        OR (al.resource_type NOT IN ('entry', 'job_site'))
       )`;
       countParams.push(filters.job_site_ids);
       countParamCount++;

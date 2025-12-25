@@ -51,18 +51,39 @@ export const generateReport = async (
     // The reportService will append ' America/Chicago' and convert to UTC for comparison
 
     // Check job site access if not admin
+    // For clients and guards, ensure they can only access their assigned sites
+    let allowedJobSiteId = job_site_id;
     if (req.user.role !== 'admin') {
       const jobSiteAccess = req.user.job_site_access || [];
-      if (job_site_id && !jobSiteAccess.includes(job_site_id)) {
-        const error: AppError = new Error('Access denied to this job site');
-        error.statusCode = 403;
-        error.code = 'JOB_SITE_ACCESS_DENIED';
-        return next(error);
+      if (job_site_id) {
+        if (!jobSiteAccess.includes(job_site_id)) {
+          const error: AppError = new Error('Access denied to this job site');
+          error.statusCode = 403;
+          error.code = 'JOB_SITE_ACCESS_DENIED';
+          return next(error);
+        }
+        allowedJobSiteId = job_site_id;
+      } else {
+        // If no job_site_id provided, clients/guards must select from their accessible sites
+        // For now, if they have only one site, use it; otherwise require selection
+        if (jobSiteAccess.length === 1) {
+          allowedJobSiteId = jobSiteAccess[0];
+        } else if (jobSiteAccess.length === 0) {
+          const error: AppError = new Error('No job sites assigned');
+          error.statusCode = 403;
+          error.code = 'NO_JOB_SITE_ACCESS';
+          return next(error);
+        } else {
+          const error: AppError = new Error('Job site selection required');
+          error.statusCode = 400;
+          error.code = 'JOB_SITE_REQUIRED';
+          return next(error);
+        }
       }
     }
 
     const filters = {
-      job_site_id,
+      job_site_id: allowedJobSiteId,
       date_from: datetime_from,
       date_to: datetime_to,
       entry_type,
@@ -75,7 +96,7 @@ export const generateReport = async (
       data: {
         report,
         filters: {
-          job_site_id,
+          job_site_id: allowedJobSiteId,
           date_from,
           date_to,
           time_from,
@@ -135,18 +156,38 @@ export const exportReport = async (
     // The reportService will append ' America/Chicago' and convert to UTC for comparison
 
     // Check job site access if not admin
+    // For clients and guards, ensure they can only access their assigned sites
+    let allowedJobSiteId = job_site_id;
     if (req.user.role !== 'admin') {
       const jobSiteAccess = req.user.job_site_access || [];
-      if (job_site_id && !jobSiteAccess.includes(job_site_id)) {
-        const error: AppError = new Error('Access denied to this job site');
-        error.statusCode = 403;
-        error.code = 'JOB_SITE_ACCESS_DENIED';
-        return next(error);
+      if (job_site_id) {
+        if (!jobSiteAccess.includes(job_site_id)) {
+          const error: AppError = new Error('Access denied to this job site');
+          error.statusCode = 403;
+          error.code = 'JOB_SITE_ACCESS_DENIED';
+          return next(error);
+        }
+        allowedJobSiteId = job_site_id;
+      } else {
+        // If no job_site_id provided, clients/guards must select from their accessible sites
+        if (jobSiteAccess.length === 1) {
+          allowedJobSiteId = jobSiteAccess[0];
+        } else if (jobSiteAccess.length === 0) {
+          const error: AppError = new Error('No job sites assigned');
+          error.statusCode = 403;
+          error.code = 'NO_JOB_SITE_ACCESS';
+          return next(error);
+        } else {
+          const error: AppError = new Error('Job site selection required');
+          error.statusCode = 400;
+          error.code = 'JOB_SITE_REQUIRED';
+          return next(error);
+        }
       }
     }
 
     const filters = {
-      job_site_id,
+      job_site_id: allowedJobSiteId,
       date_from: datetime_from,
       date_to: datetime_to,
       entry_type,
