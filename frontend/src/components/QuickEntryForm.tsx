@@ -333,8 +333,8 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
   };
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2, overflow: 'auto' }}>
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2, overflowY: 'auto', overflowX: 'hidden' }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           Log New Entry
         </Typography>
