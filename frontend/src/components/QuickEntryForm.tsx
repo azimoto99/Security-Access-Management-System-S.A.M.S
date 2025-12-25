@@ -13,6 +13,9 @@ import {
   Collapse,
   IconButton,
   CircularProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import {
   CameraAlt,
@@ -47,11 +50,13 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [createdEntryId, setCreatedEntryId] = useState<string | null>(null);
   const identifierInputRef = useRef<HTMLInputElement>(null);
-  const photoUploadRef = useRef<PhotoUploadRef>(null);
+  const photoUploadRef = useRef<PhotoUploadRef | null>(null);
   const autofillTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAutofilledRef = useRef(false);
+  const isSubmittingRef = useRef(false);
 
   // Initialize form data when entry type changes
   useEffect(() => {
@@ -252,11 +257,18 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validate() || isSubmitting) {
+    // Prevent multiple submissions
+    if (isSubmittingRef.current || isSubmitting || isUploadingPhotos) {
       return;
     }
 
+    if (!validate()) return;
+
+    // Check if there are photos waiting to be uploaded
+    const hasPhotos = photoUploadRef.current?.hasPhotos() || false;
+    
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
 
     try {
       const entryData: Record<string, any> = { ...formData };
@@ -289,34 +301,33 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
         : formData.license_plate?.toUpperCase() || '';
       showSnackbar(`✓ ${identifier} logged successfully`, 'success');
 
-      // Upload photos if any
-      if (photoUploadRef.current?.hasPhotos()) {
-        try {
-          await photoUploadRef.current.uploadPhotos();
-        } catch (photoError) {
-          console.error('Photo upload error:', photoError);
-        }
-      }
-
       // Callback to parent
       if (onEntryCreated) {
         onEntryCreated(entry);
       }
 
-      // Reset form
-      setEntryType('vehicle');
-      setShowOptionalFields(false);
-      setCreatedEntryId(null);
-      
-      // Refocus identifier field
-      setTimeout(() => {
-        identifierInputRef.current?.focus();
-      }, 100);
+      // If no photos, we can reset the submitting state immediately
+      // Otherwise, it will be reset when photos finish uploading
+      if (!hasPhotos) {
+        setIsSubmitting(false);
+        isSubmittingRef.current = false;
+        
+        // Reset form
+        setEntryType('vehicle');
+        setShowOptionalFields(false);
+        setCreatedEntryId(null);
+        
+        // Refocus identifier field
+        setTimeout(() => {
+          identifierInputRef.current?.focus();
+        }, 100);
+      }
+      // If there are photos, the form will reset after photos finish uploading via callbacks
 
     } catch (error: any) {
       showSnackbar(error.message || 'Failed to create entry', 'error');
-    } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -590,37 +601,55 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
           </Box>
 
           {/* Photo Upload */}
-          <Box>
-            <Typography variant="body2" sx={{ mb: 1, color: '#b0b0b0' }}>
-              Photos (Optional)
-            </Typography>
-            {createdEntryId ? (
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Typography>Upload Photos (Optional)</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
               <PhotoUpload
+                entryId={createdEntryId || undefined}
+                maxPhotos={10}
+                onUploadStart={() => {
+                  setIsUploadingPhotos(true);
+                }}
+                onUploadComplete={(photoIds: string[]) => {
+                  // Photos uploaded successfully
+                  console.log('Photos uploaded:', photoIds);
+                  setIsUploadingPhotos(false);
+                  setIsSubmitting(false);
+                  isSubmittingRef.current = false;
+                  
+                  // Reset form after photos are uploaded
+                  setEntryType('vehicle');
+                  setShowOptionalFields(false);
+                  setCreatedEntryId(null);
+                  
+                  // Refocus identifier field
+                  setTimeout(() => {
+                    identifierInputRef.current?.focus();
+                  }, 100);
+                }}
+                onUploadError={() => {
+                  setIsUploadingPhotos(false);
+                  setIsSubmitting(false);
+                  isSubmittingRef.current = false;
+                }}
+                onPhotosChange={(_hasPhotos: boolean) => {
+                  // Track if there are photos ready to upload
+                  // This callback is used to notify parent of photo state changes
+                }}
                 ref={photoUploadRef}
-                entryId={createdEntryId}
-                maxPhotos={5}
               />
-            ) : (
-              <Button
-                variant="outlined"
-                startIcon={<CameraAlt />}
-                fullWidth
-                size="small"
-                disabled
-                sx={{ py: 1.5 }}
-              >
-                Photos will be available after entry is created
-              </Button>
-            )}
-          </Box>
+            </AccordionDetails>
+          </Accordion>
 
           {/* Submit Button */}
           <Button
             type="submit"
             variant="contained"
             size="large"
-            disabled={isSubmitting}
-            startIcon={isSubmitting ? <CircularProgress size={20} /> : <CheckCircle />}
+            disabled={isSubmitting || isUploadingPhotos}
+            startIcon={isSubmitting || isUploadingPhotos ? <CircularProgress size={20} /> : <CheckCircle />}
             sx={{
               mt: 'auto',
               py: 1.5,
@@ -628,7 +657,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
               fontWeight: 600,
             }}
           >
-            {isSubmitting ? 'Logging...' : 'LOG ENTRY'}
+            {isUploadingPhotos ? 'Uploading Photos...' : isSubmitting ? 'Logging...' : 'LOG ENTRY'}
           </Button>
         </Box>
       </CardContent>
