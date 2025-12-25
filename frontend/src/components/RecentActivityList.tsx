@@ -433,7 +433,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                 </TableRow>
               ) : (
                 filteredEntries.map((entry) => (
-                <TableRow
+                  <TableRow
                   key={entry.id}
                   onClick={() => handleEntryClick(entry.id)}
                   sx={{
@@ -515,7 +515,8 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                     </Box>
                   </TableCell>
                 </TableRow>
-              ))}
+                ))
+              )}
             </TableBody>
           </Table>
           {loadingMore && (
