@@ -11,7 +11,6 @@ import {
   TableHead,
   TableRow,
   Chip,
-  CircularProgress,
   Skeleton,
   useMediaQuery,
   useTheme,

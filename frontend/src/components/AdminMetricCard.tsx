@@ -105,7 +105,7 @@ export const AdminMetricCard: React.FC<AdminMetricCardProps> = ({
               mr: 1.5,
             }}
           >
-            {React.cloneElement(icon, { fontSize: 'small' })}
+            {React.cloneElement(icon, { sx: { fontSize: 'small' } })}
           </Box>
           <Typography
             variant="body2"

@@ -8,13 +8,9 @@ import {
   Toolbar,
   Grid,
   Card,
-  CardContent,
-  CircularProgress,
   Alert,
   Chip,
   IconButton,
-  Skeleton,
-  Button,
   FormControl,
   InputLabel,
   Select,
@@ -31,12 +27,11 @@ import {
   Warning,
   Notifications,
   Search,
-  FilterList,
 } from '@mui/icons-material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../hooks/useWebSocket';
-import { adminDashboardService, type DashboardMetrics, type SiteStatus, type RecentActivity, type AnalyticsData, type ActiveAlert, type ClientUsage } from '../services/adminDashboardService';
+import { adminDashboardService } from '../services/adminDashboardService';
 import { AdminMetricCard } from '../components/AdminMetricCard';
 import { SiteStatusGrid } from '../components/SiteStatusGrid';
 import { RecentActivityFeed } from '../components/RecentActivityFeed';
@@ -141,7 +136,7 @@ export const AdminDashboardPage: React.FC = () => {
   }) || [];
 
   // Get unique clients for filter
-  const uniqueClients = Array.from(new Set(sitesStatus?.map(s => s.clientName).filter(Boolean) || []));
+  const uniqueClients = Array.from(new Set(sitesStatus?.map(s => s.clientName).filter((name): name is string => Boolean(name)) || []));
 
   return (
     <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
@@ -215,8 +210,8 @@ export const AdminDashboardPage: React.FC = () => {
               >
                 <MenuItem value="all">All Clients</MenuItem>
                 {uniqueClients.map((client) => (
-                  <MenuItem key={client} value={client}>
-                    {client}
+                  <MenuItem key={client || 'unknown'} value={client || ''}>
+                    {client || 'Unknown'}
                   </MenuItem>
                 ))}
               </Select>

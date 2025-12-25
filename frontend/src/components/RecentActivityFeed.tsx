@@ -10,7 +10,6 @@ import {
   ListItemAvatar,
   Avatar,
   Chip,
-  CircularProgress,
   Skeleton,
   Button,
 } from '@mui/material';
@@ -19,7 +18,6 @@ import {
   Person,
   LocalShipping,
   Warning,
-  ImageNotSupported,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import type { RecentActivity } from '../services/adminDashboardService';
@@ -119,7 +117,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                         variant="rounded"
                         sx={{ width: 40, height: 40, bgcolor: '#444' }}
                       >
-                        {getEntryIcon(activity.entryType)}
+                        {photoId ? null : getEntryIcon(activity.entryType)}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText

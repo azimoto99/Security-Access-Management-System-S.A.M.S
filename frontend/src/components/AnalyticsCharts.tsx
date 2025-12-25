@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Card,
   CardContent,
   Typography,
-  CircularProgress,
   Skeleton,
   FormControl,
   InputLabel,
@@ -178,7 +177,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
                 fill="#8884d8"
                 dataKey="count"
               >
-                {data.entryTypeBreakdown.map((entry, index) => (
+                {data.entryTypeBreakdown.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

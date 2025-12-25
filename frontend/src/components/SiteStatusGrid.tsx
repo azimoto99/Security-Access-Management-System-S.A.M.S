@@ -6,7 +6,6 @@ import {
   Typography,
   Grid,
   Chip,
-  CircularProgress,
   Skeleton,
   FormControl,
   InputLabel,
@@ -14,7 +13,6 @@ import {
   MenuItem,
 } from '@mui/material';
 import {
-  Business,
   DirectionsCar,
   Warning,
 } from '@mui/icons-material';
@@ -41,7 +39,7 @@ const getStatusColor = (status: SiteStatus['status']) => {
   }
 };
 
-const getStatusLabel = (status: SiteStatus['status']) => {
+const getStatusLabel = (status: SiteStatus['status']): string => {
   switch (status) {
     case 'active':
       return 'ACTIVE';
@@ -52,7 +50,7 @@ const getStatusLabel = (status: SiteStatus['status']) => {
     case 'alert':
       return 'ALERT';
     default:
-      return status.toUpperCase();
+      return 'UNKNOWN';
   }
 };
 
