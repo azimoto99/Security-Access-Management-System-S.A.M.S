@@ -15,6 +15,14 @@ import {
   IconButton,
   Skeleton,
   Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tabs,
+  Tab,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Logout,
@@ -40,6 +48,9 @@ import { dashboardService, type DashboardSummary } from '../services/dashboardSe
 import { DashboardSummaryCard } from '../components/DashboardSummaryCard';
 import { RecentActivityList } from '../components/RecentActivityList';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
+import { QuickEntryForm } from '../components/QuickEntryForm';
+import { OnSiteVehiclesList } from '../components/OnSiteVehiclesList';
+import { entryService, type Entry } from '../services/entryService';
 
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -50,13 +61,29 @@ export const DashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
+  
+  // Guard dashboard state
+  const [onSiteEntries, setOnSiteEntries] = useState<Entry[]>([]);
+  const [onSiteLoading, setOnSiteLoading] = useState(false);
+  const [onSiteError, setOnSiteError] = useState<string | null>(null);
+  const [guardSelectedSiteId, setGuardSelectedSiteId] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Get first accessible site for client
+  // Get first accessible site for client or guard
   useEffect(() => {
     if (user?.role === 'client' && user.job_site_access && user.job_site_access.length > 0) {
       setSelectedSiteId(user.job_site_access[0]);
       loadJobSites();
-    } else if (user?.role !== 'client') {
+    } else if ((user?.role === 'guard' || user?.role === 'admin') && user.job_site_access && user.job_site_access.length > 0) {
+      // Guard dashboard - select first accessible site
+      const firstSite = user.job_site_access[0];
+      setGuardSelectedSiteId(firstSite);
+      loadJobSites().then(() => {
+        loadOnSiteEntries(firstSite);
+      });
+    } else if (user?.role !== 'client' && user?.role !== 'guard' && user?.role !== 'admin') {
       loadOccupancy();
     }
   }, [user]);
@@ -71,8 +98,53 @@ export const DashboardPage: React.FC = () => {
           setSelectedSiteId(accessibleSite.id);
         }
       }
+      return sites;
     } catch (err: any) {
       console.error('Failed to load job sites:', err);
+      return [];
+    }
+  };
+
+  // Load on-site entries for guard dashboard
+  const loadOnSiteEntries = async (siteId: string) => {
+    try {
+      setOnSiteLoading(true);
+      setOnSiteError(null);
+      const entries = await entryService.getActiveEntries(siteId);
+      setOnSiteEntries(entries);
+    } catch (err: any) {
+      setOnSiteError(err.message || 'Failed to load on-site entries');
+    } finally {
+      setOnSiteLoading(false);
+    }
+  };
+
+  // Handle exit processing
+  const handleExit = async (entryId: string, _exitNotes?: string) => {
+    try {
+      await entryService.processExit({ entry_id: entryId });
+      // Remove from list immediately
+      setOnSiteEntries((prev) => prev.filter((e) => e.id !== entryId));
+      // Reload to ensure consistency
+      if (guardSelectedSiteId) {
+        loadOnSiteEntries(guardSelectedSiteId);
+      }
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  // Handle new entry created
+  const handleEntryCreated = (entry: Entry) => {
+    // Add to on-site list if it's for the current site
+    if (guardSelectedSiteId && entry.job_site_id === guardSelectedSiteId) {
+      setOnSiteEntries((prev) => [entry, ...prev]);
+    }
+    // Reload to ensure consistency
+    if (guardSelectedSiteId) {
+      setTimeout(() => {
+        loadOnSiteEntries(guardSelectedSiteId);
+      }, 500);
     }
   };
 
@@ -80,13 +152,32 @@ export const DashboardPage: React.FC = () => {
   const handleWebSocketMessage = useCallback((message: any) => {
     if (message.type === 'occupancy_update') {
       setOccupancies(message.data || []);
-    } else if (message.type === 'entry:created' || message.type === 'entry:updated') {
+    } else if (message.type === 'entry:created') {
+      // Add to on-site list if it's for the current site
+      if (guardSelectedSiteId && message.entry?.job_site_id === guardSelectedSiteId && message.entry?.exit_time === null) {
+        setOnSiteEntries((prev) => {
+          // Check if entry already exists
+          if (prev.find((e) => e.id === message.entry.id)) {
+            return prev;
+          }
+          return [message.entry, ...prev];
+        });
+      }
+      // Invalidate dashboard query to refetch data
+      if (selectedSiteId) {
+        queryClient.invalidateQueries({ queryKey: ['clientDashboard', selectedSiteId] });
+      }
+    } else if (message.type === 'entry:updated') {
+      // Remove from on-site list if exit was processed
+      if (guardSelectedSiteId && message.entry?.exit_time) {
+        setOnSiteEntries((prev) => prev.filter((e) => e.id !== message.entry.id));
+      }
       // Invalidate dashboard query to refetch data
       if (selectedSiteId) {
         queryClient.invalidateQueries({ queryKey: ['clientDashboard', selectedSiteId] });
       }
     }
-  }, [selectedSiteId, queryClient]);
+  }, [selectedSiteId, guardSelectedSiteId, queryClient]);
 
   useWebSocket(handleWebSocketMessage);
 
@@ -199,6 +290,145 @@ export const DashboardPage: React.FC = () => {
   const uniqueActionCards = Array.from(
     new Map(actionCards.map((card) => [card.path, card])).values()
   );
+
+  // Guard Dashboard View (Split-Screen)
+  if ((user?.role === 'guard' || user?.role === 'admin')) {
+    // Show loading if site not selected yet
+    if (!guardSelectedSiteId) {
+      return (
+        <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    const guardSelectedSite = jobSites.find((site) => site.id === guardSelectedSiteId);
+    const guardCurrentOccupancy = onSiteEntries.length;
+
+    return (
+      <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
+        <AppBar position="static" elevation={0}>
+          <Toolbar sx={{ minHeight: '56px !important', py: 1 }}>
+            <Box
+              component="img"
+              src="/logo.png"
+              alt="Shield Logo"
+              sx={{ height: 32, mr: 2 }}
+            />
+            <Typography variant="h6" sx={{ flexGrow: 1, fontSize: '1rem', fontWeight: 600 }}>
+              Security Access Management
+            </Typography>
+            <Chip
+              label={`${user?.username} (${user?.role})`}
+              size="small"
+              sx={{
+                backgroundColor: '#2a2a2a',
+                color: '#ffffff',
+                mr: 1,
+                height: '28px',
+                fontSize: '0.75rem',
+              }}
+            />
+            <IconButton
+              onClick={handleLogout}
+              size="small"
+              sx={{
+                color: '#ffd700',
+                '&:hover': { backgroundColor: '#2a2a2a' },
+              }}
+            >
+              <Logout fontSize="small" />
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+        <Container maxWidth="xl" sx={{ py: 2, height: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column' }}>
+          {/* Header Section */}
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  {guardSelectedSite?.name || 'Dashboard'}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+                  {user?.username} • Currently On Site: <strong>{guardCurrentOccupancy}</strong> vehicles
+                </Typography>
+              </Box>
+              {jobSites.length > 1 && (
+                <FormControl size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Job Site</InputLabel>
+                  <Select
+                    value={guardSelectedSiteId}
+                    onChange={(e) => {
+                      const newSiteId = e.target.value;
+                      setGuardSelectedSiteId(newSiteId);
+                      loadOnSiteEntries(newSiteId);
+                    }}
+                    label="Job Site"
+                  >
+                    {jobSites
+                      .filter((site) => user?.role === 'admin' || user?.job_site_access?.includes(site.id))
+                      .map((site) => (
+                        <MenuItem key={site.id} value={site.id}>
+                          {site.name}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              )}
+            </Box>
+          </Box>
+
+          {/* Mobile: Tabbed Interface */}
+          {isMobile ? (
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+              <Tabs value={mobileTab} onChange={(_, newValue) => setMobileTab(newValue)} sx={{ mb: 2 }}>
+                <Tab label="Log Entry" />
+                <Tab label={`On Site (${guardCurrentOccupancy})`} />
+              </Tabs>
+              <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+                {mobileTab === 0 ? (
+                  <QuickEntryForm
+                    jobSiteId={guardSelectedSiteId}
+                    onEntryCreated={handleEntryCreated}
+                  />
+                ) : (
+                  <OnSiteVehiclesList
+                    entries={onSiteEntries}
+                    loading={onSiteLoading}
+                    onExit={handleExit}
+                  />
+                )}
+              </Box>
+            </Box>
+          ) : (
+            /* Desktop: Split-Screen Layout */
+            <Grid container spacing={2} sx={{ flexGrow: 1, overflow: 'hidden' }}>
+              {/* Left Column: Entry Form (40%) */}
+              <Grid item xs={12} md={4.8} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <Box sx={{ height: '100%', overflow: 'auto' }}>
+                  <QuickEntryForm
+                    jobSiteId={guardSelectedSiteId}
+                    onEntryCreated={handleEntryCreated}
+                  />
+                </Box>
+              </Grid>
+
+              {/* Right Column: On-Site List (60%) */}
+              <Grid item xs={12} md={7.2} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <Box sx={{ height: '100%', overflow: 'hidden' }}>
+                  <OnSiteVehiclesList
+                    entries={onSiteEntries}
+                    loading={onSiteLoading}
+                    onExit={handleExit}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
+          )}
+        </Container>
+      </Box>
+    );
+  }
 
   // Client Dashboard View
   if (user?.role === 'client') {
