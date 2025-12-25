@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -146,6 +147,7 @@ function App() {
         <CssBaseline />
         <BrowserRouter>
           <AuthProvider>
+            <LanguageProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route
@@ -254,6 +256,7 @@ function App() {
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+            </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
