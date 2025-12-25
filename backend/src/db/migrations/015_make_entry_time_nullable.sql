@@ -12,3 +12,4 @@ COMMENT ON COLUMN entries.entry_time IS 'Entry timestamp. NULL for manual exits 
 
 
 
+
