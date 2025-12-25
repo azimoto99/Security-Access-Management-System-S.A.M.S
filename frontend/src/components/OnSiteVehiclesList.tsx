@@ -20,6 +20,7 @@ import {
   ExitToApp,
   Image as ImageIcon,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { Entry } from '../services/entryService';
 import { photoService } from '../services/photoService';
@@ -59,7 +60,7 @@ const getEntryTypeColor = (entryType: string): string => {
   }
 };
 
-const formatRelativeTime = (dateString: string): string => {
+const formatRelativeTime = (dateString: string, t: any): string => {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -68,13 +69,13 @@ const formatRelativeTime = (dateString: string): string => {
   const diffDays = Math.floor(diffMs / 86400000);
 
   if (diffMins < 1) {
-    return 'Just now';
+    return t('onSiteVehicles.justNow');
   } else if (diffMins < 60) {
-    return `${diffMins}m ago`;
+    return t('onSiteVehicles.minutesAgo', { count: diffMins });
   } else if (diffHours < 24) {
-    return `${diffHours}h ${diffMins % 60}m ago`;
+    return t('onSiteVehicles.hoursAgo', { count: diffHours, minutes: diffMins % 60 });
   } else {
-    return `${diffDays}d ago`;
+    return t('onSiteVehicles.daysAgo', { count: diffDays });
   }
 };
 
@@ -113,6 +114,7 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
   onExit,
   onManualExit,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
@@ -163,7 +165,7 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
         <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2, minHeight: 0, overflow: 'hidden' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexShrink: 0 }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Vehicles On Site
+              {t('onSiteVehicles.vehiclesOnSite')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {onManualExit && (
@@ -182,7 +184,7 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
                     },
                   }}
                 >
-                  Manual Exit
+                  {t('onSiteVehicles.manualExit')}
                 </Button>
               )}
               <Chip
@@ -196,7 +198,7 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
 
           {/* Search */}
           <TextField
-            placeholder="Search on-site vehicles..."
+            placeholder={t('onSiteVehicles.searchOnSite')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             size="small"
@@ -233,7 +235,7 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
               </Box>
             ) : filteredEntries.length === 0 ? (
               <Alert severity="info" sx={{ mt: 2 }}>
-                {searchTerm ? 'No vehicles match your search' : 'No vehicles currently on site'}
+                {searchTerm ? t('onSiteVehicles.noVehiclesMatch') : t('onSiteVehicles.noVehiclesOnSite')}
               </Alert>
             ) : (
               filteredEntries.map((entry) => {
@@ -326,7 +328,7 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
                           variant="caption"
                           sx={{ color: '#b0b0b0', fontSize: '0.7rem' }}
                         >
-                          {formatRelativeTime(entry.entry_time)}
+                          {formatRelativeTime(entry.entry_time, t)}
                         </Typography>
                       </Box>
                     </Box>
@@ -344,7 +346,7 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
                         textTransform: 'none',
                       }}
                     >
-                      EXIT
+                      {t('onSiteVehicles.exit')}
                     </Button>
                   </Box>
                 );

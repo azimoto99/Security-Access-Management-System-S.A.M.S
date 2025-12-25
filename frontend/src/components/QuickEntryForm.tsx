@@ -26,6 +26,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import type { EntryType } from '../types/entry';
 import { entryService } from '../services/entryService';
 import { PhotoUpload, type PhotoUploadRef } from './PhotoUpload';
@@ -39,6 +40,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
   jobSiteId,
   onEntryCreated,
 }) => {
+  const { t } = useTranslation();
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -203,27 +205,27 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (entryType === 'vehicle') {
-      if (!formData.license_plate?.trim()) newErrors.license_plate = 'License plate is required';
-      if (!formData.vehicle_type?.trim()) newErrors.vehicle_type = 'Vehicle type is required';
-      if (!formData.driver_name?.trim()) newErrors.driver_name = 'Driver name is required';
-      if (!formData.purpose?.trim()) newErrors.purpose = 'Purpose is required';
+      if (!formData.license_plate?.trim()) newErrors.license_plate = t('entryForm.licensePlateRequired');
+      if (!formData.vehicle_type?.trim()) newErrors.vehicle_type = t('entryForm.vehicleTypeRequired');
+      if (!formData.driver_name?.trim()) newErrors.driver_name = t('entryForm.driverNameRequired');
+      if (!formData.purpose?.trim()) newErrors.purpose = t('entryForm.purposeRequired');
     } else if (entryType === 'visitor') {
-      if (!formData.name?.trim()) newErrors.name = 'Name is required';
-      if (!formData.purpose?.trim()) newErrors.purpose = 'Purpose is required';
+      if (!formData.name?.trim()) newErrors.name = t('entryForm.nameRequired');
+      if (!formData.purpose?.trim()) newErrors.purpose = t('entryForm.purposeRequired');
     } else if (entryType === 'truck') {
-      if (!formData.license_plate?.trim()) newErrors.license_plate = 'License plate is required';
-      if (!formData.company?.trim()) newErrors.company = 'Company is required';
-      if (!formData.driver_name?.trim()) newErrors.driver_name = 'Driver name is required';
-      if (!formData.delivery_pickup) newErrors.delivery_pickup = 'Delivery/pickup type is required';
+      if (!formData.license_plate?.trim()) newErrors.license_plate = t('entryForm.licensePlateRequired');
+      if (!formData.company?.trim()) newErrors.company = t('entryForm.companyRequired');
+      if (!formData.driver_name?.trim()) newErrors.driver_name = t('entryForm.driverNameRequired');
+      if (!formData.delivery_pickup) newErrors.delivery_pickup = t('entryForm.deliveryPickupRequired');
     }
 
     if (formData.expected_duration && (isNaN(formData.expected_duration) || formData.expected_duration < 0)) {
-      newErrors.expected_duration = 'Expected duration must be a non-negative number';
+      newErrors.expected_duration = t('entryForm.expectedDurationInvalid');
     }
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
-      showSnackbar('Please fill in all required fields', 'error');
+      showSnackbar(t('entryForm.fillRequiredFields'), 'error');
       return false;
     }
     return true;
@@ -298,7 +300,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
       const identifier = entryType === 'visitor' 
         ? formData.name 
         : formData.license_plate?.toUpperCase() || '';
-      showSnackbar(`✓ ${identifier} logged successfully`, 'success');
+      showSnackbar(t('entryForm.loggedSuccessfully', { identifier }), 'success');
 
       // Callback to parent
       if (onEntryCreated) {
@@ -324,7 +326,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
       // If there are photos, the form will reset after photos finish uploading via callbacks
 
     } catch (error: any) {
-      showSnackbar(error.message || 'Failed to create entry', 'error');
+      showSnackbar(error.message || t('entryForm.failedToCreate'), 'error');
       setIsSubmitting(false);
       isSubmittingRef.current = false;
     }
@@ -346,7 +348,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2, overflowY: 'auto', overflowX: 'hidden' }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Log New Entry
+          {t('entryForm.logNewEntry')}
         </Typography>
 
         <Box
@@ -357,15 +359,15 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
         >
           {/* Entry Type */}
           <FormControl fullWidth size="small">
-            <InputLabel>Entry Type</InputLabel>
+            <InputLabel>{t('entryForm.entryType')}</InputLabel>
             <Select
               value={entryType}
               onChange={(e) => setEntryType(e.target.value as EntryType)}
-              label="Entry Type"
+              label={t('entryForm.entryType')}
             >
-              <MenuItem value="vehicle">Vehicle</MenuItem>
-              <MenuItem value="visitor">Visitor</MenuItem>
-              <MenuItem value="truck">Truck</MenuItem>
+              <MenuItem value="vehicle">{t('entryForm.vehicle')}</MenuItem>
+              <MenuItem value="visitor">{t('entryForm.visitor')}</MenuItem>
+              <MenuItem value="truck">{t('entryForm.truck')}</MenuItem>
             </Select>
           </FormControl>
 
@@ -374,8 +376,8 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
             <>
               <TextField
                 inputRef={identifierInputRef}
-                label="License Plate"
-                placeholder="ABC-123"
+                label={t('entryForm.licensePlate')}
+                placeholder={t('entryForm.licensePlatePlaceholder')}
                 value={formData.license_plate || ''}
                 onChange={handleChange('license_plate')}
                 error={!!errors.license_plate}
@@ -387,8 +389,8 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Vehicle Type"
-                placeholder="Car, SUV, Van, etc."
+                label={t('entryForm.vehicleType')}
+                placeholder={t('entryForm.vehicleTypePlaceholder')}
                 value={formData.vehicle_type || ''}
                 onChange={handleChange('vehicle_type')}
                 error={!!errors.vehicle_type}
@@ -399,7 +401,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Driver Name"
+                label={t('entryForm.driverName')}
                 value={formData.driver_name || ''}
                 onChange={handleChange('driver_name')}
                 error={!!errors.driver_name}
@@ -410,7 +412,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Company"
+                label={t('entryForm.company')}
                 value={formData.company || ''}
                 onChange={handleChange('company')}
                 fullWidth
@@ -418,7 +420,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Purpose"
+                label={t('entryForm.purpose')}
                 value={formData.purpose || ''}
                 onChange={handleChange('purpose')}
                 error={!!errors.purpose}
@@ -436,8 +438,8 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
             <>
               <TextField
                 inputRef={identifierInputRef}
-                label="Name"
-                placeholder="John Doe"
+                label={t('entryForm.name')}
+                placeholder={t('entryForm.namePlaceholder')}
                 value={formData.name || ''}
                 onChange={handleChange('name')}
                 error={!!errors.name}
@@ -449,7 +451,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Company"
+                label={t('entryForm.company')}
                 value={formData.company || ''}
                 onChange={handleChange('company')}
                 fullWidth
@@ -457,7 +459,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Contact Phone"
+                label={t('entryForm.contactPhone')}
                 value={formData.contact_phone || ''}
                 onChange={handleChange('contact_phone')}
                 fullWidth
@@ -465,7 +467,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Host Contact"
+                label={t('entryForm.hostContact')}
                 value={formData.host_contact || ''}
                 onChange={handleChange('host_contact')}
                 fullWidth
@@ -473,7 +475,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Purpose"
+                label={t('entryForm.purpose')}
                 value={formData.purpose || ''}
                 onChange={handleChange('purpose')}
                 error={!!errors.purpose}
@@ -491,8 +493,8 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
             <>
               <TextField
                 inputRef={identifierInputRef}
-                label="License Plate"
-                placeholder="TRK-456"
+                label={t('entryForm.licensePlate')}
+                placeholder={t('entryForm.truckPlaceholder')}
                 value={formData.license_plate || ''}
                 onChange={handleChange('license_plate')}
                 error={!!errors.license_plate}
@@ -504,7 +506,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Truck Number"
+                label={t('entryForm.truckNumber')}
                 value={formData.truck_number || ''}
                 onChange={handleChange('truck_number')}
                 fullWidth
@@ -512,7 +514,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Trailer Number"
+                label={t('entryForm.trailerNumber')}
                 value={formData.trailer_number || ''}
                 onChange={handleChange('trailer_number')}
                 fullWidth
@@ -520,7 +522,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Company"
+                label={t('entryForm.company')}
                 value={formData.company || ''}
                 onChange={handleChange('company')}
                 error={!!errors.company}
@@ -531,7 +533,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <TextField
-                label="Driver Name"
+                label={t('entryForm.driverName')}
                 value={formData.driver_name || ''}
                 onChange={handleChange('driver_name')}
                 error={!!errors.driver_name}
@@ -542,18 +544,18 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                 autoComplete="off"
               />
               <FormControl fullWidth size="small" required error={!!errors.delivery_pickup}>
-                <InputLabel>Delivery/Pickup</InputLabel>
+                <InputLabel>{t('entryForm.deliveryPickup')}</InputLabel>
                 <Select
                   value={formData.delivery_pickup || 'delivery'}
                   onChange={handleSelectChange('delivery_pickup')}
-                  label="Delivery/Pickup"
+                  label={t('entryForm.deliveryPickup')}
                 >
-                  <MenuItem value="delivery">Delivery</MenuItem>
-                  <MenuItem value="pickup">Pickup</MenuItem>
+                  <MenuItem value="delivery">{t('entryForm.delivery')}</MenuItem>
+                  <MenuItem value="pickup">{t('entryForm.pickup')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label="Cargo Description"
+                label={t('entryForm.cargoDescription')}
                 value={formData.cargo_description || ''}
                 onChange={handleChange('cargo_description')}
                 fullWidth
@@ -577,7 +579,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
               onClick={() => setShowOptionalFields(!showOptionalFields)}
             >
               <Typography variant="body2" sx={{ color: '#b0b0b0', flexGrow: 1 }}>
-                Additional Information (Optional)
+                {t('entryForm.additionalInfo')}
               </Typography>
               <IconButton size="small">
                 {showOptionalFields ? <ExpandLess /> : <ExpandMore />}
@@ -585,7 +587,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
             </Box>
             <Collapse in={showOptionalFields}>
               <TextField
-                label="Expected Duration (minutes)"
+                label={t('entryForm.expectedDuration')}
                 type="number"
                 value={formData.expected_duration || ''}
                 onChange={handleChange('expected_duration')}
@@ -602,7 +604,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
           {/* Photo Upload */}
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMore />}>
-              <Typography>Upload Photos (Optional)</Typography>
+              <Typography>{t('entryForm.uploadPhotos')}</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <PhotoUpload
@@ -656,7 +658,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
               fontWeight: 600,
             }}
           >
-            {isUploadingPhotos ? 'Uploading Photos...' : isSubmitting ? 'Logging...' : 'LOG ENTRY'}
+            {isUploadingPhotos ? t('entryForm.uploadingPhotos') : isSubmitting ? t('entryForm.logging') : t('entryForm.logEntry')}
           </Button>
         </Box>
       </CardContent>

@@ -26,6 +26,7 @@ import {
   Image as ImageIcon,
   Search,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { RecentEntry } from '../services/dashboardService';
 import { photoService } from '../services/photoService';
@@ -50,7 +51,7 @@ const getEntryTypeIcon = (entryType: string) => {
   }
 };
 
-const formatRelativeTime = (dateString: string): string => {
+const formatRelativeTime = (dateString: string, t: any): string => {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -59,13 +60,13 @@ const formatRelativeTime = (dateString: string): string => {
   const diffDays = Math.floor(diffMs / 86400000);
 
   if (diffMins < 1) {
-    return 'Just now';
+    return t('common.justNow');
   } else if (diffMins < 60) {
-    return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    return t('common.minutesAgo', { count: diffMins });
   } else if (diffHours < 24) {
-    return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    return t('common.hoursAgo', { count: diffHours });
   } else if (diffDays < 7) {
-    return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    return t('common.daysAgo', { count: diffDays });
   } else {
     return date.toLocaleDateString();
   }
@@ -76,6 +77,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
   siteId,
   onViewAll,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -163,7 +165,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
       <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
         <CardContent sx={{ p: 3, textAlign: 'center' }}>
           <Typography variant="body1" sx={{ color: '#b0b0b0' }}>
-            No recent activity
+            {t('recentActivity.noRecentActivity')}
           </Typography>
         </CardContent>
       </Card>
@@ -176,12 +178,12 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
       <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
         <CardContent sx={{ p: 2 }}>
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '0.875rem' }}>
-            Recent Activity
+            {t('recentActivity.recentActivity')}
           </Typography>
           
           {/* Search Bar */}
           <TextField
-            placeholder="Search entries..."
+            placeholder={t('recentActivity.searchEntries')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             size="small"
@@ -209,7 +211,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
             {filteredEntries.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                  {searchTerm ? 'No entries match your search' : 'No recent activity'}
+                  {searchTerm ? t('recentActivity.noEntriesMatch') : t('recentActivity.noRecentActivity')}
                 </Typography>
               </Box>
             ) : (
@@ -273,7 +275,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                       {entry.companyName}
                     </Typography>
                   )}
-                  {entry.driverName && (
+                      {entry.driverName && (
                     <Typography
                       variant="caption"
                       sx={{
@@ -283,7 +285,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                         mb: 0.5,
                       }}
                     >
-                      Driver: {entry.driverName}
+                      {t('recentActivity.driverLabel', { name: entry.driverName })}
                     </Typography>
                   )}
                   {(entry.truckNumber || entry.trailerNumber) && (
@@ -296,17 +298,17 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                         mb: 0.5,
                       }}
                     >
-                      {entry.truckNumber && `Truck: ${entry.truckNumber}`}
+                      {entry.truckNumber && t('recentActivity.truckLabel', { number: entry.truckNumber })}
                       {entry.truckNumber && entry.trailerNumber && ' • '}
-                      {entry.trailerNumber && `Trailer: ${entry.trailerNumber}`}
+                      {entry.trailerNumber && t('recentActivity.trailerLabel', { number: entry.trailerNumber })}
                       {!entry.isOnSite && entry.exitTrailerNumber && entry.exitTrailerNumber !== entry.trailerNumber && (
-                        <span> → Exit: {entry.exitTrailerNumber}</span>
+                        <span> → {t('recentActivity.exitLabel', { number: entry.exitTrailerNumber })}</span>
                       )}
                     </Typography>
                   )}
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                     <Chip
-                      label={entry.isOnSite ? 'ON SITE' : 'EXITED'}
+                      label={entry.isOnSite ? t('recentActivity.onSite') : t('recentActivity.exited')}
                       size="small"
                       sx={{
                         height: 20,
@@ -320,7 +322,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                       variant="caption"
                       sx={{ color: '#b0b0b0', fontSize: '0.7rem', ml: 'auto' }}
                     >
-                      {formatRelativeTime(entry.entryTime)}
+                      {formatRelativeTime(entry.entryTime, t)}
                     </Typography>
                   </Box>
                 </Box>
@@ -335,7 +337,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
             {!hasMore && allEntries.length > 0 && (
               <Box sx={{ textAlign: 'center', py: 2 }}>
                 <Typography variant="caption" sx={{ color: '#b0b0b0' }}>
-                  No more entries to load
+                  {t('recentActivity.noMoreEntries')}
                 </Typography>
               </Box>
             )}
@@ -355,7 +357,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                   },
                 }}
               >
-                View All Logs
+                {t('recentActivity.viewAllLogs')}
               </Button>
             </Box>
           )}
@@ -366,16 +368,16 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
 
   // Desktop: Table layout
   return (
-    <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+      <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
       <CardContent sx={{ p: 0 }}>
         <Box sx={{ p: 2, borderBottom: '1px solid #2a2a2a' }}>
           <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.875rem', mb: 2 }}>
-            Recent Activity
+            {t('recentActivity.recentActivity')}
           </Typography>
           
           {/* Search Bar */}
           <TextField
-            placeholder="Search entries..."
+            placeholder={t('recentActivity.searchEntries')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             size="small"
@@ -397,28 +399,28 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
             <TableHead>
               <TableRow sx={{ backgroundColor: '#0a0a0a' }}>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  Photo
+                  {t('recentActivity.photo')}
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  Identifier
+                  {t('recentActivity.identifier')}
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  Company
+                  {t('recentActivity.company')}
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  Driver
+                  {t('recentActivity.driver')}
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  Truck/Trailer
+                  {t('recentActivity.truckTrailer')}
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  Entry Time
+                  {t('recentActivity.entryTime')}
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  Status
+                  {t('recentActivity.status')}
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  Type
+                  {t('recentActivity.type')}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -427,7 +429,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                 <TableRow>
                   <TableCell colSpan={8} sx={{ textAlign: 'center', py: 4, borderColor: '#2a2a2a' }}>
                     <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                      {searchTerm ? 'No entries match your search' : 'No recent activity'}
+                      {searchTerm ? t('recentActivity.noEntriesMatch') : t('recentActivity.noRecentActivity')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -479,13 +481,13 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" sx={{ color: '#b0b0b0', fontSize: '0.75rem' }}>
-                      {entry.truckNumber && `Truck: ${entry.truckNumber}`}
+                      {entry.truckNumber && t('recentActivity.truckLabel', { number: entry.truckNumber })}
                       {entry.truckNumber && entry.trailerNumber && <br />}
-                      {entry.trailerNumber && `Trailer: ${entry.trailerNumber}`}
+                      {entry.trailerNumber && t('recentActivity.trailerLabel', { number: entry.trailerNumber })}
                       {!entry.isOnSite && entry.exitTrailerNumber && entry.exitTrailerNumber !== entry.trailerNumber && (
                         <>
                           <br />
-                          <span style={{ color: '#ff9800' }}>Exit: {entry.exitTrailerNumber}</span>
+                          <span style={{ color: '#ff9800' }}>{t('recentActivity.exitLabel', { number: entry.exitTrailerNumber })}</span>
                         </>
                       )}
                       {!entry.truckNumber && !entry.trailerNumber && '-'}
@@ -493,12 +495,12 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                      {formatRelativeTime(entry.entryTime)}
+                      {formatRelativeTime(entry.entryTime, t)}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={entry.isOnSite ? 'ON SITE' : 'EXITED'}
+                      label={entry.isOnSite ? t('recentActivity.onSite') : t('recentActivity.exited')}
                       size="small"
                       sx={{
                         height: 24,
@@ -527,7 +529,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
           {!hasMore && allEntries.length > 0 && (
             <Box sx={{ textAlign: 'center', py: 2 }}>
               <Typography variant="caption" sx={{ color: '#b0b0b0' }}>
-                No more entries to load
+                {t('recentActivity.noMoreEntries')}
               </Typography>
             </Box>
           )}
@@ -547,7 +549,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                 },
               }}
             >
-              View All Logs
+              {t('recentActivity.viewAllLogs')}
             </Button>
           </Box>
         )}

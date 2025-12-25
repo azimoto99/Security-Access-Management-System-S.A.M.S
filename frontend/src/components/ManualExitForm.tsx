@@ -10,6 +10,7 @@ import {
   MenuItem,
   Alert,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import type { SelectChangeEvent } from '@mui/material';
 
 interface ManualExitFormProps {
@@ -35,6 +36,7 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const [entryType, setEntryType] = useState<'vehicle' | 'truck'>('vehicle');
   const [formData, setFormData] = useState({
     license_plate: '',
@@ -75,11 +77,11 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.license_plate.trim()) {
-      newErrors.license_plate = 'License plate is required';
+      newErrors.license_plate = t('entryForm.licensePlateRequired');
     }
 
     if (entryType === 'truck' && !formData.truck_number.trim()) {
-      newErrors.truck_number = 'Truck number is required for trucks';
+      newErrors.truck_number = t('manualExit.truckNumberRequired');
     }
 
     setErrors(newErrors);
@@ -141,16 +143,16 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
   return (
     <Box component="form" onSubmit={handleSubmit}>
       <Alert severity="info" sx={{ mb: 2 }}>
-        Log an exit for a vehicle or truck that wasn't logged in as an entry.
+        {t('manualExit.logExitInfo')}
       </Alert>
 
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <FormControl fullWidth required>
-            <InputLabel>Entry Type</InputLabel>
-            <Select value={entryType} onChange={handleEntryTypeChange} label="Entry Type">
-              <MenuItem value="vehicle">Vehicle</MenuItem>
-              <MenuItem value="truck">Truck</MenuItem>
+            <InputLabel>{t('manualExit.entryType')}</InputLabel>
+            <Select value={entryType} onChange={handleEntryTypeChange} label={t('manualExit.entryType')}>
+              <MenuItem value="vehicle">{t('entryForm.vehicle')}</MenuItem>
+              <MenuItem value="truck">{t('entryForm.truck')}</MenuItem>
             </Select>
           </FormControl>
         </Grid>
@@ -158,7 +160,7 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="License Plate"
+            label={t('manualExit.licensePlate')}
             value={formData.license_plate}
             onChange={handleChange('license_plate')}
             required
@@ -173,7 +175,7 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Truck Number"
+                label={t('manualExit.truckNumber')}
                 value={formData.truck_number}
                 onChange={handleChange('truck_number')}
                 required
@@ -183,15 +185,15 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>Destination</InputLabel>
+                <InputLabel>{t('manualExit.destination')}</InputLabel>
                 <Select
                   value={formData.destination}
                   onChange={handleDestinationChange}
-                  label="Destination"
+                  label={t('manualExit.destination')}
                 >
-                  <MenuItem value="">None</MenuItem>
-                  <MenuItem value="north">North</MenuItem>
-                  <MenuItem value="south">South</MenuItem>
+                  <MenuItem value="">{t('manualExit.none')}</MenuItem>
+                  <MenuItem value="north">{t('manualExit.north')}</MenuItem>
+                  <MenuItem value="south">{t('manualExit.south')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -201,7 +203,7 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Trailer Number"
+            label={t('manualExit.trailerNumber')}
             value={formData.trailer_number}
             onChange={handleChange('trailer_number')}
           />
@@ -210,7 +212,7 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Driver Name"
+            label={t('manualExit.driverName')}
             value={formData.driver_name}
             onChange={handleChange('driver_name')}
           />
@@ -219,7 +221,7 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Company"
+            label={t('manualExit.company')}
             value={formData.company}
             onChange={handleChange('company')}
           />
@@ -229,7 +231,7 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Cargo Description"
+              label={t('manualExit.cargoDescription')}
               value={formData.cargo_description}
               onChange={handleChange('cargo_description')}
               multiline
@@ -241,10 +243,10 @@ export const ManualExitForm: React.FC<ManualExitFormProps> = ({
         <Grid item xs={12}>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
             <Button onClick={onCancel} disabled={isSubmitting}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={isSubmitting}>
-              {isSubmitting ? 'Logging Exit...' : 'Log Exit'}
+              {isSubmitting ? t('manualExit.loggingExit') : t('manualExit.logExit')}
             </Button>
           </Box>
         </Grid>
