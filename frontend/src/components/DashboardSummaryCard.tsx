@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent, Box, Typography } from '@mui/material';
-import { SxProps, Theme } from '@mui/material/styles';
 
 interface DashboardSummaryCardProps {
   title: string;

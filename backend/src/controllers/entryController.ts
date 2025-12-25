@@ -519,13 +519,13 @@ export const processExit = async (
     });
 
     // Broadcast entry updated event
-    const updatedEntryData = typeof updatedEntry.entry_data === 'string' ? JSON.parse(updatedEntry.entry_data) : updatedEntry.entry_data;
-    const updatedEntryPhotos = typeof updatedEntry.photos === 'string' ? JSON.parse(updatedEntry.photos) : (updatedEntry.photos || []);
+    const parsedEntryData = typeof updatedEntry.entry_data === 'string' ? JSON.parse(updatedEntry.entry_data) : updatedEntry.entry_data;
+    const parsedEntryPhotos = typeof updatedEntry.photos === 'string' ? JSON.parse(updatedEntry.photos) : (updatedEntry.photos || []);
     webSocketService.broadcastEntryUpdated(
       {
         ...updatedEntry,
-        entry_data: updatedEntryData,
-        photos: updatedEntryPhotos,
+        entry_data: parsedEntryData,
+        photos: parsedEntryPhotos,
       },
       entry.job_site_id
     );
