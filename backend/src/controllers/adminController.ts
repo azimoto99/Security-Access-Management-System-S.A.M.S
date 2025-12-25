@@ -510,11 +510,11 @@ export const getClientUsage = async (
     // Get all client users
     // Note: Clients are associated with job sites via job_site_access array in users table
     // Count sites by checking which job sites are in the user's job_site_access array
+    // Note: users table doesn't have last_login column
     const clientsResult = await pool.query(
       `SELECT 
         u.id,
         u.username,
-        u.last_login,
         u.job_site_access,
         jsonb_array_length(COALESCE(u.job_site_access, '[]'::jsonb)) as site_count
        FROM users u
