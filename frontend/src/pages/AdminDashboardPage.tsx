@@ -82,6 +82,7 @@ export const AdminDashboardPage: React.FC = () => {
   });
   
   const recentActivity = recentActivityData?.activities || [];
+  const recentActivityHasMore = recentActivityData?.hasMore ?? false;
 
   // Fetch analytics
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
@@ -301,6 +302,7 @@ export const AdminDashboardPage: React.FC = () => {
                 activities={recentActivity || []}
                 loading={activityLoading}
                 onActivityClick={(entryId) => navigate(`/search?entry_id=${entryId}`)}
+                initialHasMore={recentActivityHasMore}
               />
             </Box>
           </Grid>

@@ -27,6 +27,10 @@ export interface RecentActivity {
   entryType: 'vehicle' | 'visitor' | 'truck';
   identifier: string;
   company?: string;
+  driverName?: string;
+  truckNumber?: string;
+  trailerNumber?: string;
+  exitTrailerNumber?: string;
   siteName: string;
   entryTime: string;
   exitTime?: string | null;

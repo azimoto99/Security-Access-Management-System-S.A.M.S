@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -16,12 +16,15 @@ import {
   useMediaQuery,
   useTheme,
   CircularProgress,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import {
   DirectionsCar,
   Person,
   LocalShipping,
   Image as ImageIcon,
+  Search,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import type { RecentEntry } from '../services/dashboardService';
@@ -80,7 +83,36 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(initialEntries.length);
+  const [searchTerm, setSearchTerm] = useState('');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Filter entries based on search term
+  const filteredEntries = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return allEntries;
+    }
+
+    const search = searchTerm.toLowerCase();
+    return allEntries.filter((entry) => {
+      const identifier = entry.identifier?.toLowerCase() || '';
+      const companyName = entry.companyName?.toLowerCase() || '';
+      const entryType = entry.entryType?.toLowerCase() || '';
+      const driverName = entry.driverName?.toLowerCase() || '';
+      const truckNumber = entry.truckNumber?.toLowerCase() || '';
+      const trailerNumber = entry.trailerNumber?.toLowerCase() || '';
+      const exitTrailerNumber = entry.exitTrailerNumber?.toLowerCase() || '';
+      
+      return (
+        identifier.includes(search) ||
+        companyName.includes(search) ||
+        entryType.includes(search) ||
+        driverName.includes(search) ||
+        truckNumber.includes(search) ||
+        trailerNumber.includes(search) ||
+        exitTrailerNumber.includes(search)
+      );
+    });
+  }, [allEntries, searchTerm]);
 
   // Update entries when initial data changes
   useEffect(() => {
@@ -146,6 +178,24 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '0.875rem' }}>
             Recent Activity
           </Typography>
+          
+          {/* Search Bar */}
+          <TextField
+            placeholder="Search entries..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            size="small"
+            fullWidth
+            sx={{ mb: 2 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+          
           <Box 
             ref={scrollContainerRef}
             sx={{ 
@@ -156,7 +206,14 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
               overflowY: 'auto',
             }}
           >
-            {allEntries.map((entry) => (
+            {filteredEntries.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+                  {searchTerm ? 'No entries match your search' : 'No recent activity'}
+                </Typography>
+              </Box>
+            ) : (
+              filteredEntries.map((entry) => (
               <Box
                 key={entry.id}
                 onClick={() => handleEntryClick(entry.id)}
@@ -216,6 +273,37 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                       {entry.companyName}
                     </Typography>
                   )}
+                  {entry.driverName && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: '#b0b0b0',
+                        fontSize: '0.7rem',
+                        display: 'block',
+                        mb: 0.5,
+                      }}
+                    >
+                      Driver: {entry.driverName}
+                    </Typography>
+                  )}
+                  {(entry.truckNumber || entry.trailerNumber) && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: '#b0b0b0',
+                        fontSize: '0.7rem',
+                        display: 'block',
+                        mb: 0.5,
+                      }}
+                    >
+                      {entry.truckNumber && `Truck: ${entry.truckNumber}`}
+                      {entry.truckNumber && entry.trailerNumber && ' • '}
+                      {entry.trailerNumber && `Trailer: ${entry.trailerNumber}`}
+                      {!entry.isOnSite && entry.exitTrailerNumber && entry.exitTrailerNumber !== entry.trailerNumber && (
+                        <span> → Exit: {entry.exitTrailerNumber}</span>
+                      )}
+                    </Typography>
+                  )}
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                     <Chip
                       label={entry.isOnSite ? 'ON SITE' : 'EXITED'}
@@ -238,7 +326,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                 </Box>
                 <Box sx={{ color: '#ffd700' }}>{getEntryTypeIcon(entry.entryType)}</Box>
               </Box>
-            ))}
+            )))}
             {loadingMore && (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
                 <CircularProgress size={24} />
@@ -281,9 +369,25 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
     <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
       <CardContent sx={{ p: 0 }}>
         <Box sx={{ p: 2, borderBottom: '1px solid #2a2a2a' }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.875rem', mb: 2 }}>
             Recent Activity
           </Typography>
+          
+          {/* Search Bar */}
+          <TextField
+            placeholder="Search entries..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            size="small"
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
         </Box>
         <TableContainer 
           ref={scrollContainerRef}
@@ -302,6 +406,12 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                   Company
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
+                  Driver
+                </TableCell>
+                <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
+                  Truck/Trailer
+                </TableCell>
+                <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
                   Entry Time
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
@@ -313,7 +423,16 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {allEntries.map((entry) => (
+              {filteredEntries.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} sx={{ textAlign: 'center', py: 4, borderColor: '#2a2a2a' }}>
+                    <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+                      {searchTerm ? 'No entries match your search' : 'No recent activity'}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredEntries.map((entry) => (
                 <TableRow
                   key={entry.id}
                   onClick={() => handleEntryClick(entry.id)}
@@ -351,6 +470,25 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                   <TableCell>
                     <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
                       {entry.companyName || '-'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+                      {entry.driverName || '-'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ color: '#b0b0b0', fontSize: '0.75rem' }}>
+                      {entry.truckNumber && `Truck: ${entry.truckNumber}`}
+                      {entry.truckNumber && entry.trailerNumber && <br />}
+                      {entry.trailerNumber && `Trailer: ${entry.trailerNumber}`}
+                      {!entry.isOnSite && entry.exitTrailerNumber && entry.exitTrailerNumber !== entry.trailerNumber && (
+                        <>
+                          <br />
+                          <span style={{ color: '#ff9800' }}>Exit: {entry.exitTrailerNumber}</span>
+                        </>
+                      )}
+                      {!entry.truckNumber && !entry.trailerNumber && '-'}
                     </Typography>
                   </TableCell>
                   <TableCell>

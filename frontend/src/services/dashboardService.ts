@@ -15,6 +15,10 @@ export interface RecentEntry {
   entryType: 'vehicle' | 'visitor' | 'truck';
   identifier: string;
   companyName: string;
+  driverName?: string;
+  truckNumber?: string;
+  trailerNumber?: string;
+  exitTrailerNumber?: string;
   entryTime: string;
   exitTime: string | null;
   photoUrl: string | null;

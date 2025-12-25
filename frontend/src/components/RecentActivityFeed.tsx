@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Box,
   Card,
@@ -13,12 +13,15 @@ import {
   Skeleton,
   Button,
   CircularProgress,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import {
   DirectionsCar,
   Person,
   LocalShipping,
   Warning,
+  Search,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import type { RecentActivity } from '../services/adminDashboardService';
@@ -29,6 +32,7 @@ interface RecentActivityFeedProps {
   activities: RecentActivity[];
   loading: boolean;
   onActivityClick: (entryId: string) => void;
+  initialHasMore?: boolean;
 }
 
 const getEntryIcon = (entryType: string) => {
@@ -62,20 +66,53 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
   activities: initialActivities,
   loading: initialLoading,
   onActivityClick,
+  initialHasMore = false,
 }) => {
   const navigate = useNavigate();
   const [allActivities, setAllActivities] = useState<RecentActivity[]>(initialActivities);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(initialHasMore || initialActivities.length >= 20);
   const [offset, setOffset] = useState(initialActivities.length);
+  const [searchTerm, setSearchTerm] = useState('');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Filter activities based on search term
+  const filteredActivities = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return allActivities;
+    }
+
+    const search = searchTerm.toLowerCase();
+    return allActivities.filter((activity) => {
+      const identifier = activity.identifier?.toLowerCase() || '';
+      const company = activity.company?.toLowerCase() || '';
+      const siteName = activity.siteName?.toLowerCase() || '';
+      const entryType = activity.entryType?.toLowerCase() || '';
+      const driverName = activity.driverName?.toLowerCase() || '';
+      const truckNumber = activity.truckNumber?.toLowerCase() || '';
+      const trailerNumber = activity.trailerNumber?.toLowerCase() || '';
+      const exitTrailerNumber = activity.exitTrailerNumber?.toLowerCase() || '';
+      
+      return (
+        identifier.includes(search) ||
+        company.includes(search) ||
+        siteName.includes(search) ||
+        entryType.includes(search) ||
+        driverName.includes(search) ||
+        truckNumber.includes(search) ||
+        trailerNumber.includes(search) ||
+        exitTrailerNumber.includes(search)
+      );
+    });
+  }, [allActivities, searchTerm]);
 
   // Update activities when initial data changes
   useEffect(() => {
     setAllActivities(initialActivities);
     setOffset(initialActivities.length);
-    setHasMore(initialActivities.length > 0);
-  }, [initialActivities]);
+    // Use initialHasMore if provided, otherwise assume more if we got a full page
+    setHasMore(initialHasMore !== undefined ? initialHasMore : initialActivities.length >= 20);
+  }, [initialActivities, initialHasMore]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
@@ -129,6 +166,24 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
           Recent Activity
         </Typography>
+        
+        {/* Search Bar */}
+        <TextField
+          placeholder="Search activities..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          size="small"
+          fullWidth
+          sx={{ mb: 2, flexShrink: 0 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+        />
+        
         <Box 
           ref={scrollContainerRef}
           sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}
@@ -139,9 +194,15 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                 No recent activity
               </Typography>
             </Box>
+          ) : filteredActivities.length === 0 && searchTerm ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body2" color="text.secondary">
+                No activities match your search
+              </Typography>
+            </Box>
           ) : (
             <List sx={{ p: 0 }}>
-              {allActivities.map((activity) => {
+              {filteredActivities.map((activity) => {
                 const photoId = activity.photos && activity.photos.length > 0 ? activity.photos[0] : null;
                 const isExited = !!activity.exitTime;
 
@@ -193,6 +254,21 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                           <Typography variant="caption" sx={{ color: '#b0b0b0', display: 'block' }}>
                             {activity.siteName}
                           </Typography>
+                          {activity.driverName && (
+                            <Typography variant="caption" sx={{ color: '#b0b0b0', display: 'block', mt: 0.5 }}>
+                              Driver: {activity.driverName}
+                            </Typography>
+                          )}
+                          {(activity.truckNumber || activity.trailerNumber) && (
+                            <Typography variant="caption" sx={{ color: '#b0b0b0', display: 'block', mt: 0.5 }}>
+                              {activity.truckNumber && `Truck: ${activity.truckNumber}`}
+                              {activity.truckNumber && activity.trailerNumber && ' • '}
+                              {activity.trailerNumber && `Trailer: ${activity.trailerNumber}`}
+                              {isExited && activity.exitTrailerNumber && activity.exitTrailerNumber !== activity.trailerNumber && (
+                                <span> → Exit Trailer: {activity.exitTrailerNumber}</span>
+                              )}
+                            </Typography>
+                          )}
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                             {getEntryIcon(activity.entryType)}
                             <Typography variant="caption" sx={{ color: '#888' }}>
