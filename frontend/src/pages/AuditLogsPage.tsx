@@ -53,21 +53,10 @@ export const AuditLogsPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Initialize filters with default resource_type for clients
-  const getInitialFilters = (): AuditLogFilters => {
-    const baseFilters: AuditLogFilters = {
-      page: 1,
-      limit: 50,
-    };
-    // If user is already loaded and is a client, set default resource_type
-    if (user?.role === 'client') {
-      baseFilters.resource_type = 'entry';
-    }
-    return baseFilters;
-  };
-  
-  const [filters, setFilters] = useState<AuditLogFilters>(getInitialFilters);
+  const [filters, setFilters] = useState<AuditLogFilters>({
+    page: 1,
+    limit: 50,
+  });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -80,27 +69,29 @@ export const AuditLogsPage: React.FC = () => {
 
   // Set default resource type to 'entry' for clients when user is loaded
   useEffect(() => {
-    if (user?.role === 'client' && !filters.resource_type) {
-      setFilters((prev) => ({
-        ...prev,
-        resource_type: 'entry',
-      }));
-      setFiltersInitialized(true);
-    } else if (user && user.role !== 'client') {
-      // For non-clients, mark as initialized immediately
-      setFiltersInitialized(true);
-    } else if (!user) {
-      // User not loaded yet, wait
-      setFiltersInitialized(false);
+    if (user) {
+      if (user.role === 'client' && !filters.resource_type) {
+        // Set default filter for clients
+        setFilters((prev) => ({
+          ...prev,
+          resource_type: 'entry',
+        }));
+        // Mark as initialized after setting filter
+        setFiltersInitialized(true);
+      } else if (user.role !== 'client') {
+        // For non-clients, mark as initialized immediately
+        setFiltersInitialized(true);
+      }
     }
-  }, [user, filters.resource_type]);
+  }, [user]);
 
   useEffect(() => {
     // Only load logs after filters are properly initialized
-    if (filtersInitialized || (user && user.role !== 'client')) {
+    if (filtersInitialized) {
       loadLogs();
     }
-  }, [filters, filtersInitialized, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, filtersInitialized]);
 
   const loadLogs = async () => {
     try {
