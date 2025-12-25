@@ -65,7 +65,6 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
 }) => {
   const navigate = useNavigate();
   const [allActivities, setAllActivities] = useState<RecentActivity[]>(initialActivities);
-  const [loading, setLoading] = useState(initialLoading);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(initialActivities.length);
@@ -111,7 +110,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
     return () => container.removeEventListener('scroll', handleScroll);
   }, [hasMore, loadingMore, loadMore]);
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <Card sx={{ backgroundColor: '#1a1a1a' }}>
         <CardContent>
@@ -134,7 +133,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
           ref={scrollContainerRef}
           sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}
         >
-          {allActivities.length === 0 && !loading ? (
+          {allActivities.length === 0 && !initialLoading ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="body2" color="text.secondary">
                 No recent activity
