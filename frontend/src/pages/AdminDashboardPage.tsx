@@ -122,21 +122,17 @@ export const AdminDashboardPage: React.FC = () => {
 
   // Filter sites based on search and filters
   const filteredSites = sitesStatus?.filter((site) => {
-    if (searchTerm && !site.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !(site.clientName?.toLowerCase().includes(searchTerm.toLowerCase()))) {
+    if (searchTerm && !site.name.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
-    if (clientFilter !== 'all' && site.clientName !== clientFilter) {
+    if (jobSiteFilter !== 'all' && site.id !== jobSiteFilter) {
       return false;
     }
-    if (siteFilter !== 'all' && site.status !== siteFilter) {
+    if (statusFilter !== 'all' && site.status !== statusFilter) {
       return false;
     }
     return true;
   }) || [];
-
-  // Get unique clients for filter
-  const uniqueClients = Array.from(new Set(sitesStatus?.map(s => s.clientName).filter((name): name is string => Boolean(name)) || []));
 
   return (
     <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
