@@ -197,17 +197,17 @@ export const AdminDashboardPage: React.FC = () => {
                 ),
               }}
             />
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Client</InputLabel>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Job Site</InputLabel>
               <Select
-                value={clientFilter}
-                onChange={(e) => setClientFilter(e.target.value)}
-                label="Client"
+                value={jobSiteFilter}
+                onChange={(e) => setJobSiteFilter(e.target.value)}
+                label="Job Site"
               >
-                <MenuItem value="all">All Clients</MenuItem>
-                {uniqueClients.map((client) => (
-                  <MenuItem key={client || 'unknown'} value={client || ''}>
-                    {client || 'Unknown'}
+                <MenuItem value="all">All Sites</MenuItem>
+                {sitesStatus?.map((site) => (
+                  <MenuItem key={site.id} value={site.id}>
+                    {site.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -215,8 +215,8 @@ export const AdminDashboardPage: React.FC = () => {
             <FormControl size="small" sx={{ minWidth: 150 }}>
               <InputLabel>Status</InputLabel>
               <Select
-                value={siteFilter}
-                onChange={(e) => setSiteFilter(e.target.value)}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
                 label="Status"
               >
                 <MenuItem value="all">All Status</MenuItem>
