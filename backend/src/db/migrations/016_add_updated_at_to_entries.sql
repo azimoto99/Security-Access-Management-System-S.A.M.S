@@ -17,3 +17,4 @@ CREATE TRIGGER update_entries_updated_at
 -- Add comment
 COMMENT ON COLUMN entries.updated_at IS 'Timestamp of last update to the entry';
 
+

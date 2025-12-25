@@ -12,6 +12,7 @@ import alertsRoutes from './alerts';
 import emergencyRoutes from './emergency';
 import hrDocumentsRoutes from './hrDocuments';
 import healthRoutes from './health';
+import clientRoutes from './client';
 
 const router = Router();
 
@@ -59,6 +60,9 @@ router.use('/emergency', emergencyRoutes);
 
 // HR Documents routes
 router.use('/hr', hrDocumentsRoutes);
+
+// Client routes
+router.use('/client', clientRoutes);
 
 // Health check route (no auth required)
 router.use('/health', healthRoutes);

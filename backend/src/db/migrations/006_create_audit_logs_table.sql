@@ -28,3 +28,4 @@ COMMENT ON COLUMN audit_logs.details IS 'JSON object containing additional actio
 
 
 
+

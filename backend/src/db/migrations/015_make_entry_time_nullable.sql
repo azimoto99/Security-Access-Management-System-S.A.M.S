@@ -9,3 +9,4 @@ CREATE INDEX IF NOT EXISTS idx_entries_entry_time ON entries(entry_time) WHERE e
 -- Add comment
 COMMENT ON COLUMN entries.entry_time IS 'Entry timestamp. NULL for manual exits (vehicles/trucks not logged in)';
 
+

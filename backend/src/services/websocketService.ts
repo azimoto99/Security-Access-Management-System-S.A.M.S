@@ -229,6 +229,58 @@ class WebSocketService {
       }
     });
   }
+
+  /**
+   * Broadcast entry created event to clients with access to the job site
+   */
+  broadcastEntryCreated(entry: any, jobSiteId: string) {
+    if (!this.wss) return;
+
+    const message = JSON.stringify({
+      type: 'entry:created',
+      entry,
+      job_site_id: jobSiteId,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Broadcast to all clients (including client role) with access to this job site
+    this.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        if (
+          client.role === 'admin' ||
+          (client.jobSiteAccess && client.jobSiteAccess.includes(jobSiteId))
+        ) {
+          client.send(message);
+        }
+      }
+    });
+  }
+
+  /**
+   * Broadcast entry updated event (e.g., exit processed) to clients with access to the job site
+   */
+  broadcastEntryUpdated(entry: any, jobSiteId: string) {
+    if (!this.wss) return;
+
+    const message = JSON.stringify({
+      type: 'entry:updated',
+      entry,
+      job_site_id: jobSiteId,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Broadcast to all clients (including client role) with access to this job site
+    this.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        if (
+          client.role === 'admin' ||
+          (client.jobSiteAccess && client.jobSiteAccess.includes(jobSiteId))
+        ) {
+          client.send(message);
+        }
+      }
+    });
+  }
 }
 
 export const webSocketService = new WebSocketService();

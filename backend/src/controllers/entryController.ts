@@ -157,6 +157,18 @@ export const createEntry = async (
       logger.error('Error broadcasting occupancy update:', err);
     });
 
+    // Broadcast entry created event
+    const entryData = typeof entry.entry_data === 'string' ? JSON.parse(entry.entry_data) : entry.entry_data;
+    const entryPhotos = typeof entry.photos === 'string' ? JSON.parse(entry.photos) : (entry.photos || []);
+    webSocketService.broadcastEntryCreated(
+      {
+        ...entry,
+        entry_data: entryData,
+        photos: entryPhotos,
+      },
+      job_site_id
+    );
+
     res.status(201).json({
       success: true,
       data: {
@@ -505,6 +517,18 @@ export const processExit = async (
     webSocketService.broadcastOccupancyUpdate(entry.job_site_id).catch((err) => {
       logger.error('Error broadcasting occupancy update:', err);
     });
+
+    // Broadcast entry updated event
+    const updatedEntryData = typeof updatedEntry.entry_data === 'string' ? JSON.parse(updatedEntry.entry_data) : updatedEntry.entry_data;
+    const updatedEntryPhotos = typeof updatedEntry.photos === 'string' ? JSON.parse(updatedEntry.photos) : (updatedEntry.photos || []);
+    webSocketService.broadcastEntryUpdated(
+      {
+        ...updatedEntry,
+        entry_data: updatedEntryData,
+        photos: updatedEntryPhotos,
+      },
+      entry.job_site_id
+    );
 
     res.json({
       success: true,
