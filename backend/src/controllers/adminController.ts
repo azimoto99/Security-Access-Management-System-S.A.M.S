@@ -524,39 +524,61 @@ export const getClientUsage = async (
 
     const clients = await Promise.all(
       clientsResult.rows.map(async (client) => {
-        // Get total entries at their sites today
-        const entriesResult = await pool.query(
-          `SELECT COUNT(*) as count
-           FROM entries e
-           INNER JOIN job_sites js ON e.job_site_id = js.id
-           WHERE js.client_id = $1
-           AND e.entry_time >= $2
-           AND e.entry_time IS NOT NULL`,
-          [client.id, todayStart]
-        );
-        const todayEntries = parseInt(entriesResult.rows[0].count, 10);
-
-        // Determine activity level
-        let activityLevel: 'active' | 'moderate' | 'inactive' = 'inactive';
-        if (client.last_login) {
-          const lastLogin = new Date(client.last_login);
-          const daysSinceLogin = (new Date().getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24);
+        try {
+          // Get total entries at their sites today
+          // Use job_site_access array to find entries
+          const jobSiteAccess = client.job_site_access || [];
+          if (jobSiteAccess.length === 0) {
+            return {
+              id: client.id,
+              name: client.username || 'Unknown',
+              siteCount: parseInt(client.site_count || '0', 10),
+              lastLogin: null,
+              activityLevel: 'inactive' as const,
+              todayEntries: 0,
+            };
+          }
           
-          if (daysSinceLogin <= 1) {
+          const entriesResult = await pool.query(
+            `SELECT COUNT(*) as count
+             FROM entries e
+             WHERE e.job_site_id = ANY($1::uuid[])
+             AND e.entry_time >= $2
+             AND e.entry_time IS NOT NULL`,
+            [jobSiteAccess, todayStart]
+          );
+          const todayEntries = parseInt(entriesResult.rows[0]?.count || '0', 10);
+
+          // Determine activity level
+          // Since users table doesn't have last_login, we'll use a simple heuristic
+          // based on today's entries to determine activity
+          let activityLevel: 'active' | 'moderate' | 'inactive' = 'inactive';
+          if (todayEntries > 0) {
             activityLevel = 'active';
-          } else if (daysSinceLogin <= 7) {
+          } else if (parseInt(client.site_count || '0', 10) > 0) {
+            // Has sites assigned but no entries today - moderate
             activityLevel = 'moderate';
           }
-        }
 
-        return {
-          id: client.id,
-          name: client.username,
-          siteCount: parseInt(client.site_count, 10),
-          lastLogin: client.last_login,
-          activityLevel,
-          todayEntries,
-        };
+          return {
+            id: client.id,
+            name: client.username || 'Unknown',
+            siteCount: parseInt(client.site_count || '0', 10),
+            lastLogin: null, // users table doesn't have last_login column
+            activityLevel,
+            todayEntries,
+          };
+        } catch (error) {
+          logger.error(`Error processing client ${client.id}:`, error);
+          return {
+            id: client.id,
+            name: client.username || 'Unknown',
+            siteCount: parseInt(client.site_count || '0', 10),
+            lastLogin: null,
+            activityLevel: 'inactive' as const,
+            todayEntries: 0,
+          };
+        }
       })
     );
 
