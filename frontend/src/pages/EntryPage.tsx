@@ -16,12 +16,17 @@ import {
   MenuItem,
 } from '@mui/material';
 import { EntryForm } from '../components/EntryForm';
+import { Translate } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import type { EntryType } from '../types/entry';
 import { entryService } from '../services/entryService';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
 
 export const EntryPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
   const { user } = useAuth();
   const [entryType, setEntryType] = useState<EntryType>('vehicle');
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
@@ -56,7 +61,7 @@ export const EntryPage: React.FC = () => {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to load job sites');
+      setError(err.message || t('entry.failedToLoadJobSites'));
     } finally {
       setLoading(false);
     }
@@ -70,7 +75,7 @@ export const EntryPage: React.FC = () => {
 
   const handleSubmit = async (data: Record<string, any>) => {
     if (!selectedJobSiteId) {
-      setError('Please select a job site');
+      setError(t('entry.selectJobSite'));
       return;
     }
 
@@ -85,7 +90,7 @@ export const EntryPage: React.FC = () => {
       });
 
       setCreatedEntryId(entry.id);
-      setSuccess(`✓ Entry logged successfully! Entry ID: ${entry.id.substring(0, 8)}... You can now upload photos if needed.`);
+      setSuccess(t('entry.entryLoggedSuccess', { entryId: entry.id.substring(0, 8) }));
       
       // Reset form after a delay to allow user to see success message
       setTimeout(() => {
@@ -95,7 +100,7 @@ export const EntryPage: React.FC = () => {
         setFormKey((prev) => prev + 1);
       }, 5000);
     } catch (err: any) {
-      setError(err.message || 'Failed to create entry');
+      setError(err.message || t('entry.failedToCreate'));
     }
   };
 
@@ -118,12 +123,35 @@ export const EntryPage: React.FC = () => {
         <AppBar position="static">
           <Toolbar>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Entry Logging
+              {t('entry.title')}
             </Typography>
+            <Button
+              onClick={toggleLanguage}
+              size="small"
+              startIcon={<Translate fontSize="small" />}
+              variant="outlined"
+              sx={{
+                borderColor: '#ffd700',
+                color: '#ffd700',
+                mr: 1,
+                minWidth: 'auto',
+                px: 1.5,
+                py: 0.5,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                '&:hover': {
+                  borderColor: '#ffed4e',
+                  backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                },
+              }}
+            >
+              {language === 'en' ? 'EN' : 'ES'}
+            </Button>
           </Toolbar>
         </AppBar>
         <Container maxWidth="md" sx={{ mt: 4 }}>
-          <Alert severity="warning">No active job sites available</Alert>
+          <Alert severity="warning">{t('entry.noActiveJobSites')}</Alert>
         </Container>
       </Box>
     );
@@ -140,12 +168,35 @@ export const EntryPage: React.FC = () => {
         <AppBar position="static">
           <Toolbar>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Entry Logging
+              {t('entry.title')}
             </Typography>
+            <Button
+              onClick={toggleLanguage}
+              size="small"
+              startIcon={<Translate fontSize="small" />}
+              variant="outlined"
+              sx={{
+                borderColor: '#ffd700',
+                color: '#ffd700',
+                mr: 1,
+                minWidth: 'auto',
+                px: 1.5,
+                py: 0.5,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                '&:hover': {
+                  borderColor: '#ffed4e',
+                  backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                },
+              }}
+            >
+              {language === 'en' ? 'EN' : 'ES'}
+            </Button>
           </Toolbar>
         </AppBar>
         <Container maxWidth="md" sx={{ mt: 4 }}>
-          <Alert severity="warning">You don't have access to any job sites</Alert>
+          <Alert severity="warning">{t('entry.noAccessToJobSites')}</Alert>
         </Container>
       </Box>
     );
@@ -156,14 +207,37 @@ export const EntryPage: React.FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Entry Logging
+            {t('entry.title')}
           </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
         <Paper sx={{ p: 3 }}>
           <Typography variant="h5" gutterBottom>
-            Log Entry
+            {t('entry.logEntry')}
           </Typography>
 
           {error && (
@@ -180,11 +254,11 @@ export const EntryPage: React.FC = () => {
 
           <Box sx={{ mb: 3 }}>
             <FormControl fullWidth>
-              <InputLabel>Job Site</InputLabel>
+              <InputLabel>{t('entry.jobSite')}</InputLabel>
               <Select
                 value={selectedJobSiteId}
                 onChange={(e) => setSelectedJobSiteId(e.target.value)}
-                label="Job Site"
+                label={t('entry.jobSite')}
                 required
               >
                 {accessibleJobSites.map((site) => (
@@ -198,9 +272,9 @@ export const EntryPage: React.FC = () => {
 
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
             <Tabs value={entryType} onChange={handleEntryTypeChange}>
-              <Tab label="Vehicle" value="vehicle" />
-              <Tab label="Visitor" value="visitor" />
-              <Tab label="Truck" value="truck" />
+              <Tab label={t('entry.vehicle')} value="vehicle" />
+              <Tab label={t('entry.visitor')} value="visitor" />
+              <Tab label={t('entry.truck')} value="truck" />
             </Tabs>
           </Box>
 

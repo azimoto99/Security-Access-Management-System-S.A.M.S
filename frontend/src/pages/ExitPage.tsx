@@ -30,7 +30,9 @@ import {
   MenuItem,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import { Add } from '@mui/icons-material';
+import { Add, Translate } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { entryService, type Entry } from '../services/entryService';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
@@ -38,6 +40,8 @@ import type { EntryType } from '../types/entry';
 import { ManualExitForm } from '../components/ManualExitForm';
 
 export const ExitPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
   const { user } = useAuth();
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [selectedJobSiteId, setSelectedJobSiteId] = useState<string>('');
@@ -83,7 +87,7 @@ export const ExitPage: React.FC = () => {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to load job sites');
+      setError(err.message || t('exit.failedToLoadJobSites'));
     } finally {
       setLoading(false);
     }
@@ -99,7 +103,7 @@ export const ExitPage: React.FC = () => {
       );
       setEntries(activeEntries);
     } catch (err: any) {
-      setError(err.message || 'Failed to load active entries');
+      setError(err.message || t('exit.failedToLoadEntries'));
     } finally {
       setLoading(false);
     }
@@ -123,7 +127,7 @@ export const ExitPage: React.FC = () => {
       setExitTrailerNumber('');
       await loadActiveEntries();
     } catch (err: any) {
-      setError(err.message || 'Failed to process exit');
+      setError(err.message || t('exit.failedToProcess'));
     } finally {
       setProcessing(false);
     }
@@ -138,7 +142,7 @@ export const ExitPage: React.FC = () => {
       const entry = await entryService.createManualExit(data);
 
       setManualExitDialog(false);
-      setSuccess(`✓ Manual exit logged successfully! Entry ID: ${entry.id.substring(0, 8)}...`);
+      setSuccess(t('exit.manualExitSuccess', { entryId: entry.id.substring(0, 8) }));
       await loadActiveEntries();
       
       // Clear success message after 5 seconds
@@ -146,7 +150,7 @@ export const ExitPage: React.FC = () => {
         setSuccess(null);
       }, 5000);
     } catch (err: any) {
-      setError(err.message || 'Failed to log manual exit');
+      setError(err.message || t('exit.failedToLogManualExit'));
     } finally {
       setProcessing(false);
     }
@@ -209,15 +213,38 @@ export const ExitPage: React.FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Exit Processing
+            {t('exit.title')}
           </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Paper sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h5">
-              Process Exits
+              {t('exit.processExits')}
             </Typography>
             <Button
               variant="contained"
@@ -225,7 +252,7 @@ export const ExitPage: React.FC = () => {
               onClick={() => setManualExitDialog(true)}
               disabled={!selectedJobSiteId}
             >
-              Log Manual Exit
+              {t('exit.logManualExit')}
             </Button>
           </Box>
 
@@ -243,17 +270,17 @@ export const ExitPage: React.FC = () => {
 
           <Box sx={{ mb: 3 }}>
             <FormControl fullWidth sx={{ maxWidth: 500 }}>
-              <InputLabel>Select Job Site</InputLabel>
+              <InputLabel>{t('exit.selectJobSite')}</InputLabel>
               <Select
                 value={selectedJobSiteId}
                 onChange={(e) => setSelectedJobSiteId(e.target.value)}
-                label="Select Job Site"
+                label={t('exit.selectJobSite')}
                 required
                 displayEmpty
               >
                 {!selectedJobSiteId && (
                   <MenuItem value="" disabled>
-                    <em>Choose a job site to view entries</em>
+                    <em>{t('exit.chooseJobSite')}</em>
                   </MenuItem>
                 )}
                 {user?.role === 'admin'
@@ -272,8 +299,8 @@ export const ExitPage: React.FC = () => {
               </Select>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
                 {user?.role === 'admin'
-                  ? 'Select any job site to view and process exits'
-                  : 'Select a job site to view and process exits for entries you have access to'}
+                  ? t('exit.selectJobSiteDescription')
+                  : t('exit.selectJobSiteDescriptionClient')}
               </Typography>
             </FormControl>
           </Box>
@@ -283,17 +310,17 @@ export const ExitPage: React.FC = () => {
               value={entryType}
               onChange={(_e, newValue) => setEntryType(newValue)}
             >
-              <Tab label="All" value="all" />
-              <Tab label="Vehicles" value="vehicle" />
-              <Tab label="Visitors" value="visitor" />
-              <Tab label="Trucks" value="truck" />
+              <Tab label={t('exit.all')} value="all" />
+              <Tab label={t('exit.vehicles')} value="vehicle" />
+              <Tab label={t('exit.visitors')} value="visitor" />
+              <Tab label={t('exit.trucks')} value="truck" />
             </Tabs>
           </Box>
 
           <Box sx={{ mb: 3 }}>
             <TextField
               fullWidth
-              placeholder="Search by license plate, driver name, visitor name, or company..."
+              placeholder={t('exit.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
@@ -311,11 +338,11 @@ export const ExitPage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Details</TableCell>
-                  <TableCell>Entry Time</TableCell>
-                  <TableCell>Duration</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell>{t('exit.type')}</TableCell>
+                  <TableCell>{t('exit.details')}</TableCell>
+                  <TableCell>{t('exit.entryTime')}</TableCell>
+                  <TableCell>{t('exit.duration')}</TableCell>
+                  <TableCell align="right">{t('exit.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -323,8 +350,8 @@ export const ExitPage: React.FC = () => {
                   <TableRow>
                     <TableCell colSpan={5} align="center">
                       {entries.length === 0
-                        ? 'No active entries found'
-                        : 'No entries match your search'}
+                        ? t('exit.noActiveEntries')
+                        : t('exit.noEntriesMatch')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -345,7 +372,7 @@ export const ExitPage: React.FC = () => {
                           size="small"
                           onClick={() => setExitDialog(entry)}
                         >
-                          Process Exit
+                          {t('exit.processExit')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -364,7 +391,7 @@ export const ExitPage: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Log Manual Exit</DialogTitle>
+        <DialogTitle>{t('exit.logManualExitTitle')}</DialogTitle>
         <DialogContent>
           {selectedJobSiteId ? (
             <ManualExitForm
@@ -373,7 +400,7 @@ export const ExitPage: React.FC = () => {
               onCancel={() => setManualExitDialog(false)}
             />
           ) : (
-            <Alert severity="warning">Please select a job site first</Alert>
+            <Alert severity="warning">{t('exit.selectJobSiteFirst')}</Alert>
           )}
         </DialogContent>
       </Dialog>
@@ -391,35 +418,35 @@ export const ExitPage: React.FC = () => {
         fullWidth
         disableEscapeKeyDown={processing}
       >
-        <DialogTitle>Process Exit</DialogTitle>
+        <DialogTitle>{t('exit.processExitTitle')}</DialogTitle>
         <DialogContent>
           {exitDialog && (
             <>
               <Typography variant="body1" gutterBottom>
-                <strong>Type:</strong> {exitDialog.entry_type}
+                <strong>{t('exit.typeLabel')}</strong> {exitDialog.entry_type}
               </Typography>
               <Typography variant="body1" gutterBottom>
-                <strong>Details:</strong> {getEntryDisplayName(exitDialog)}
+                <strong>{t('exit.detailsLabel')}</strong> {getEntryDisplayName(exitDialog)}
               </Typography>
               <Typography variant="body1" gutterBottom>
-                <strong>Entry Time:</strong> {exitDialog.entry_time ? new Date(exitDialog.entry_time).toLocaleString() : 'N/A'}
+                <strong>{t('exit.entryTimeLabel')}</strong> {exitDialog.entry_time ? new Date(exitDialog.entry_time).toLocaleString() : 'N/A'}
               </Typography>
               <Typography variant="body1" gutterBottom>
-                <strong>Duration:</strong> {formatDuration(exitDialog)}
+                <strong>{t('exit.durationLabel')}</strong> {formatDuration(exitDialog)}
               </Typography>
               {exitDialog.entry_type === 'truck' && (
                 <>
                   <Typography variant="body2" sx={{ mt: 2, mb: 1, color: 'text.secondary' }}>
-                    <strong>Entry Trailer:</strong> {exitDialog.entry_data.trailer_number || 'None'}
+                    <strong>{t('exit.entryTrailer')}</strong> {exitDialog.entry_data.trailer_number || 'None'}
                   </Typography>
                   <TextField
                     fullWidth
-                    label="Exit Trailer Number (Optional)"
+                    label={t('exit.exitTrailerNumber')}
                     value={exitTrailerNumber}
                     onChange={(e) => setExitTrailerNumber(e.target.value)}
-                    placeholder="Enter trailer number if different from entry"
+                    placeholder={t('exit.exitTrailerPlaceholder')}
                     sx={{ mt: 1 }}
-                    helperText="Leave blank if same as entry trailer"
+                    helperText={t('exit.exitTrailerHelper')}
                   />
                 </>
               )}
@@ -429,13 +456,13 @@ export const ExitPage: React.FC = () => {
                   onClick={() => setUseOverride(!useOverride)}
                   size="small"
                 >
-                  Manual Override
+                  {t('exit.manualOverride')}
                 </Button>
               </Box>
               {useOverride && (
                 <TextField
                   fullWidth
-                  label="Override Reason"
+                  label={t('exit.overrideReason')}
                   multiline
                   rows={3}
                   value={overrideReason}
@@ -459,7 +486,7 @@ export const ExitPage: React.FC = () => {
             }}
             disabled={processing}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={() => {
@@ -470,7 +497,7 @@ export const ExitPage: React.FC = () => {
             variant="contained"
             disabled={processing || (useOverride && !overrideReason.trim())}
           >
-            {processing ? 'Processing...' : 'Confirm Exit'}
+            {processing ? t('exit.processing') : t('exit.confirmExit')}
           </Button>
         </DialogActions>
       </Dialog>

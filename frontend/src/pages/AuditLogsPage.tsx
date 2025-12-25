@@ -30,27 +30,31 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Clear, Download, PictureAsPdf } from '@mui/icons-material';
+import { Clear, Download, PictureAsPdf, Translate } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { auditLogService, type AuditLog, type AuditLogFilters } from '../services/auditLogService';
 import { entryService, type Entry } from '../services/entryService';
 import { PhotoGallery } from '../components/PhotoGallery';
 import { generateAuditLogsPDF } from '../utils/pdfGenerator';
 import { useAuth } from '../contexts/AuthContext';
 
-// Available resource types in the system
-const RESOURCE_TYPES = [
-  { value: 'entry', label: 'Entry' },
-  { value: 'job_site', label: 'Job Site' },
-  { value: 'user', label: 'User' },
-  { value: 'watchlist', label: 'Watchlist' },
-  { value: 'hr_document', label: 'HR Document' },
-  { value: 'document_assignment', label: 'Document Assignment' },
-  { value: 'emergency_mode', label: 'Emergency Mode' },
-];
-
 export const AuditLogsPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
   const { user } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  
+  // Available resource types in the system
+  const RESOURCE_TYPES = [
+    { value: 'entry', label: t('auditLogs.entry') },
+    { value: 'job_site', label: t('auditLogs.jobSite') },
+    { value: 'user', label: t('auditLogs.user') },
+    { value: 'watchlist', label: t('auditLogs.watchlist') },
+    { value: 'hr_document', label: t('auditLogs.hrDocument') },
+    { value: 'document_assignment', label: t('auditLogs.documentAssignment') },
+    { value: 'emergency_mode', label: t('auditLogs.emergencyMode') },
+  ];
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<AuditLogFilters>({
@@ -103,7 +107,7 @@ export const AuditLogsPage: React.FC = () => {
       setTotalPages(result.totalPages);
       setTotal(result.total);
     } catch (err: any) {
-      setError(err.message || 'Failed to load audit logs');
+      setError(err.message || t('auditLogs.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -146,7 +150,7 @@ export const AuditLogsPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err: any) {
-      setError(err.message || 'Failed to export logs');
+      setError(err.message || t('auditLogs.failedToExport'));
     } finally {
       setExporting(false);
     }
@@ -160,7 +164,7 @@ export const AuditLogsPage: React.FC = () => {
       const doc = generateAuditLogsPDF(allLogs, filters);
       doc.save(`audit-logs-${Date.now()}.pdf`);
     } catch (err: any) {
-      setError(err.message || 'Failed to export PDF');
+      setError(err.message || t('auditLogs.failedToExportPDF'));
     } finally {
       setExportingPDF(false);
     }
@@ -194,14 +198,37 @@ export const AuditLogsPage: React.FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Audit Logs
+            {t('auditLogs.title')}
           </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Paper sx={{ p: 3, mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h5">Audit Logs</Typography>
+            <Typography variant="h5">{t('auditLogs.title')}</Typography>
             <Button
               variant="outlined"
               startIcon={<Download />}
@@ -209,7 +236,7 @@ export const AuditLogsPage: React.FC = () => {
               disabled={exporting || exportingPDF}
               sx={{ mr: 1 }}
             >
-              {exporting ? 'Exporting...' : 'Export CSV'}
+              {exporting ? t('reports.exporting') : t('auditLogs.exportCSV')}
             </Button>
             <Button
               variant="contained"
@@ -217,7 +244,7 @@ export const AuditLogsPage: React.FC = () => {
               onClick={handleExportPDF}
               disabled={exporting || exportingPDF}
             >
-              {exportingPDF ? 'Exporting...' : 'Export PDF'}
+              {exportingPDF ? t('reports.exporting') : t('auditLogs.exportPDF')}
             </Button>
           </Box>
 
@@ -229,20 +256,20 @@ export const AuditLogsPage: React.FC = () => {
 
           <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
             <TextField
-              label="Action"
+              label={t('auditLogs.action')}
               value={filters.action || ''}
               onChange={(e) => handleFilterChange('action', e.target.value)}
               size="small"
             />
             <FormControl size="small" sx={{ minWidth: 180 }}>
-              <InputLabel>Resource Type</InputLabel>
+              <InputLabel>{t('auditLogs.resourceType')}</InputLabel>
               <Select
                 value={filters.resource_type || ''}
-                label="Resource Type"
+                label={t('auditLogs.resourceType')}
                 onChange={(e) => handleFilterChange('resource_type', e.target.value || undefined)}
               >
                 <MenuItem value="">
-                  <em>All Types</em>
+                  <em>{t('auditLogs.allTypes')}</em>
                 </MenuItem>
                 {RESOURCE_TYPES.map((type) => (
                   <MenuItem key={type.value} value={type.value}>
@@ -252,7 +279,7 @@ export const AuditLogsPage: React.FC = () => {
               </Select>
             </FormControl>
             <TextField
-              label="Date From"
+              label={t('auditLogs.dateFrom')}
               type="date"
               value={filters.date_from || ''}
               onChange={(e) => handleFilterChange('date_from', e.target.value)}
@@ -260,7 +287,7 @@ export const AuditLogsPage: React.FC = () => {
               InputLabelProps={{ shrink: true }}
             />
             <TextField
-              label="Date To"
+              label={t('auditLogs.dateTo')}
               type="date"
               value={filters.date_to || ''}
               onChange={(e) => handleFilterChange('date_to', e.target.value)}
@@ -268,7 +295,7 @@ export const AuditLogsPage: React.FC = () => {
               InputLabelProps={{ shrink: true }}
             />
             <Button variant="outlined" startIcon={<Clear />} onClick={handleClear}>
-              Clear
+              {t('auditLogs.clear')}
             </Button>
           </Box>
         </Paper>
@@ -278,12 +305,12 @@ export const AuditLogsPage: React.FC = () => {
             <CircularProgress />
           </Box>
         ) : logs.length === 0 ? (
-          <Alert severity="info">No audit logs found</Alert>
+          <Alert severity="info">{t('auditLogs.noLogsFound')}</Alert>
         ) : (
           <>
             <Paper sx={{ p: 2, mb: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                Found {total} log{total !== 1 ? 's' : ''}
+                {t('auditLogs.foundLogs', { count: total })}
               </Typography>
             </Paper>
 
@@ -291,12 +318,12 @@ export const AuditLogsPage: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Timestamp</TableCell>
-                    <TableCell>User</TableCell>
-                    <TableCell>Action</TableCell>
-                    <TableCell>Resource Type</TableCell>
-                    <TableCell>Resource ID</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell>{t('auditLogs.timestamp')}</TableCell>
+                    <TableCell>{t('auditLogs.user')}</TableCell>
+                    <TableCell>{t('auditLogs.action')}</TableCell>
+                    <TableCell>{t('auditLogs.resourceType')}</TableCell>
+                    <TableCell>{t('auditLogs.resourceId')}</TableCell>
+                    <TableCell align="right">{t('auditLogs.actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -315,7 +342,7 @@ export const AuditLogsPage: React.FC = () => {
                       </TableCell>
                       <TableCell align="right">
                         <Button size="small" onClick={() => handleViewDetails(log)}>
-                          View Details
+                          {t('auditLogs.viewDetails')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -348,26 +375,26 @@ export const AuditLogsPage: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Audit Log Details</DialogTitle>
+        <DialogTitle>{t('auditLogs.logDetails')}</DialogTitle>
         <DialogContent>
           {selectedLog && (
             <Box sx={{ mt: 2 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
-                    Timestamp
+                    {t('auditLogs.timestamp')}
                   </Typography>
                   <Typography variant="body1">{formatDate(selectedLog.timestamp)}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
-                    User
+                    {t('auditLogs.user')}
                   </Typography>
                   <Typography variant="body1">{selectedLog.username || selectedLog.user_id}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
-                    Action
+                    {t('auditLogs.action')}
                   </Typography>
                   <Typography variant="body1">
                     <Chip label={selectedLog.action} size="small" />
@@ -375,13 +402,13 @@ export const AuditLogsPage: React.FC = () => {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
-                    Resource Type
+                    {t('auditLogs.resourceType')}
                   </Typography>
                   <Typography variant="body1">{selectedLog.resource_type}</Typography>
                 </Grid>
                 <Grid item xs={12}>
                   <Typography variant="body2" color="text.secondary">
-                    Resource ID
+                    {t('auditLogs.resourceId')}
                   </Typography>
                   <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
                     {selectedLog.resource_id}
@@ -391,7 +418,7 @@ export const AuditLogsPage: React.FC = () => {
                   <Card variant="outlined">
                     <CardContent>
                       <Typography variant="subtitle2" gutterBottom>
-                        Details
+                        {t('auditLogs.details')}
                       </Typography>
                       <pre style={{ margin: 0, fontSize: '0.875rem' }}>
                         {JSON.stringify(selectedLog.details, null, 2)}
@@ -408,13 +435,13 @@ export const AuditLogsPage: React.FC = () => {
                     ) : relatedEntry && relatedEntry.photos && relatedEntry.photos.length > 0 ? (
                       <>
                         <Typography variant="subtitle2" gutterBottom>
-                          Photos ({relatedEntry.photos.length})
+                          {t('auditLogs.photos', { count: relatedEntry.photos.length })}
                         </Typography>
                         <PhotoGallery entryId={selectedLog.resource_id} allowDelete={false} />
                       </>
                     ) : relatedEntry ? (
                       <Typography variant="body2" color="text.secondary">
-                        No photos available for this entry
+                        {t('auditLogs.noPhotosAvailable')}
                       </Typography>
                     ) : null}
                   </Grid>
@@ -430,7 +457,7 @@ export const AuditLogsPage: React.FC = () => {
               setRelatedEntry(null);
             }}
           >
-            Close
+            {t('auditLogs.close')}
           </Button>
         </DialogActions>
       </Dialog>

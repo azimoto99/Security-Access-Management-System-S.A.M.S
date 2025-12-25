@@ -24,7 +24,9 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { Download, Assessment, PictureAsPdf } from '@mui/icons-material';
+import { Download, Assessment, PictureAsPdf, Translate } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { reportService, type ReportData, type ReportFilters } from '../services/reportService';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
@@ -44,6 +46,8 @@ import {
 } from 'recharts';
 
 export const ReportsPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
   const { user } = useAuth();
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [filters, setFilters] = useState<ReportFilters>({
@@ -80,7 +84,7 @@ export const ReportsPage: React.FC = () => {
       const result = await reportService.generateReport(filters);
       setReport(result.report);
     } catch (err: any) {
-      setError(err.message || 'Failed to generate report');
+      setError(err.message || t('reports.failedToGenerate'));
     } finally {
       setLoading(false);
     }
@@ -99,7 +103,7 @@ export const ReportsPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err: any) {
-      setError(err.message || 'Failed to export report');
+      setError(err.message || t('reports.failedToExport'));
     } finally {
       setExporting(false);
     }
@@ -140,7 +144,7 @@ export const ReportsPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err: any) {
-      setError(err.message || 'Failed to export detailed logs');
+      setError(err.message || t('reports.failedToExportDetailed'));
     } finally {
       setExportingDetailed(false);
     }
@@ -156,7 +160,7 @@ export const ReportsPage: React.FC = () => {
         : `${filters.date_from}_to_${filters.date_to}`;
       doc.save(`report-${dateStr}-${Date.now()}.pdf`);
     } catch (err: any) {
-      setError(err.message || 'Failed to export PDF');
+      setError(err.message || t('reports.failedToExportPDF'));
     } finally {
       setExportingPDF(false);
     }
@@ -200,7 +204,7 @@ export const ReportsPage: React.FC = () => {
       const response = await entryService.searchEntries(exportFilters);
       
       if (!response || !response.entries || response.entries.length === 0) {
-        setError('No entries found for the selected date range');
+        setError(t('reports.noEntriesFound'));
         return;
       }
       
@@ -214,7 +218,7 @@ export const ReportsPage: React.FC = () => {
         : `${filters.date_from}_to_${filters.date_to}`;
       doc.save(`detailed-logs-${dateStr}-${Date.now()}.pdf`);
     } catch (err: any) {
-      setError(err.message || 'Failed to export detailed PDF');
+      setError(err.message || t('reports.failedToExportDetailedPDF'));
     } finally {
       setExportingDetailedPDF(false);
     }
@@ -229,14 +233,37 @@ export const ReportsPage: React.FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Reports & Analytics
+            {t('reports.title')}
           </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" gutterBottom>
-            Generate Report
+            {t('reports.generateReport')}
           </Typography>
 
           {error && (
@@ -248,15 +275,15 @@ export const ReportsPage: React.FC = () => {
           <Grid container spacing={2} sx={{ mb: 2 }}>
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Job Site</InputLabel>
+                <InputLabel>{t('reports.jobSite')}</InputLabel>
                 <Select
                   value={filters.job_site_id || ''}
                   onChange={(e) =>
                     setFilters({ ...filters, job_site_id: e.target.value || undefined })
                   }
-                  label="Job Site"
+                  label={t('reports.jobSite')}
                 >
-                  <MenuItem value="">All Job Sites</MenuItem>
+                  <MenuItem value="">{t('reports.allJobSites')}</MenuItem>
                   {(user?.role === 'admin'
                     ? jobSites
                     : jobSites.filter((site) => user?.job_site_access?.includes(site.id))
@@ -270,25 +297,25 @@ export const ReportsPage: React.FC = () => {
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Entry Type</InputLabel>
+                <InputLabel>{t('reports.entryType')}</InputLabel>
                 <Select
                   value={filters.entry_type || ''}
                   onChange={(e) =>
                     setFilters({ ...filters, entry_type: (e.target.value as 'vehicle' | 'visitor' | 'truck' | undefined) || undefined })
                   }
-                  label="Entry Type"
+                  label={t('reports.entryType')}
                 >
-                  <MenuItem value="">All Types</MenuItem>
-                  <MenuItem value="vehicle">Vehicle</MenuItem>
-                  <MenuItem value="visitor">Visitor</MenuItem>
-                  <MenuItem value="truck">Truck</MenuItem>
+                  <MenuItem value="">{t('reports.allTypes')}</MenuItem>
+                  <MenuItem value="vehicle">{t('reports.vehicles')}</MenuItem>
+                  <MenuItem value="visitor">{t('reports.visitors')}</MenuItem>
+                  <MenuItem value="truck">{t('reports.trucks')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
-                label="Date From"
+                label={t('reports.dateFrom')}
                 type="date"
                 value={filters.date_from}
                 onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
@@ -298,7 +325,7 @@ export const ReportsPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
-                label="Date To"
+                label={t('reports.dateTo')}
                 type="date"
                 value={filters.date_to}
                 onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
@@ -308,7 +335,7 @@ export const ReportsPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
-                label="Time From"
+                label={t('reports.timeFrom')}
                 type="time"
                 value={filters.time_from || '00:00'}
                 onChange={(e) => setFilters({ ...filters, time_from: e.target.value })}
@@ -319,7 +346,7 @@ export const ReportsPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
-                label="Time To"
+                label={t('reports.timeTo')}
                 type="time"
                 value={filters.time_to || '23:59'}
                 onChange={(e) => setFilters({ ...filters, time_to: e.target.value })}
@@ -335,7 +362,7 @@ export const ReportsPage: React.FC = () => {
                   onClick={handleGenerate}
                   disabled={loading}
                 >
-                  {loading ? 'Generating...' : 'Generate Report'}
+                  {loading ? t('reports.generating') : t('reports.generateReportButton')}
                 </Button>
                 {report && (
                   <>
@@ -345,7 +372,7 @@ export const ReportsPage: React.FC = () => {
                       onClick={handleExport}
                       disabled={exporting || exportingPDF || exportingDetailedPDF}
                     >
-                      {exporting ? 'Exporting...' : 'Export Summary CSV'}
+                      {exporting ? t('reports.exporting') : t('reports.exportSummaryCSV')}
                     </Button>
                     <Button
                       variant="contained"
@@ -353,7 +380,7 @@ export const ReportsPage: React.FC = () => {
                       onClick={handleExportPDF}
                       disabled={exporting || exportingPDF || exportingDetailedPDF}
                     >
-                      {exportingPDF ? 'Exporting...' : 'Export Summary PDF'}
+                      {exportingPDF ? t('reports.exporting') : t('reports.exportSummaryPDF')}
                     </Button>
                     <Button
                       variant="outlined"
@@ -362,7 +389,7 @@ export const ReportsPage: React.FC = () => {
                       onClick={handleExportDetailed}
                       disabled={exporting || exportingPDF || exportingDetailed || exportingDetailedPDF}
                     >
-                      {exportingDetailed ? 'Exporting...' : 'Download Detailed Logs CSV'}
+                      {exportingDetailed ? t('reports.exporting') : t('reports.downloadDetailedLogsCSV')}
                     </Button>
                     <Button
                       variant="contained"
@@ -371,7 +398,7 @@ export const ReportsPage: React.FC = () => {
                       onClick={handleExportDetailedPDF}
                       disabled={exporting || exportingPDF || exportingDetailed || exportingDetailedPDF}
                     >
-                      {exportingDetailedPDF ? 'Exporting...' : 'Download Detailed Logs PDF'}
+                      {exportingDetailedPDF ? t('reports.exporting') : t('reports.downloadDetailedLogsPDF')}
                     </Button>
                   </>
                 )}
@@ -393,7 +420,7 @@ export const ReportsPage: React.FC = () => {
                   <CardContent>
                     <Typography variant="h4">{report.summary.total_entries}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Total Entries
+                      {t('reports.totalEntries')}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -403,7 +430,7 @@ export const ReportsPage: React.FC = () => {
                   <CardContent>
                     <Typography variant="h4">{report.summary.total_exits}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Total Exits
+                      {t('reports.totalExits')}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -413,7 +440,7 @@ export const ReportsPage: React.FC = () => {
                   <CardContent>
                     <Typography variant="h4">{report.summary.active_entries}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Active Entries
+                      {t('reports.activeEntries')}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -423,7 +450,7 @@ export const ReportsPage: React.FC = () => {
                   <CardContent>
                     <Typography variant="h4">{report.average_duration}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Avg Duration (min)
+                      {t('reports.avgDuration')}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -435,13 +462,13 @@ export const ReportsPage: React.FC = () => {
               <Grid item xs={12} md={6}>
                 <Paper sx={{ p: 3 }}>
                   <Typography variant="h6" gutterBottom>
-                    Entries by Type
+                    {t('reports.entriesByType')}
                   </Typography>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={[
-                      { name: 'Vehicles', count: report.summary.by_type.vehicles },
-                      { name: 'Visitors', count: report.summary.by_type.visitors },
-                      { name: 'Trucks', count: report.summary.by_type.trucks },
+                      { name: t('reports.vehicles'), count: report.summary.by_type.vehicles },
+                      { name: t('reports.visitors'), count: report.summary.by_type.visitors },
+                      { name: t('reports.trucks'), count: report.summary.by_type.trucks },
                     ]}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
@@ -457,7 +484,7 @@ export const ReportsPage: React.FC = () => {
               <Grid item xs={12} md={6}>
                 <Paper sx={{ p: 3 }}>
                   <Typography variant="h6" gutterBottom>
-                    Peak Hours
+                    {t('reports.peakHours')}
                   </Typography>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={report.peak_hours.map((ph) => ({ hour: formatHour(ph.hour), count: ph.count }))}>
@@ -476,7 +503,7 @@ export const ReportsPage: React.FC = () => {
                 <Grid item xs={12}>
                   <Paper sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom>
-                      Daily Breakdown
+                      {t('reports.dailyBreakdown')}
                     </Typography>
                     <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={report.daily_breakdown}>
@@ -485,8 +512,8 @@ export const ReportsPage: React.FC = () => {
                         <YAxis />
                         <Tooltip />
                         <Legend />
-                        <Line type="monotone" dataKey="entries" stroke="#1976d2" name="Entries" />
-                        <Line type="monotone" dataKey="exits" stroke="#dc004e" name="Exits" />
+                        <Line type="monotone" dataKey="entries" stroke="#1976d2" name={t('reports.entries')} />
+                        <Line type="monotone" dataKey="exits" stroke="#dc004e" name={t('reports.exits')} />
                       </LineChart>
                     </ResponsiveContainer>
                   </Paper>
@@ -498,15 +525,15 @@ export const ReportsPage: React.FC = () => {
             {report.by_job_site && report.by_job_site.length > 0 && (
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                  Breakdown by Job Site
+                  {t('reports.breakdownByJobSite')}
                 </Typography>
                 <TableContainer>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Job Site</TableCell>
-                        <TableCell align="right">Entries</TableCell>
-                        <TableCell align="right">Exits</TableCell>
+                        <TableCell>{t('reports.jobSiteName')}</TableCell>
+                        <TableCell align="right">{t('reports.entries')}</TableCell>
+                        <TableCell align="right">{t('reports.exits')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -524,7 +551,7 @@ export const ReportsPage: React.FC = () => {
             )}
           </>
         ) : (
-          <Alert severity="info">Generate a report to view analytics</Alert>
+          <Alert severity="info">{t('reports.generateReportToView')}</Alert>
         )}
       </Container>
     </Box>

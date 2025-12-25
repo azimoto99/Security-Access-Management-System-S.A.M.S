@@ -31,7 +31,9 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import { Search, Visibility, Clear, Edit, Delete } from '@mui/icons-material';
+import { Search, Visibility, Clear, Edit, Delete, Translate } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { entryService, type Entry } from '../services/entryService';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useAuth } from '../contexts/AuthContext';
@@ -40,6 +42,8 @@ import { PhotoGallery } from '../components/PhotoGallery';
 import { EntryForm } from '../components/EntryForm';
 
 export const SearchPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [licensePlate, setLicensePlate] = useState('');
@@ -110,7 +114,7 @@ export const SearchPage: React.FC = () => {
       setTotalPages(response.pagination?.totalPages || 1);
       setTotal(response.pagination?.total || 0);
     } catch (err: any) {
-      setError(err.message || 'Search failed');
+      setError(err.message || t('search.searchFailed'));
     } finally {
       setLoading(false);
     }
@@ -174,7 +178,7 @@ export const SearchPage: React.FC = () => {
       setEditEntry(null);
       await handleSearch(page); // Refresh the list
     } catch (err: any) {
-      setError(err.message || 'Failed to update entry');
+      setError(err.message || t('search.failedToUpdate'));
     } finally {
       setProcessing(false);
     }
@@ -189,7 +193,7 @@ export const SearchPage: React.FC = () => {
       setDeleteEntryId(null);
       await handleSearch(page); // Refresh the list
     } catch (err: any) {
-      setError(err.message || 'Failed to delete entry');
+      setError(err.message || t('search.failedToDelete'));
     } finally {
       setProcessing(false);
     }
@@ -218,14 +222,37 @@ export const SearchPage: React.FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Search Entries
+            {t('search.title')}
           </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" gutterBottom>
-            Search Entries
+            {t('search.title')}
           </Typography>
 
           {error && (
@@ -238,7 +265,7 @@ export const SearchPage: React.FC = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Quick Search (License Plate, Name, Company)"
+                label={t('search.quickSearch')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => {
@@ -258,14 +285,14 @@ export const SearchPage: React.FC = () => {
 
             <Grid item xs={12}>
               <Typography variant="subtitle2" gutterBottom>
-                Advanced Filters
+                {t('search.advancedFilters')}
               </Typography>
             </Grid>
 
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
-                label="License Plate"
+                label={t('search.licensePlate')}
                 value={licensePlate}
                 onChange={(e) => setLicensePlate(e.target.value)}
               />
@@ -274,7 +301,7 @@ export const SearchPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
-                label="Name"
+                label={t('search.name')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -283,7 +310,7 @@ export const SearchPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
-                label="Company"
+                label={t('search.company')}
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
               />
@@ -291,13 +318,13 @@ export const SearchPage: React.FC = () => {
 
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Job Site</InputLabel>
+                <InputLabel>{t('search.jobSite')}</InputLabel>
                 <Select
                   value={jobSiteId}
                   onChange={(e) => setJobSiteId(e.target.value)}
-                  label="Job Site"
+                  label={t('search.jobSite')}
                 >
-                  <MenuItem value="">All</MenuItem>
+                  <MenuItem value="">{t('search.all')}</MenuItem>
                   {jobSites.map((site) => (
                     <MenuItem key={site.id} value={site.id}>
                       {site.name}
@@ -309,32 +336,32 @@ export const SearchPage: React.FC = () => {
 
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Entry Type</InputLabel>
+                <InputLabel>{t('search.entryType')}</InputLabel>
                 <Select
                   value={entryType}
                   onChange={(e) => setEntryType(e.target.value as EntryType | '')}
-                  label="Entry Type"
+                  label={t('search.entryType')}
                 >
-                  <MenuItem value="">All</MenuItem>
-                  <MenuItem value="vehicle">Vehicle</MenuItem>
-                  <MenuItem value="visitor">Visitor</MenuItem>
-                  <MenuItem value="truck">Truck</MenuItem>
+                  <MenuItem value="">{t('search.all')}</MenuItem>
+                  <MenuItem value="vehicle">{t('reports.vehicles')}</MenuItem>
+                  <MenuItem value="visitor">{t('reports.visitors')}</MenuItem>
+                  <MenuItem value="truck">{t('reports.trucks')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
 
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
+                <InputLabel>{t('search.status')}</InputLabel>
                 <Select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as EntryStatus | '')}
-                  label="Status"
+                  label={t('search.status')}
                 >
-                  <MenuItem value="">All</MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="exited">Exited</MenuItem>
-                  <MenuItem value="emergency_exit">Emergency Exit</MenuItem>
+                  <MenuItem value="">{t('search.all')}</MenuItem>
+                  <MenuItem value="active">{t('search.active')}</MenuItem>
+                  <MenuItem value="exited">{t('search.exited')}</MenuItem>
+                  <MenuItem value="emergency_exit">{t('search.emergencyExit')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -342,7 +369,7 @@ export const SearchPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
-                label="Date From"
+                label={t('search.dateFrom')}
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
@@ -353,7 +380,7 @@ export const SearchPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
-                label="Date To"
+                label={t('search.dateTo')}
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
@@ -364,10 +391,10 @@ export const SearchPage: React.FC = () => {
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <Button variant="contained" onClick={() => handleSearch(1)} startIcon={<Search />}>
-                  Search
+                  {t('search.search')}
                 </Button>
                 <Button variant="outlined" onClick={handleClear} startIcon={<Clear />}>
-                  Clear
+                  {t('search.clear')}
                 </Button>
               </Box>
             </Grid>
@@ -380,13 +407,13 @@ export const SearchPage: React.FC = () => {
           </Box>
         ) : entries.length === 0 && total === 0 ? (
           <Alert severity="info">
-            No entries found. Try adjusting your search criteria.
+            {t('search.noEntriesFound')}
           </Alert>
         ) : (
           <>
             <Paper sx={{ p: 2, mb: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                Found {total} result{total !== 1 ? 's' : ''}
+                {t('search.foundResults', { count: total })}
               </Typography>
             </Paper>
 
@@ -394,12 +421,12 @@ export const SearchPage: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Details</TableCell>
-                    <TableCell>Job Site</TableCell>
-                    <TableCell>Entry Time</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell>{t('search.type')}</TableCell>
+                    <TableCell>{t('search.details')}</TableCell>
+                    <TableCell>{t('search.jobSite')}</TableCell>
+                    <TableCell>{t('search.entryTime')}</TableCell>
+                    <TableCell>{t('search.status')}</TableCell>
+                    <TableCell align="right">{t('search.actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -438,7 +465,7 @@ export const SearchPage: React.FC = () => {
                           size="small"
                           onClick={() => setSelectedEntry(entry)}
                           color="primary"
-                          title="View Details"
+                          title={t('search.entryDetails')}
                         >
                           <Visibility />
                         </IconButton>
@@ -448,7 +475,7 @@ export const SearchPage: React.FC = () => {
                               size="small"
                               onClick={() => setEditEntry(entry)}
                               color="primary"
-                              title="Edit Entry"
+                              title={t('search.editEntry')}
                             >
                               <Edit />
                             </IconButton>
@@ -456,7 +483,7 @@ export const SearchPage: React.FC = () => {
                               size="small"
                               onClick={() => setDeleteEntryId(entry.id)}
                               color="error"
-                              title="Delete Entry"
+                              title={t('search.deleteEntry')}
                             >
                               <Delete />
                             </IconButton>
@@ -490,14 +517,14 @@ export const SearchPage: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Entry Details</DialogTitle>
+        <DialogTitle>{t('search.entryDetails')}</DialogTitle>
         <DialogContent>
           {selectedEntry && (
             <Box>
               <Grid container spacing={2} sx={{ mt: 1 }}>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
-                    Type
+                    {t('search.type')}
                   </Typography>
                   <Typography variant="body1">
                     <Chip label={selectedEntry.entry_type} size="small" />
@@ -505,7 +532,7 @@ export const SearchPage: React.FC = () => {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
-                    Status
+                    {t('search.status')}
                   </Typography>
                   <Typography variant="body1">
                     <Chip
@@ -523,7 +550,7 @@ export const SearchPage: React.FC = () => {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
-                    Job Site
+                    {t('search.jobSite')}
                   </Typography>
                   <Typography variant="body1">
                     {(selectedEntry as any).job_site_name || 'N/A'}
@@ -531,21 +558,21 @@ export const SearchPage: React.FC = () => {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
-                    Entry Time
+                    {t('search.entryTime')}
                   </Typography>
                   <Typography variant="body1">{formatDate(selectedEntry.entry_time)}</Typography>
                 </Grid>
                 {selectedEntry.exit_time && (
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body2" color="text.secondary">
-                      Exit Time
+                      {t('search.exitTime')}
                     </Typography>
                     <Typography variant="body1">{formatDate(selectedEntry.exit_time)}</Typography>
                   </Grid>
                 )}
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
-                    Guard
+                    {t('search.guard')}
                   </Typography>
                   <Typography variant="body1">
                     {(selectedEntry as any).guard_username || 'N/A'}
@@ -555,7 +582,7 @@ export const SearchPage: React.FC = () => {
                   <Card variant="outlined">
                     <CardContent>
                       <Typography variant="subtitle2" gutterBottom>
-                        Entry Data
+                        {t('search.entryData')}
                       </Typography>
                       <pre style={{ margin: 0, fontSize: '0.875rem' }}>
                         {JSON.stringify(selectedEntry.entry_data, null, 2)}
@@ -566,7 +593,7 @@ export const SearchPage: React.FC = () => {
                 {selectedEntry.photos && selectedEntry.photos.length > 0 && (
                   <Grid item xs={12}>
                     <Typography variant="subtitle2" gutterBottom>
-                      Photos
+                      {t('search.photos')}
                     </Typography>
                     <PhotoGallery entryId={selectedEntry.id} allowDelete={false} />
                   </Grid>
@@ -576,7 +603,7 @@ export const SearchPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelectedEntry(null)}>Close</Button>
+          <Button onClick={() => setSelectedEntry(null)}>{t('common.close')}</Button>
         </DialogActions>
       </Dialog>
 
@@ -588,7 +615,7 @@ export const SearchPage: React.FC = () => {
           maxWidth="md"
           fullWidth
         >
-          <DialogTitle>Edit Entry</DialogTitle>
+          <DialogTitle>{t('search.editEntry')}</DialogTitle>
           <DialogContent>
             <Box sx={{ mt: 2 }}>
               <EntryForm
@@ -611,15 +638,15 @@ export const SearchPage: React.FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Delete Entry</DialogTitle>
+        <DialogTitle>{t('search.deleteEntry')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this entry? This action cannot be undone.
+            {t('search.deleteConfirm')}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteEntryId(null)} disabled={processing}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleDeleteEntry}
@@ -627,7 +654,7 @@ export const SearchPage: React.FC = () => {
             variant="contained"
             disabled={processing}
           >
-            {processing ? 'Deleting...' : 'Delete'}
+            {processing ? t('search.deleting') : t('search.delete')}
           </Button>
         </DialogActions>
       </Dialog>
