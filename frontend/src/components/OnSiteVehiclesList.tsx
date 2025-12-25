@@ -28,6 +28,7 @@ import { ExitConfirmationDialog } from './ExitConfirmationDialog';
 interface OnSiteVehiclesListProps {
   entries: Entry[];
   loading?: boolean;
+  error?: string | null;
   onExit: (entryId: string, exitNotes?: string) => Promise<void>;
 }
 
@@ -107,6 +108,7 @@ const getCompany = (entry: Entry): string => {
 export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
   entries,
   loading,
+  error,
   onExit,
 }) => {
   const navigate = useNavigate();
@@ -196,7 +198,11 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
               gap: 1.5,
             }}
           >
-            {loading ? (
+            {error ? (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            ) : loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
                 <CircularProgress size={32} />
               </Box>

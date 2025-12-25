@@ -395,6 +395,7 @@ export const DashboardPage: React.FC = () => {
                   <OnSiteVehiclesList
                     entries={onSiteEntries}
                     loading={onSiteLoading}
+                    error={onSiteError}
                     onExit={handleExit}
                   />
                 )}
@@ -419,6 +420,7 @@ export const DashboardPage: React.FC = () => {
                   <OnSiteVehiclesList
                     entries={onSiteEntries}
                     loading={onSiteLoading}
+                    error={onSiteError}
                     onExit={handleExit}
                   />
                 </Box>
