@@ -241,6 +241,7 @@ export const getRecentActivity = async (
     }
 
     const limit = parseInt((req.query.limit as string) || '20', 10);
+    const offset = parseInt((req.query.offset as string) || '0', 10);
 
     const result = await pool.query(
       `SELECT 
@@ -253,9 +254,17 @@ export const getRecentActivity = async (
        LEFT JOIN alerts a ON a.entry_id = e.id AND a.is_acknowledged = false
        WHERE e.entry_time IS NOT NULL
        ORDER BY e.entry_time DESC
-       LIMIT $1`,
-      [limit]
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
+
+    // Get total count for pagination
+    const countResult = await pool.query(
+      `SELECT COUNT(*) as total
+       FROM entries e
+       WHERE e.entry_time IS NOT NULL`
+    );
+    const total = parseInt(countResult.rows[0].total, 10);
 
     const activities = result.rows.map((row) => {
       let entryData: any = {};
@@ -294,7 +303,11 @@ export const getRecentActivity = async (
 
     res.json({
       success: true,
-      data: activities,
+      data: {
+        activities,
+        total,
+        hasMore: offset + activities.length < total,
+      },
     });
   } catch (error) {
     logger.error('Error in getDashboardMetrics:', error);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -15,6 +15,7 @@ import {
   Button,
   useMediaQuery,
   useTheme,
+  CircularProgress,
 } from '@mui/material';
 import {
   DirectionsCar,
@@ -25,9 +26,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import type { RecentEntry } from '../services/dashboardService';
 import { photoService } from '../services/photoService';
+import { dashboardService } from '../services/dashboardService';
 
 interface RecentActivityListProps {
   entries: RecentEntry[];
+  siteId?: string;
   onViewAll?: () => void;
 }
 
@@ -66,18 +69,64 @@ const formatRelativeTime = (dateString: string): string => {
 };
 
 export const RecentActivityList: React.FC<RecentActivityListProps> = ({
-  entries,
+  entries: initialEntries,
+  siteId,
   onViewAll,
 }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [allEntries, setAllEntries] = useState<RecentEntry[]>(initialEntries);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(initialEntries.length);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Update entries when initial data changes
+  useEffect(() => {
+    setAllEntries(initialEntries);
+    setOffset(initialEntries.length);
+    setHasMore(initialEntries.length > 0);
+  }, [initialEntries]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || !siteId) return;
+
+    try {
+      setLoadingMore(true);
+      const result = await dashboardService.getRecentEntries(siteId, 20, offset);
+      setAllEntries((prev) => [...prev, ...result.entries]);
+      setHasMore(result.hasMore);
+      setOffset((prev) => prev + result.entries.length);
+    } catch (error) {
+      console.error('Failed to load more entries:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [offset, loadingMore, hasMore, siteId]);
+
+  // Handle scroll
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Load more when user is within 100px of the bottom
+      if (scrollHeight - scrollTop - clientHeight < 100 && hasMore && !loadingMore) {
+        loadMore();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [hasMore, loadingMore, loadMore]);
 
   const handleEntryClick = (entryId: string) => {
     navigate(`/search?entry_id=${entryId}`);
   };
 
-  if (entries.length === 0) {
+  if (allEntries.length === 0) {
     return (
       <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
         <CardContent sx={{ p: 3, textAlign: 'center' }}>
@@ -97,8 +146,17 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '0.875rem' }}>
             Recent Activity
           </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            {entries.map((entry) => (
+          <Box 
+            ref={scrollContainerRef}
+            sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 1.5,
+              maxHeight: '600px',
+              overflowY: 'auto',
+            }}
+          >
+            {allEntries.map((entry) => (
               <Box
                 key={entry.id}
                 onClick={() => handleEntryClick(entry.id)}
@@ -181,6 +239,18 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                 <Box sx={{ color: '#ffd700' }}>{getEntryTypeIcon(entry.entryType)}</Box>
               </Box>
             ))}
+            {loadingMore && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            )}
+            {!hasMore && allEntries.length > 0 && (
+              <Box sx={{ textAlign: 'center', py: 2 }}>
+                <Typography variant="caption" sx={{ color: '#b0b0b0' }}>
+                  No more entries to load
+                </Typography>
+              </Box>
+            )}
           </Box>
           {onViewAll && (
             <Box sx={{ mt: 2, textAlign: 'center' }}>
@@ -215,7 +285,10 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
             Recent Activity
           </Typography>
         </Box>
-        <TableContainer>
+        <TableContainer 
+          ref={scrollContainerRef}
+          sx={{ maxHeight: '600px', overflowY: 'auto' }}
+        >
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#0a0a0a' }}>
@@ -240,7 +313,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {entries.map((entry) => (
+              {allEntries.map((entry) => (
                 <TableRow
                   key={entry.id}
                   onClick={() => handleEntryClick(entry.id)}
@@ -307,6 +380,18 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
               ))}
             </TableBody>
           </Table>
+          {loadingMore && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+              <CircularProgress size={24} />
+            </Box>
+          )}
+          {!hasMore && allEntries.length > 0 && (
+            <Box sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="caption" sx={{ color: '#b0b0b0' }}>
+                No more entries to load
+              </Typography>
+            </Box>
+          )}
         </TableContainer>
         {onViewAll && (
           <Box sx={{ p: 2, borderTop: '1px solid #2a2a2a', textAlign: 'center' }}>

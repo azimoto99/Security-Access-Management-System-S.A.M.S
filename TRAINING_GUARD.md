@@ -92,15 +92,15 @@ The Dashboard is your central hub for monitoring activity at your job sites.
      - Entry breakdown by type (Vehicles, Visitors, Trucks)
    - Updates automatically in real-time
 
-3. **Quick Actions Section**
-   - **Log Entry**: Create a new entry
-   - **Process Exit**: Process exits for active entries
-   - **Search Entries**: Search entry history
-   - **Audit Logs**: View system activity logs
-   - **Reports**: Generate analytics reports
-   - **Alerts**: View security alerts
-   - **Emergency**: Access emergency mode
-   - **My Documents**: View your HR documents
+3. **Split-Screen Layout** (Desktop)
+   - **Left Side**: Log New Entry form
+   - **Right Side**: Vehicles On Site list with Manual Exit button
+   - Both sections are always visible for quick access
+
+4. **Quick Actions Section**
+   - **Reports**: Generate and view analytics reports
+   - **Audit Logs**: View and download system activity logs
+   - **HR Docs**: Access your HR documents and onboarding materials
 
 ### Navigating the Dashboard
 
@@ -116,8 +116,9 @@ Logging entries is one of your primary responsibilities. You can log three types
 
 ### Accessing Entry Logging
 
-1. From the Dashboard, click the **"Log Entry"** card
-2. Or use the navigation menu if available
+1. **On Guard Dashboard**: The entry form is always visible on the left side of the screen
+2. **Default Entry Type**: The form defaults to "Truck" entry type
+3. You can switch between Vehicle, Visitor, and Truck types using the dropdown
 
 ### Selecting Job Site
 
@@ -126,9 +127,10 @@ Logging entries is one of your primary responsibilities. You can log three types
    - You'll only see job sites you have access to
    - The dropdown is located at the top of the entry form
 
-2. **Entry Type Tabs**
-   - Click the appropriate tab: **Vehicle**, **Visitor**, or **Truck**
+2. **Entry Type Dropdown**
+   - Select the appropriate type: **Truck** (default), **Vehicle**, or **Visitor**
    - Each type has different required fields
+   - The form automatically adjusts based on your selection
 
 ### Logging a Vehicle Entry
 
@@ -300,13 +302,36 @@ The Exit Processing page shows:
 - Click **"Confirm Exit"**
 - Entry is marked as "emergency_exit" status
 
+### Vehicles On Site Section
+
+The right side of the guard dashboard shows all vehicles currently on site:
+
+**Features:**
+- **Search Bar**: Search for specific vehicles by license plate, truck number, or company
+- **Vehicle List**: Shows all active entries with:
+  - Photo thumbnail
+  - Identifier (license plate or name)
+  - Company name
+  - Entry time and duration
+  - Entry type icon
+  - EXIT button for each vehicle
+- **Manual Exit Button**: Located at the top right of the Vehicles On Site box, next to the vehicle count
+- **Vehicle Count Badge**: Shows total number of vehicles currently on site
+
+**Processing Exits from Dashboard:**
+1. Find the vehicle in the Vehicles On Site list
+2. Click the **"EXIT"** button next to the vehicle
+3. Confirm the exit in the dialog
+4. The vehicle is removed from the list immediately
+
 ### Logging Manual Exits
 
 Sometimes vehicles or trucks leave without being logged in. You can log these as manual exits.
 
 **Accessing Manual Exit:**
-1. On the Exit Processing page, click **"Log Manual Exit"** button (top right)
-2. A form dialog opens
+1. On the Guard Dashboard, locate the **"Vehicles On Site"** box on the right side
+2. Click the **"Manual Exit"** button at the top right of the Vehicles On Site box (next to the vehicle count)
+3. A form dialog opens
 
 **For Vehicles:**
 1. Select "Vehicle" from Entry Type dropdown

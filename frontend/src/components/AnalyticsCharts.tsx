@@ -238,15 +238,15 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
               Export
             </Button>
           </Box>
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <ResponsiveContainer width="100%" height={240}>
+            <PieChart margin={{ top: 10, right: 20, left: 20, bottom: 40 }}>
               <Pie
                 data={data.entryTypeBreakdown}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
+                labelLine={{ stroke: '#b0b0b0', strokeWidth: 1 }}
                 label={({ type, percent }) => `${type}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={70}
+                outerRadius={60}
                 fill="#8884d8"
                 dataKey="count"
               >

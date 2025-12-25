@@ -12,8 +12,8 @@ import {
   Business,
   Assessment,
   Security,
-  Settings,
   Warning,
+  Description,
 } from '@mui/icons-material';
 
 export const QuickActionsPanel: React.FC = () => {
@@ -21,11 +21,11 @@ export const QuickActionsPanel: React.FC = () => {
 
   const actions = [
     { icon: <PersonAdd />, label: 'Users', path: '/users?action=create' },
-    { icon: <Business />, label: 'Create New Site', path: '/job-sites?action=create' },
+    { icon: <Business />, label: 'Job Sites', path: '/job-sites?action=create' },
     { icon: <Assessment />, label: 'Generate Report', path: '/reports' },
     { icon: <Warning />, label: 'View All Alerts', path: '/alerts' },
     { icon: <Security />, label: 'Manage Watchlist', path: '/watchlist' },
-    { icon: <Settings />, label: 'System Settings', path: '/settings' },
+    { icon: <Description />, label: 'HR Docs', path: '/hr/manage' },
   ];
 
   return (

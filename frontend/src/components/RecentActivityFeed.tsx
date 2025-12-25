@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -12,6 +12,7 @@ import {
   Chip,
   Skeleton,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import {
   DirectionsCar,
@@ -22,6 +23,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import type { RecentActivity } from '../services/adminDashboardService';
 import { photoService } from '../services/photoService';
+import { adminDashboardService } from '../services/adminDashboardService';
 
 interface RecentActivityFeedProps {
   activities: RecentActivity[];
@@ -57,11 +59,57 @@ const formatTimeAgo = (dateString: string): string => {
 };
 
 export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
-  activities,
-  loading,
+  activities: initialActivities,
+  loading: initialLoading,
   onActivityClick,
 }) => {
   const navigate = useNavigate();
+  const [allActivities, setAllActivities] = useState<RecentActivity[]>(initialActivities);
+  const [loading, setLoading] = useState(initialLoading);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(initialActivities.length);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Update activities when initial data changes
+  useEffect(() => {
+    setAllActivities(initialActivities);
+    setOffset(initialActivities.length);
+    setHasMore(initialActivities.length > 0);
+  }, [initialActivities]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+      const result = await adminDashboardService.getRecentActivity(20, offset);
+      setAllActivities((prev) => [...prev, ...result.activities]);
+      setHasMore(result.hasMore);
+      setOffset((prev) => prev + result.activities.length);
+    } catch (error) {
+      console.error('Failed to load more activities:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [offset, loadingMore, hasMore]);
+
+  // Handle scroll
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Load more when user is within 100px of the bottom
+      if (scrollHeight - scrollTop - clientHeight < 100 && hasMore && !loadingMore) {
+        loadMore();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [hasMore, loadingMore, loadMore]);
 
   if (loading) {
     return (
@@ -82,8 +130,11 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
           Recent Activity
         </Typography>
-        <Box sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}>
-          {activities.length === 0 ? (
+        <Box 
+          ref={scrollContainerRef}
+          sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}
+        >
+          {allActivities.length === 0 && !loading ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="body2" color="text.secondary">
                 No recent activity
@@ -91,7 +142,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
             </Box>
           ) : (
             <List sx={{ p: 0 }}>
-              {activities.map((activity) => {
+              {allActivities.map((activity) => {
                 const photoId = activity.photos && activity.photos.length > 0 ? activity.photos[0] : null;
                 const isExited = !!activity.exitTime;
 
@@ -156,6 +207,18 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                 );
               })}
             </List>
+          )}
+          {loadingMore && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+              <CircularProgress size={24} />
+            </Box>
+          )}
+          {!hasMore && allActivities.length > 0 && (
+            <Box sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="caption" color="text.secondary">
+                No more activities to load
+              </Typography>
+            </Box>
           )}
         </Box>
         <Box sx={{ mt: 2, textAlign: 'center' }}>

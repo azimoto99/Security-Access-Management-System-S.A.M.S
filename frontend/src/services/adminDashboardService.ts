@@ -79,9 +79,17 @@ export const adminDashboardService = {
     throw new Error(response.data.error?.message || 'Failed to fetch sites status');
   },
 
-  async getRecentActivity(limit: number = 20): Promise<RecentActivity[]> {
-    const response = await api.get<ApiResponse<RecentActivity[]>>('/admin/dashboard/recent-activity', {
-      params: { limit },
+  async getRecentActivity(limit: number = 20, offset: number = 0): Promise<{
+    activities: RecentActivity[];
+    total: number;
+    hasMore: boolean;
+  }> {
+    const response = await api.get<ApiResponse<{
+      activities: RecentActivity[];
+      total: number;
+      hasMore: boolean;
+    }>>('/admin/dashboard/recent-activity', {
+      params: { limit, offset },
     });
     if (response.data.success && response.data.data) {
       return response.data.data;

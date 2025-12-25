@@ -93,6 +93,30 @@ All notable changes to the Security Access Management System will be documented 
 - Asset optimization
 - Gzip compression
 
+## [1.1.0] - 2024-12-XX
+
+### Added
+- Quick Actions section on guard dashboard for easy access to Reports and Audit Logs
+- HR Docs quick action button on admin and guard dashboards
+- Infinite scrolling for recent activity feeds on admin and client dashboards
+- Manual Exit button moved inside Vehicles On Site box for better accessibility
+
+### Changed
+- Default entry type in guard dashboard changed from "vehicle" to "truck"
+- Quick Actions button labels simplified ("Add New User" → "Users", "Create New Site" → "Job Sites")
+- Analytics charts improved with better margins and label positioning to prevent text cutoff
+- Pie chart labels now use label lines to prevent text cutoff
+- Recent activity sections now support endless scrolling to view all historical entries
+
+### Fixed
+- Fixed text cutoff issues in analytics charts (line charts, bar charts, and pie charts)
+- Fixed pie chart label cutoff for "trucks" entry type
+- Removed non-functional System Settings button from admin quick actions
+
+### Removed
+- Client portal usage section removed from admin dashboard
+- System Settings quick action (route did not exist)
+
 
 
 

@@ -42,7 +42,6 @@ import {
   Dashboard as DashboardIcon,
   Login as LoginIcon,
   Logout as LogoutIcon,
-  ExitToApp,
 } from '@mui/icons-material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
@@ -389,15 +388,6 @@ export const DashboardPage: React.FC = () => {
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Button
-                  variant="outlined"
-                  color="warning"
-                  startIcon={<ExitToApp />}
-                  onClick={() => setManualExitDialogOpen(true)}
-                  size="small"
-                >
-                  Manual Exit
-                </Button>
                 {jobSites.length > 1 && (
                   <FormControl size="small" sx={{ minWidth: 200 }}>
                     <InputLabel>Job Site</InputLabel>
@@ -462,6 +452,22 @@ export const DashboardPage: React.FC = () => {
               >
                 Audit Logs
               </Button>
+              <Button
+                variant="outlined"
+                startIcon={<Description />}
+                onClick={() => navigate('/hr/documents')}
+                sx={{
+                  borderColor: '#ffd700',
+                  color: '#ffd700',
+                  '&:hover': {
+                    borderColor: '#ffed4e',
+                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                  },
+                }}
+                size="small"
+              >
+                HR Docs
+              </Button>
             </Box>
           </Box>
 
@@ -484,6 +490,7 @@ export const DashboardPage: React.FC = () => {
                     loading={onSiteLoading}
                     error={onSiteError}
                     onExit={handleExit}
+                    onManualExit={() => setManualExitDialogOpen(true)}
                   />
                 )}
               </Box>
@@ -690,6 +697,7 @@ export const DashboardPage: React.FC = () => {
             <Box sx={{ mb: 3 }}>
               <RecentActivityList
                 entries={dashboardData.recentEntries}
+                siteId={selectedSiteId || undefined}
                 onViewAll={() => navigate('/audit-logs')}
               />
             </Box>

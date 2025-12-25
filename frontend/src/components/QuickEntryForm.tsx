@@ -44,7 +44,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
     message: '',
     severity: 'success',
   });
-  const [entryType, setEntryType] = useState<EntryType>('vehicle');
+  const [entryType, setEntryType] = useState<EntryType>('truck');
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showOptionalFields, setShowOptionalFields] = useState(false);
@@ -312,7 +312,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
         isSubmittingRef.current = false;
         
         // Reset form
-        setEntryType('vehicle');
+        setEntryType('truck');
         setShowOptionalFields(false);
         setCreatedEntryId(null);
         
@@ -619,7 +619,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
                   isSubmittingRef.current = false;
                   
                   // Reset form after photos are uploaded
-                  setEntryType('vehicle');
+                  setEntryType('truck');
                   setShowOptionalFields(false);
                   setCreatedEntryId(null);
                   

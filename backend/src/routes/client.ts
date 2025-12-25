@@ -10,5 +10,8 @@ router.use(authenticateToken);
 // Dashboard summary endpoint
 router.get('/dashboard/:siteId/summary', clientController.getDashboardSummary);
 
+// Recent entries endpoint (for pagination)
+router.get('/dashboard/:siteId/recent-entries', clientController.getRecentEntries);
+
 export default router;
 

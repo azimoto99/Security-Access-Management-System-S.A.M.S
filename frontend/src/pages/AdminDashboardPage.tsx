@@ -74,12 +74,14 @@ export const AdminDashboardPage: React.FC = () => {
   });
 
   // Fetch recent activity
-  const { data: recentActivity, isLoading: activityLoading } = useQuery({
+  const { data: recentActivityData, isLoading: activityLoading } = useQuery({
     queryKey: ['adminDashboard', 'recentActivity'],
-    queryFn: () => adminDashboardService.getRecentActivity(20),
+    queryFn: () => adminDashboardService.getRecentActivity(20, 0),
     refetchInterval: 15000, // More frequent for activity
     staleTime: 5000,
   });
+  
+  const recentActivity = recentActivityData?.activities || [];
 
   // Fetch analytics
   const { data: analytics, isLoading: analyticsLoading } = useQuery({

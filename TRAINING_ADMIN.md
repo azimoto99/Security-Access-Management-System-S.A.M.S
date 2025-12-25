@@ -99,18 +99,28 @@ The Dashboard provides a comprehensive overview of all system activity.
      - Breakdown by entry type
    - Updates in real-time via WebSocket
 
-3. **Quick Actions Section**
-   - **Log Entry**: Create entries (same as guards)
-   - **Process Exit**: Process exits (same as guards)
-   - **Search Entries**: Advanced search across all sites
-   - **Job Sites**: Manage job sites
-   - **Users**: Manage user accounts
-   - **Audit Logs**: View complete audit trail
-   - **Reports**: Generate comprehensive reports
-   - **Watchlist**: Manage security watchlist
-   - **Alerts**: View and manage all alerts
-   - **HR Docs**: Manage HR documents and DocuSign
-   - **Emergency**: Activate emergency mode
+3. **Quick Actions Panel** (Right Side)
+   - **Users**: Create and manage user accounts
+   - **Job Sites**: Create and manage job sites
+   - **Generate Report**: Create analytics reports
+   - **View All Alerts**: Access security alerts
+   - **Manage Watchlist**: Manage security watchlist
+   - **HR Docs**: Manage HR documents and DocuSign integration
+   - All actions are accessible with a single click
+
+4. **Analytics Charts Section**
+   - **Entries Over Time**: Line chart showing entry trends
+   - **Site Activity Comparison**: Bar chart comparing activity across sites
+   - **Entry Type Breakdown**: Pie chart showing distribution of entry types
+   - Charts support export to PNG format
+   - Period filter: Today, This Week, or This Month
+
+5. **Recent Activity Feed**
+   - Shows recent entries across all sites
+   - **Infinite Scrolling**: Scroll down to automatically load more entries
+   - Continues loading until all historical entries are displayed
+   - Click any entry to view full details
+   - Real-time updates via WebSocket
 
 ---
 
@@ -526,8 +536,35 @@ As an administrator, you have access to comprehensive reporting and analytics ac
 
 ### Accessing Reports
 
-1. From Dashboard, click **"Reports"** card
-2. You'll see the Reports & Analytics page
+1. From Dashboard, click **"Generate Report"** in the Quick Actions panel
+2. Or click **"Reports"** from the main navigation
+3. You'll see the Reports & Analytics page
+
+### Dashboard Analytics Charts
+
+The admin dashboard includes real-time analytics charts:
+
+**Entries Over Time Chart:**
+- Line chart showing entry trends
+- Period filter: Today (hourly), This Week (daily), or This Month (daily)
+- Export to PNG format available
+
+**Site Activity Comparison:**
+- Bar chart comparing entry counts across different job sites
+- Shows top 10 sites by activity
+- Site names displayed with angled labels for readability
+- Export to PNG format available
+
+**Entry Type Breakdown:**
+- Pie chart showing distribution of entry types (Vehicles, Visitors, Trucks)
+- Labels positioned outside the chart with connecting lines
+- Export to PNG format available
+
+**Chart Features:**
+- All charts support period filtering (Today, This Week, This Month)
+- Export buttons available for each chart
+- Charts automatically update when period filter changes
+- Improved label positioning prevents text cutoff
 
 ### Generating Reports
 

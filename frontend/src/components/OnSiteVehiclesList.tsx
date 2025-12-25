@@ -30,6 +30,7 @@ interface OnSiteVehiclesListProps {
   loading?: boolean;
   error?: string | null;
   onExit: (entryId: string, exitNotes?: string) => Promise<void>;
+  onManualExit?: () => void;
 }
 
 const getEntryTypeIcon = (entryType: string) => {
@@ -110,6 +111,7 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
   loading,
   error,
   onExit,
+  onManualExit,
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -163,12 +165,33 @@ export const OnSiteVehiclesList: React.FC<OnSiteVehiclesListProps> = ({
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Vehicles On Site
             </Typography>
-            <Chip
-              label={entries.length}
-              color="primary"
-              size="small"
-              sx={{ fontWeight: 600 }}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {onManualExit && (
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  startIcon={<ExitToApp />}
+                  onClick={onManualExit}
+                  size="small"
+                  sx={{
+                    borderColor: '#ff9800',
+                    color: '#ff9800',
+                    '&:hover': {
+                      borderColor: '#fb8c00',
+                      backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                    },
+                  }}
+                >
+                  Manual Exit
+                </Button>
+              )}
+              <Chip
+                label={entries.length}
+                color="primary"
+                size="small"
+                sx={{ fontWeight: 600 }}
+              />
+            </Box>
           </Box>
 
           {/* Search */}

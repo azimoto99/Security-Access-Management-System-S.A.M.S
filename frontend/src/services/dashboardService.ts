@@ -21,6 +21,12 @@ export interface RecentEntry {
   isOnSite: boolean;
 }
 
+export interface RecentEntriesResponse {
+  entries: RecentEntry[];
+  total: number;
+  hasMore: boolean;
+}
+
 export const dashboardService = {
   /**
    * Get dashboard summary for a site
@@ -32,6 +38,24 @@ export const dashboardService = {
 
     if (!response.data.success || !response.data.data) {
       throw new Error('Failed to fetch dashboard summary');
+    }
+
+    return response.data.data;
+  },
+
+  /**
+   * Get paginated recent entries for a site
+   */
+  async getRecentEntries(siteId: string, limit: number = 20, offset: number = 0): Promise<RecentEntriesResponse> {
+    const response = await api.get<{ success: boolean; data: RecentEntriesResponse }>(
+      `/client/dashboard/${siteId}/recent-entries`,
+      {
+        params: { limit, offset },
+      }
+    );
+
+    if (!response.data.success || !response.data.data) {
+      throw new Error('Failed to fetch recent entries');
     }
 
     return response.data.data;
