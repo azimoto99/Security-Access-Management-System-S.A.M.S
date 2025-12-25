@@ -11,6 +11,7 @@ import {
   Alert,
   Chip,
   IconButton,
+  Button,
   FormControl,
   InputLabel,
   Select,
@@ -27,9 +28,12 @@ import {
   Warning,
   Notifications,
   Search,
+  Translate,
 } from '@mui/icons-material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { adminDashboardService } from '../services/adminDashboardService';
 import { AdminMetricCard } from '../components/AdminMetricCard';
@@ -41,6 +45,8 @@ import { QuickActionsPanel } from '../components/QuickActionsPanel';
 
 export const AdminDashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month'>('today');
@@ -139,7 +145,7 @@ export const AdminDashboardPage: React.FC = () => {
             sx={{ height: 32, mr: 2 }}
           />
           <Typography variant="h6" sx={{ flexGrow: 1, fontSize: '1rem', fontWeight: 600 }}>
-            Shield Canine Services - Admin Dashboard
+            {t('adminDashboard.title')}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 2 }}>
             <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
@@ -160,6 +166,29 @@ export const AdminDashboardPage: React.FC = () => {
               fontSize: '0.75rem',
             }}
           />
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
           <IconButton
             onClick={handleLogout}
             size="small"
@@ -178,7 +207,7 @@ export const AdminDashboardPage: React.FC = () => {
         <Card sx={{ mb: 3, p: 2 }}>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
             <TextField
-              placeholder="Search sites..."
+              placeholder={t('adminDashboard.searchSites')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               size="small"
@@ -192,13 +221,13 @@ export const AdminDashboardPage: React.FC = () => {
               }}
             />
             <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Job Site</InputLabel>
+              <InputLabel>{t('adminDashboard.jobSite')}</InputLabel>
               <Select
                 value={jobSiteFilter}
                 onChange={(e) => setJobSiteFilter(e.target.value)}
-                label="Job Site"
+                label={t('adminDashboard.jobSite')}
               >
-                <MenuItem value="all">All Sites</MenuItem>
+                <MenuItem value="all">{t('adminDashboard.allSites')}</MenuItem>
                 {sitesStatus?.map((site) => (
                   <MenuItem key={site.id} value={site.id}>
                     {site.name}
@@ -207,29 +236,29 @@ export const AdminDashboardPage: React.FC = () => {
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Status</InputLabel>
+              <InputLabel>{t('adminDashboard.status')}</InputLabel>
               <Select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                label="Status"
+                label={t('adminDashboard.status')}
               >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="moderate">Moderate</MenuItem>
-                <MenuItem value="quiet">Quiet</MenuItem>
-                <MenuItem value="alert">Alert</MenuItem>
+                <MenuItem value="all">{t('adminDashboard.allStatus')}</MenuItem>
+                <MenuItem value="active">{t('adminDashboard.active')}</MenuItem>
+                <MenuItem value="moderate">{t('adminDashboard.moderate')}</MenuItem>
+                <MenuItem value="quiet">{t('adminDashboard.quiet')}</MenuItem>
+                <MenuItem value="alert">{t('adminDashboard.alert')}</MenuItem>
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Period</InputLabel>
+              <InputLabel>{t('adminDashboard.period')}</InputLabel>
               <Select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value as 'today' | 'week' | 'month')}
-                label="Period"
+                label={t('adminDashboard.period')}
               >
-                <MenuItem value="today">Today</MenuItem>
-                <MenuItem value="week">This Week</MenuItem>
-                <MenuItem value="month">This Month</MenuItem>
+                <MenuItem value="today">{t('adminDashboard.today')}</MenuItem>
+                <MenuItem value="week">{t('adminDashboard.thisWeek')}</MenuItem>
+                <MenuItem value="month">{t('adminDashboard.thisMonth')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -238,7 +267,7 @@ export const AdminDashboardPage: React.FC = () => {
         {/* Error Display */}
         {metricsError && (
           <Alert severity="error" sx={{ mb: 3 }}>
-            Failed to load dashboard data. Please refresh the page.
+            {t('adminDashboard.failedToLoad')}
           </Alert>
         )}
 
@@ -246,9 +275,9 @@ export const AdminDashboardPage: React.FC = () => {
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={6} md={3}>
             <AdminMetricCard
-              title="Active Sites"
+              title={t('adminDashboard.activeSites')}
               value={metrics?.activeSites || 0}
-              subtitle={`of ${metrics?.totalSites || 0} total sites`}
+              subtitle={t('adminDashboard.ofTotalSites', { total: metrics?.totalSites || 0 })}
               icon={<Business />}
               color="info"
               loading={metricsLoading}
@@ -256,9 +285,9 @@ export const AdminDashboardPage: React.FC = () => {
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <AdminMetricCard
-              title="Total Entries Today"
+              title={t('adminDashboard.totalEntriesToday')}
               value={metrics?.todayEntries || 0}
-              subtitle={metrics?.entriesChange ? `${metrics.entriesChange > 0 ? '+' : ''}${metrics.entriesChange}% vs yesterday` : 'No data'}
+              subtitle={metrics?.entriesChange ? t('adminDashboard.vsYesterday', { change: `${metrics.entriesChange > 0 ? '+' : ''}${metrics.entriesChange}` }) : t('adminDashboard.noData')}
               icon={<Login />}
               color="success"
               loading={metricsLoading}
@@ -266,9 +295,9 @@ export const AdminDashboardPage: React.FC = () => {
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <AdminMetricCard
-              title="Currently On Site"
+              title={t('adminDashboard.currentlyOnSite')}
               value={metrics?.currentOccupancy || 0}
-              subtitle="across all sites"
+              subtitle={t('adminDashboard.acrossAllSites')}
               icon={<DirectionsCar />}
               color="secondary"
               loading={metricsLoading}
@@ -276,9 +305,9 @@ export const AdminDashboardPage: React.FC = () => {
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <AdminMetricCard
-              title="Active Alerts"
+              title={t('adminDashboard.activeAlerts')}
               value={metrics?.activeAlerts || 0}
-              subtitle="requiring attention"
+              subtitle={t('adminDashboard.requiringAttention')}
               icon={<Warning />}
               color={metrics?.activeAlerts && metrics.activeAlerts > 0 ? 'error' : 'default'}
               loading={metricsLoading}

@@ -42,9 +42,12 @@ import {
   Dashboard as DashboardIcon,
   Login as LoginIcon,
   Logout as LogoutIcon,
+  Translate,
 } from '@mui/icons-material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { occupancyService, type JobSiteOccupancy } from '../services/occupancyService';
 import { OccupancyCard } from '../components/OccupancyCard';
@@ -60,6 +63,8 @@ import { AdminDashboardPage } from './AdminDashboardPage';
 
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [occupancies, setOccupancies] = useState<JobSiteOccupancy[]>([]);
@@ -169,14 +174,14 @@ export const DashboardPage: React.FC = () => {
       const entry = await entryService.createManualExit(data);
       
       setManualExitDialogOpen(false);
-      setManualExitSuccess(`✓ Manual exit logged successfully! Entry ID: ${entry.id.substring(0, 8)}...`);
+      setManualExitSuccess(t('guardDashboard.manualExitLogged', { entryId: entry.id.substring(0, 8) + '...' }));
       
       // Clear success message after 5 seconds
       setTimeout(() => {
         setManualExitSuccess(null);
       }, 5000);
     } catch (err: any) {
-      setManualExitError(err.message || 'Failed to log manual exit');
+      setManualExitError(err.message || t('guardDashboard.failedToLogExit'));
     }
   };
 
@@ -250,12 +255,12 @@ export const DashboardPage: React.FC = () => {
     const diffMins = Math.floor(diffMs / 60000);
 
     if (diffMins < 1) {
-      return 'Just now';
+      return t('common.justNow');
     } else if (diffMins < 60) {
-      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+      return t('common.minutesAgo', { count: diffMins });
     } else {
       const diffHours = Math.floor(diffMins / 60);
-      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+      return t('common.hoursAgo', { count: diffHours });
     }
   };
 
@@ -285,35 +290,35 @@ export const DashboardPage: React.FC = () => {
   const actionCards = [
     ...((user?.role === 'guard' || user?.role === 'admin')
       ? [
-          { title: 'Log Entry', desc: 'Record entry', path: '/entry', icon: 'entry' },
-          { title: 'Process Exit', desc: 'Process exits', path: '/exit', icon: 'exit' },
-          { title: 'Search Entries', desc: 'Search history', path: '/search', icon: 'search' },
-          { title: 'Audit Logs', desc: 'View logs', path: '/audit-logs', icon: 'audit-logs' },
-          { title: 'Reports', desc: 'Analytics', path: '/reports', icon: 'reports' },
+          { title: t('dashboard.logEntry'), desc: t('dashboard.recordEntry'), path: '/entry', icon: 'entry' },
+          { title: t('dashboard.processExit'), desc: t('dashboard.processExits'), path: '/exit', icon: 'exit' },
+          { title: t('dashboard.searchEntries'), desc: t('dashboard.searchHistory'), path: '/search', icon: 'search' },
+          { title: t('dashboard.auditLogs'), desc: t('dashboard.viewLogs'), path: '/audit-logs', icon: 'audit-logs' },
+          { title: t('dashboard.reports'), desc: t('dashboard.analytics'), path: '/reports', icon: 'reports' },
         ]
       : []),
     ...(user?.role === 'client'
       ? [
-          { title: 'Search Entries', desc: 'Search history', path: '/search', icon: 'search' },
-          { title: 'Audit Logs', desc: 'View logs', path: '/audit-logs', icon: 'audit-logs' },
-          { title: 'Reports', desc: 'Analytics', path: '/reports', icon: 'reports' },
+          { title: t('dashboard.searchEntries'), desc: t('dashboard.searchHistory'), path: '/search', icon: 'search' },
+          { title: t('dashboard.auditLogs'), desc: t('dashboard.viewLogs'), path: '/audit-logs', icon: 'audit-logs' },
+          { title: t('dashboard.reports'), desc: t('dashboard.analytics'), path: '/reports', icon: 'reports' },
         ]
       : []),
     ...(user?.role === 'admin'
       ? [
-          { title: 'Job Sites', desc: 'Manage sites', path: '/job-sites', icon: 'job-sites' },
-          { title: 'Users', desc: 'Manage users', path: '/users', icon: 'users' },
-          { title: 'Watchlist', desc: 'Manage list', path: '/watchlist', icon: 'watchlist' },
-          { title: 'HR Docs', desc: 'DocuSign', path: '/hr/manage', icon: 'hr/manage' },
+          { title: t('dashboard.jobSites'), desc: t('dashboard.manageSites'), path: '/job-sites', icon: 'job-sites' },
+          { title: t('dashboard.users'), desc: t('dashboard.manageUsers'), path: '/users', icon: 'users' },
+          { title: t('dashboard.watchlist'), desc: t('dashboard.manageList'), path: '/watchlist', icon: 'watchlist' },
+          { title: t('dashboard.hrDocs'), desc: 'DocuSign', path: '/hr/manage', icon: 'hr/manage' },
         ]
       : []),
     ...((user?.role === 'employee' || user?.role === 'guard')
-      ? [{ title: 'My Documents', desc: 'HR docs', path: '/hr/documents', icon: 'hr/documents' }]
+      ? [{ title: t('dashboard.myDocuments'), desc: t('dashboard.hrDocs'), path: '/hr/documents', icon: 'hr/documents' }]
       : []),
     ...((user?.role === 'guard' || user?.role === 'admin')
       ? [
-          { title: 'Alerts', desc: 'Security alerts', path: '/alerts', icon: 'alerts' },
-          { title: 'Emergency', desc: 'Emergency mode', path: '/emergency', icon: 'emergency' },
+          { title: t('dashboard.alerts'), desc: t('dashboard.securityAlerts'), path: '/alerts', icon: 'alerts' },
+          { title: t('dashboard.emergency'), desc: t('dashboard.emergencyMode'), path: '/emergency', icon: 'emergency' },
         ]
       : []),
   ];
@@ -353,7 +358,7 @@ export const DashboardPage: React.FC = () => {
               sx={{ height: 32, mr: 2 }}
             />
             <Typography variant="h6" sx={{ flexGrow: 1, fontSize: '1rem', fontWeight: 600 }}>
-              Security Access Management
+              {t('dashboard.securityAccessManagement')}
             </Typography>
             <Chip
               label={`${user?.username} (${user?.role})`}
@@ -366,6 +371,29 @@ export const DashboardPage: React.FC = () => {
                 fontSize: '0.75rem',
               }}
             />
+            <Button
+              onClick={toggleLanguage}
+              size="small"
+              startIcon={<Translate fontSize="small" />}
+              variant="outlined"
+              sx={{
+                borderColor: '#ffd700',
+                color: '#ffd700',
+                mr: 1,
+                minWidth: 'auto',
+                px: 1.5,
+                py: 0.5,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                '&:hover': {
+                  borderColor: '#ffed4e',
+                  backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                },
+              }}
+            >
+              {language === 'en' ? 'EN' : 'ES'}
+            </Button>
             <IconButton
               onClick={handleLogout}
               size="small"
@@ -387,13 +415,13 @@ export const DashboardPage: React.FC = () => {
                   {guardSelectedSite?.name || 'Dashboard'}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                  {user?.username} • Currently On Site: <strong>{guardCurrentOccupancy}</strong> vehicles
+                  {user?.username} • {t('guardDashboard.onSite')}: <strong>{guardCurrentOccupancy}</strong> {t('dashboard.vehicles')}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 {jobSites.length > 1 && (
                   <FormControl size="small" sx={{ minWidth: 200 }}>
-                    <InputLabel>Job Site</InputLabel>
+                    <InputLabel>{t('guardDashboard.jobSite')}</InputLabel>
                     <Select
                       value={guardSelectedSiteId}
                       onChange={(e) => {
@@ -401,7 +429,7 @@ export const DashboardPage: React.FC = () => {
                         setGuardSelectedSiteId(newSiteId);
                         loadOnSiteEntries(newSiteId);
                       }}
-                      label="Job Site"
+                      label={t('guardDashboard.jobSite')}
                     >
                       {jobSites
                         .filter((site) => user?.role === 'admin' || user?.job_site_access?.includes(site.id))
@@ -420,7 +448,7 @@ export const DashboardPage: React.FC = () => {
           {/* Quick Actions Section */}
           <Box sx={{ mb: 2, flexShrink: 0 }}>
             <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
-              Quick Actions
+              {t('guardDashboard.quickActions')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               <Button
@@ -437,7 +465,7 @@ export const DashboardPage: React.FC = () => {
                 }}
                 size="small"
               >
-                Reports
+                {t('dashboard.reports')}
               </Button>
               <Button
                 variant="outlined"
@@ -453,7 +481,7 @@ export const DashboardPage: React.FC = () => {
                 }}
                 size="small"
               >
-                Audit Logs
+                {t('dashboard.auditLogs')}
               </Button>
               <Button
                 variant="outlined"
@@ -469,7 +497,7 @@ export const DashboardPage: React.FC = () => {
                 }}
                 size="small"
               >
-                HR Docs
+                {t('dashboard.hrDocs')}
               </Button>
             </Box>
           </Box>
@@ -478,8 +506,8 @@ export const DashboardPage: React.FC = () => {
           {isMobile ? (
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <Tabs value={mobileTab} onChange={(_, newValue) => setMobileTab(newValue)} sx={{ mb: 2, flexShrink: 0 }}>
-                <Tab label="Log Entry" />
-                <Tab label={`On Site (${guardCurrentOccupancy})`} />
+                <Tab label={t('guardDashboard.logEntry')} />
+                <Tab label={`${t('guardDashboard.onSite')} (${guardCurrentOccupancy})`} />
               </Tabs>
               <Box sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}>
                 {mobileTab === 0 ? (
@@ -537,7 +565,7 @@ export const DashboardPage: React.FC = () => {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Log Manual Exit</DialogTitle>
+          <DialogTitle>{t('guardDashboard.logManualExit')}</DialogTitle>
           <DialogContent>
             {manualExitError && (
               <Alert severity="error" sx={{ mb: 2 }} onClose={() => setManualExitError(null)}>
@@ -585,7 +613,7 @@ export const DashboardPage: React.FC = () => {
               sx={{ height: 32, mr: 2 }}
             />
             <Typography variant="h6" sx={{ flexGrow: 1, fontSize: '1rem', fontWeight: 600 }}>
-              Security Access Management
+              {t('dashboard.securityAccessManagement')}
             </Typography>
             <Chip
               label={`${user?.username} (${user?.role})`}
@@ -598,6 +626,29 @@ export const DashboardPage: React.FC = () => {
                 fontSize: '0.75rem',
               }}
             />
+            <Button
+              onClick={toggleLanguage}
+              size="small"
+              startIcon={<Translate fontSize="small" />}
+              variant="outlined"
+              sx={{
+                borderColor: '#ffd700',
+                color: '#ffd700',
+                mr: 1,
+                minWidth: 'auto',
+                px: 1.5,
+                py: 0.5,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                '&:hover': {
+                  borderColor: '#ffed4e',
+                  backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                },
+              }}
+            >
+              {language === 'en' ? 'EN' : 'ES'}
+            </Button>
             <IconButton
               onClick={handleLogout}
               size="small"
@@ -614,12 +665,12 @@ export const DashboardPage: React.FC = () => {
           {/* Header Section */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="h4" sx={{ fontWeight: 600, mb: 0.5 }}>
-              {selectedSite?.name || 'Dashboard'}
+              {selectedSite?.name || t('dashboard.title')}
             </Typography>
             {dashboardData && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                  Last updated: {formatLastUpdated(dashboardData.lastUpdated)}
+                  {t('clientDashboard.lastUpdated')}: {formatLastUpdated(dashboardData.lastUpdated)}
                 </Typography>
                 {dashboardLoading && (
                   <CircularProgress size={12} sx={{ color: '#ffd700' }} />
@@ -640,7 +691,7 @@ export const DashboardPage: React.FC = () => {
                 '& .MuiAlert-icon': { color: '#ff4444' },
               }}
             >
-              {dashboardError instanceof Error ? dashboardError.message : 'Failed to load dashboard data'}
+              {dashboardError instanceof Error ? dashboardError.message : t('clientDashboard.failedToLoad')}
             </Alert>
           )}
 
@@ -657,36 +708,36 @@ export const DashboardPage: React.FC = () => {
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6} md={3}>
                 <DashboardSummaryCard
-                  title="On Site Now"
+                  title={t('dashboard.onSiteNow')}
                   value={dashboardData.currentOccupancy}
-                  subtitle="vehicles currently on site"
+                  subtitle={t('dashboard.vehiclesCurrentlyOnSite')}
                   icon={<DirectionsCar />}
                   color="primary"
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <DashboardSummaryCard
-                  title="Today's Entries"
+                  title={t('dashboard.todaysEntries')}
                   value={dashboardData.todayEntries}
-                  subtitle="entries logged today"
+                  subtitle={t('dashboard.entriesLoggedToday')}
                   icon={<LoginIcon />}
                   color="success"
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <DashboardSummaryCard
-                  title="Today's Exits"
+                  title={t('dashboard.todaysExits')}
                   value={dashboardData.todayExits}
-                  subtitle="exits logged today"
+                  subtitle={t('dashboard.exitsLoggedToday')}
                   icon={<LogoutIcon />}
                   color="warning"
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <DashboardSummaryCard
-                  title="Active Alerts"
+                  title={t('dashboard.activeAlerts')}
                   value={dashboardData.activeAlerts}
-                  subtitle="alerts today"
+                  subtitle={t('dashboard.alertsToday')}
                   icon={<Warning />}
                   color={dashboardData.activeAlerts > 0 ? 'error' : 'default'}
                 />
@@ -710,7 +761,7 @@ export const DashboardPage: React.FC = () => {
           {/* Quick Actions Section */}
           <Box sx={{ mb: 2 }}>
             <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
-              Quick Actions
+              {t('dashboard.quickActions')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               <Button
@@ -726,7 +777,7 @@ export const DashboardPage: React.FC = () => {
                   },
                 }}
               >
-                View Full Reports
+                {t('dashboard.viewFullReports')}
               </Button>
               <Button
                 variant="outlined"
@@ -741,7 +792,7 @@ export const DashboardPage: React.FC = () => {
                   },
                 }}
               >
-                View Audit Logs
+                {t('dashboard.viewAuditLogs')}
               </Button>
             </Box>
           </Box>
@@ -762,7 +813,7 @@ export const DashboardPage: React.FC = () => {
             sx={{ height: 32, mr: 2 }}
           />
           <Typography variant="h6" sx={{ flexGrow: 1, fontSize: '1rem', fontWeight: 600 }}>
-            Security Access Management
+            {t('dashboard.securityAccessManagement')}
           </Typography>
           <Chip
             label={`${user?.username} (${user?.role})`}
@@ -775,6 +826,22 @@ export const DashboardPage: React.FC = () => {
               fontSize: '0.75rem',
             }}
           />
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            sx={{
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1,
+              fontSize: '0.75rem',
+              textTransform: 'none',
+              '&:hover': { backgroundColor: '#2a2a2a' },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
           <IconButton
             onClick={handleLogout}
             size="small"
@@ -792,10 +859,10 @@ export const DashboardPage: React.FC = () => {
         <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
-              Dashboard
+              {t('dashboard.title')}
             </Typography>
             <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-              Welcome, {user?.username} • {user?.role}
+              {t('dashboard.welcome', { username: user?.username })} • {user?.role}
               {user?.job_site_access && user.job_site_access.length > 0
                 ? ` • ${user.job_site_access.length} site(s)`
                 : ''}
@@ -806,7 +873,7 @@ export const DashboardPage: React.FC = () => {
         {/* Real-time Occupancy */}
         <Box sx={{ mb: 2 }}>
           <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
-            Real-time Occupancy
+            {t('dashboard.realTimeOccupancy')}
           </Typography>
           {error && (
             <Alert
@@ -836,7 +903,7 @@ export const DashboardPage: React.FC = () => {
                 color: '#b0b0b0',
               }}
             >
-              No active job sites found
+              {t('dashboard.noActiveJobSites')}
             </Alert>
           ) : (
             <Grid container spacing={1.5}>
@@ -852,7 +919,7 @@ export const DashboardPage: React.FC = () => {
         {/* Quick Actions */}
         <Box sx={{ mb: 2 }}>
           <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
-            Quick Actions
+            {t('dashboard.quickActions')}
           </Typography>
           <Grid container spacing={1.5}>
             {uniqueActionCards.map((action) => (
