@@ -512,12 +512,14 @@ export const DashboardPage: React.FC = () => {
           sx={{ 
             py: { xs: 1, sm: 2 }, 
             px: { xs: 1, sm: 2, md: 3 }, 
-            height: 'calc(100vh - 56px)', 
+            minHeight: 'calc(100vh - 56px)', 
+            height: 'auto',
             display: 'flex', 
             flexDirection: 'column',
             width: '100%',
             maxWidth: '100%',
-            overflowX: 'hidden'
+            overflowX: 'hidden',
+            overflowY: 'auto',
           }}
         >
           {/* Header Section */}
@@ -617,12 +619,12 @@ export const DashboardPage: React.FC = () => {
 
           {/* Mobile: Tabbed Interface */}
           {isMobile ? (
-            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
               <Tabs value={mobileTab} onChange={(_, newValue) => setMobileTab(newValue)} sx={{ mb: 2, flexShrink: 0 }}>
                 <Tab label={t('guardDashboard.logEntry')} />
                 <Tab label={`${t('guardDashboard.onSite')} (${guardCurrentOccupancy})`} />
               </Tabs>
-              <Box sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}>
+              <Box sx={{ minHeight: 400 }}>
                 {mobileTab === 0 ? (
                   <QuickEntryForm
                     jobSiteId={guardSelectedSiteId}
@@ -641,10 +643,10 @@ export const DashboardPage: React.FC = () => {
             </Box>
           ) : (
             /* Desktop: Split-Screen Layout */
-            <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ flexGrow: 1, minHeight: 0 }}>
+            <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mb: 2 }}>
               {/* Left Column: Entry Form (40%) */}
-              <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '100%' }}>
-                <Box sx={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
+              <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ minHeight: 400 }}>
                   <QuickEntryForm
                     jobSiteId={guardSelectedSiteId}
                     onEntryCreated={handleEntryCreated}
@@ -653,8 +655,8 @@ export const DashboardPage: React.FC = () => {
               </Grid>
 
               {/* Right Column: On-Site List (60%) */}
-              <Grid item xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '100%' }}>
-                <Box sx={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
+              <Grid item xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ minHeight: 400 }}>
                   <OnSiteVehiclesList
                     entries={onSiteEntries}
                     loading={onSiteLoading}
@@ -668,7 +670,7 @@ export const DashboardPage: React.FC = () => {
           )}
 
           {/* Recent Activity Feed */}
-          <Box sx={{ mt: 2, flexShrink: 0 }}>
+          <Box sx={{ mt: 2 }}>
             <RecentActivityList
               entries={guardRecentActivity?.entries || []}
               siteId={guardSelectedSiteId || undefined}
