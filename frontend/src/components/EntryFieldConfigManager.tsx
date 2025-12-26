@@ -62,6 +62,7 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
   const [error, setError] = useState<string | null>(null);
   const [selectedEntryType, setSelectedEntryType] = useState<EntryType>('vehicle');
   const [editingField, setEditingField] = useState<CustomField | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState<Partial<CreateCustomFieldData>>({
     field_key: '',
     field_label: '',
@@ -94,6 +95,7 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
 
   const handleCreate = () => {
     setEditingField(null);
+    setIsCreating(true);
     setFormData({
       field_key: '',
       field_label: '',
@@ -169,6 +171,7 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
         });
       }
       setEditingField(null);
+      setIsCreating(false);
       setFormData({
         field_key: '',
         field_label: '',
@@ -345,9 +348,10 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
 
         {/* Create/Edit Form Dialog */}
         <Dialog
-          open={!!editingField || (formData.field_key !== undefined && formData.field_key !== '')}
+          open={!!editingField || isCreating}
           onClose={() => {
             setEditingField(null);
+            setIsCreating(false);
             setFormData({
               field_key: '',
               field_label: '',
