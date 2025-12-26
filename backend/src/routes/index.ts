@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import authRoutes from './auth';
 import jobSitesRoutes from './jobSites';
+import customFieldsRoutes from './customFields';
+import exitFieldsRoutes from './exitFields';
 import entriesRoutes from './entries';
 import photosRoutes from './photos';
 import occupancyRoutes from './occupancy';
@@ -31,6 +33,8 @@ router.use('/auth', authRoutes);
 
 // Job sites routes
 router.use('/job-sites', jobSitesRoutes);
+router.use('/custom-fields', customFieldsRoutes);
+router.use('/exit-fields', exitFieldsRoutes);
 
 // Entries routes
 router.use('/entries', entriesRoutes);

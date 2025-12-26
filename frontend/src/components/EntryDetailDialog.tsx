@@ -24,6 +24,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { entryService, type Entry } from '../services/entryService';
 import { photoService } from '../services/photoService';
+import { customFieldService, type CustomField } from '../services/customFieldService';
 
 interface EntryDetailDialogProps {
   open: boolean;
@@ -54,6 +55,7 @@ export const EntryDetailDialog: React.FC<EntryDetailDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedImageIndex, setExpandedImageIndex] = useState<number | null>(null);
+  const [fieldConfigs, setFieldConfigs] = useState<CustomField[]>([]);
 
   useEffect(() => {
     if (open && entryId) {
@@ -73,6 +75,17 @@ export const EntryDetailDialog: React.FC<EntryDetailDialogProps> = ({
       setError(null);
       const entryData = await entryService.getEntryById(entryId);
       setEntry(entryData);
+      
+      // Load field configurations for this entry
+      if (entryData.job_site_id && entryData.entry_type) {
+        try {
+          const configs = await customFieldService.getCustomFields(entryData.job_site_id, entryData.entry_type);
+          setFieldConfigs(configs.filter((f) => f.is_active));
+        } catch (configError) {
+          console.error('Failed to load field configurations:', configError);
+          // Continue without field configs - will show all fields from entry_data
+        }
+      }
     } catch (err: any) {
       setError(err.message || t('common.failedToLoad'));
     } finally {
@@ -219,6 +232,77 @@ export const EntryDetailDialog: React.FC<EntryDetailDialogProps> = ({
                   <Typography variant="body1">{entry.entry_data.trailer_number}</Typography>
                 </Grid>
               )}
+
+              {/* Exit Trailer Number */}
+              {entry.entry_data.exit_trailer_number && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" sx={{ color: '#b0b0b0', mb: 0.5 }}>
+                    {t('exit.exitTrailer', { defaultValue: 'Exit Trailer' })}
+                  </Typography>
+                  <Typography variant="body1">{entry.entry_data.exit_trailer_number}</Typography>
+                </Grid>
+              )}
+
+              {/* Dynamic Custom Fields */}
+              {fieldConfigs.length > 0 && fieldConfigs
+                .sort((a, b) => a.display_order - b.display_order)
+                .map((field) => {
+                  const value = entry.entry_data[field.field_key];
+                  if (value === undefined || value === null || value === '') return null;
+                  
+                  // Skip standard fields that are already displayed above
+                  const standardFields = ['license_plate', 'driver_name', 'name', 'company', 'purpose', 'vehicle_type', 'truck_number', 'trailer_number', 'exit_trailer_number', 'cargo_description', 'delivery_pickup', 'expected_duration', 'contact_phone', 'host_contact'];
+                  if (!field.is_custom && standardFields.includes(field.field_key)) return null;
+                  
+                  let displayValue: string = '';
+                  if (field.field_type === 'select' && field.options) {
+                    const option = field.options.find((opt) => opt.value === value);
+                    displayValue = option ? option.label : String(value);
+                  } else if (field.field_type === 'boolean') {
+                    displayValue = value ? 'Yes' : 'No';
+                  } else if (field.field_type === 'date' && value) {
+                    displayValue = new Date(value).toLocaleDateString();
+                  } else {
+                    displayValue = String(value);
+                  }
+                  
+                  return (
+                    <Grid item xs={12} sm={6} key={field.id}>
+                      <Typography variant="body2" sx={{ color: '#b0b0b0', mb: 0.5 }}>
+                        {field.field_label}
+                      </Typography>
+                      <Typography variant="body1">{displayValue}</Typography>
+                    </Grid>
+                  );
+                })}
+
+              {/* Additional fields not in configs */}
+              {(() => {
+                const configuredKeys = new Set(fieldConfigs.map((f) => f.field_key));
+                const standardFields = ['license_plate', 'driver_name', 'name', 'company', 'purpose', 'vehicle_type', 'truck_number', 'trailer_number', 'exit_trailer_number', 'cargo_description', 'delivery_pickup', 'expected_duration', 'contact_phone', 'host_contact'];
+                const additionalFields = Object.keys(entry.entry_data).filter(
+                  (key) => !configuredKeys.has(key) && !standardFields.includes(key) && entry.entry_data[key] !== undefined && entry.entry_data[key] !== null && entry.entry_data[key] !== ''
+                );
+                
+                return additionalFields.map((key) => {
+                  const value = entry.entry_data[key];
+                  const label = key
+                    .split('_')
+                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                  
+                  return (
+                    <Grid item xs={12} sm={6} key={key}>
+                      <Typography variant="body2" sx={{ color: '#b0b0b0', mb: 0.5 }}>
+                        {label}
+                      </Typography>
+                      <Typography variant="body1">
+                        {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                      </Typography>
+                    </Grid>
+                  );
+                });
+              })()}
 
               {/* Entry Time */}
               <Grid item xs={12} sm={6}>

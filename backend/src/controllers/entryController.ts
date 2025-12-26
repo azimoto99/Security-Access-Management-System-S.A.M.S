@@ -421,7 +421,7 @@ export const processExit = async (
       return next(error);
     }
 
-    const { entry_id, override, override_reason, trailer_number } = req.body as ExitEntryRequest;
+    const { entry_id, override, override_reason, trailer_number, exit_data } = req.body as ExitEntryRequest;
 
     if (!entry_id) {
       const error: AppError = new Error('entry_id is required');
@@ -465,16 +465,28 @@ export const processExit = async (
     const exitTime = new Date();
     const durationMinutes = Math.floor((exitTime.getTime() - entryTime.getTime()) / (1000 * 60));
 
-    // Update entry_data if trailer_number is provided (for trucks)
-    // Store both entry_trailer_number (original) and exit_trailer_number (new)
+    // Update entry_data with exit field data
     let updatedEntryData = entry.entry_data;
+    
+    // Handle exit_data object (new way - supports all exit fields)
+    if (exit_data && typeof exit_data === 'object') {
+      updatedEntryData = {
+        ...entry.entry_data,
+        ...exit_data,
+      };
+    }
+    
+    // Handle trailer_number (backward compatibility for trucks)
     if (trailer_number !== undefined && entry.entry_type === 'truck') {
       const entryTrailerNumber = entry.entry_data.trailer_number;
       updatedEntryData = {
-        ...entry.entry_data,
-        entry_trailer_number: entryTrailerNumber, // Store original entry trailer number
-        exit_trailer_number: trailer_number.trim() || undefined, // Store exit trailer number
+        ...updatedEntryData,
+        exit_trailer_number: trailer_number.trim() || undefined,
       };
+      // Keep original entry trailer number if it exists
+      if (entryTrailerNumber) {
+        updatedEntryData.entry_trailer_number = entryTrailerNumber;
+      }
     }
 
     // Update entry

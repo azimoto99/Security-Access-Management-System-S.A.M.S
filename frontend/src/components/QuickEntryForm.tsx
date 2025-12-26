@@ -30,6 +30,8 @@ import { useTranslation } from 'react-i18next';
 import type { EntryType } from '../types/entry';
 import { entryService } from '../services/entryService';
 import { PhotoUpload, type PhotoUploadRef } from './PhotoUpload';
+import { customFieldService, type CustomField } from '../services/customFieldService';
+import { DynamicFormField } from './DynamicFormField';
 
 interface QuickEntryFormProps {
   jobSiteId: string;
@@ -53,6 +55,8 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [createdEntryId, setCreatedEntryId] = useState<string | null>(null);
+  const [fieldConfigs, setFieldConfigs] = useState<CustomField[]>([]);
+  const [loadingFields, setLoadingFields] = useState(false);
   const identifierInputRef = useRef<HTMLInputElement>(null);
   const photoUploadRef = useRef<PhotoUploadRef | null>(null);
   const autofillTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -60,47 +64,79 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
   const isSubmittingRef = useRef(false);
   const lastAutofilledSearchRef = useRef<string | null>(null);
 
-  // Initialize form data when entry type changes
+  // Load field configurations and initialize form data when entry type changes
   useEffect(() => {
-    switch (entryType) {
-      case 'vehicle':
-        setFormData({
-          license_plate: '',
-          vehicle_type: '',
-          driver_name: '',
-          company: '',
-          purpose: '',
-          expected_duration: '',
+    const loadFieldConfigs = async () => {
+      try {
+        setLoadingFields(true);
+        const configs = await customFieldService.getCustomFields(jobSiteId, entryType);
+        const activeConfigs = configs.filter((f) => f.is_active);
+        setFieldConfigs(activeConfigs);
+        
+        // Initialize form data based on field configurations
+        const initialFormData: Record<string, any> = {};
+        activeConfigs.forEach((field) => {
+          // Set default values based on field type
+          if (field.field_type === 'boolean') {
+            initialFormData[field.field_key] = false;
+          } else if (field.field_type === 'select' && field.options && field.options.length > 0) {
+            initialFormData[field.field_key] = field.options[0].value;
+          } else {
+            initialFormData[field.field_key] = '';
+          }
         });
-        break;
-      case 'visitor':
-        setFormData({
-          name: '',
-          company: '',
-          contact_phone: '',
-          purpose: '',
-          host_contact: '',
-          expected_duration: '',
-        });
-        break;
-      case 'truck':
-        setFormData({
-          license_plate: '',
-          truck_number: '',
-          trailer_number: '',
-          company: '',
-          driver_name: '',
-          cargo_description: '',
-          delivery_pickup: 'delivery',
-          expected_duration: '',
-        });
-        break;
+        
+        setFormData(initialFormData);
+      } catch (error) {
+        console.error('Failed to load field configurations:', error);
+        // Fallback to default initialization
+        switch (entryType) {
+          case 'vehicle':
+            setFormData({
+              license_plate: '',
+              vehicle_type: '',
+              driver_name: '',
+              company: '',
+              purpose: '',
+              expected_duration: '',
+            });
+            break;
+          case 'visitor':
+            setFormData({
+              name: '',
+              company: '',
+              contact_phone: '',
+              purpose: '',
+              host_contact: '',
+              expected_duration: '',
+            });
+            break;
+          case 'truck':
+            setFormData({
+              license_plate: '',
+              truck_number: '',
+              trailer_number: '',
+              company: '',
+              driver_name: '',
+              cargo_description: '',
+              delivery_pickup: 'delivery',
+              expected_duration: '',
+            });
+            break;
+        }
+      } finally {
+        setLoadingFields(false);
+      }
+    };
+
+    if (jobSiteId && entryType) {
+      loadFieldConfigs();
     }
     setErrors({});
     hasAutofilledRef.current = false;
     lastAutofilledSearchRef.current = null;
     setTimeout(() => identifierInputRef.current?.focus(), 100);
-  }, [entryType]);
+  }, [entryType, jobSiteId]);
 
   // Autofill from previous entries
   useEffect(() => {
@@ -236,23 +272,69 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (entryType === 'vehicle') {
-      if (!formData.license_plate?.trim()) newErrors.license_plate = t('entryForm.licensePlateRequired');
-      if (!formData.vehicle_type?.trim()) newErrors.vehicle_type = t('entryForm.vehicleTypeRequired');
-      if (!formData.driver_name?.trim()) newErrors.driver_name = t('entryForm.driverNameRequired');
-      if (!formData.purpose?.trim()) newErrors.purpose = t('entryForm.purposeRequired');
-    } else if (entryType === 'visitor') {
-      if (!formData.name?.trim()) newErrors.name = t('entryForm.nameRequired');
-      if (!formData.purpose?.trim()) newErrors.purpose = t('entryForm.purposeRequired');
-    } else if (entryType === 'truck') {
-      if (!formData.license_plate?.trim()) newErrors.license_plate = t('entryForm.licensePlateRequired');
-      if (!formData.company?.trim()) newErrors.company = t('entryForm.companyRequired');
-      if (!formData.driver_name?.trim()) newErrors.driver_name = t('entryForm.driverNameRequired');
-      if (!formData.delivery_pickup) newErrors.delivery_pickup = t('entryForm.deliveryPickupRequired');
-    }
+    // Validate based on field configurations
+    if (fieldConfigs.length > 0) {
+      fieldConfigs.forEach((field) => {
+        if (field.is_required) {
+          const value = formData[field.field_key];
+          if (field.field_type === 'boolean') {
+            // Boolean fields are always valid (they default to false)
+          } else if (!value || (typeof value === 'string' && !value.trim())) {
+            newErrors[field.field_key] = `${field.field_label} is required`;
+          }
+        }
 
-    if (formData.expected_duration && (isNaN(formData.expected_duration) || formData.expected_duration < 0)) {
-      newErrors.expected_duration = t('entryForm.expectedDurationInvalid');
+        // Validate field type specific rules
+        const value = formData[field.field_key];
+        if (value !== undefined && value !== null && value !== '') {
+          if (field.field_type === 'number') {
+            const numValue = Number(value);
+            if (isNaN(numValue)) {
+              newErrors[field.field_key] = `${field.field_label} must be a number`;
+            } else {
+              if (field.validation?.min !== undefined && numValue < field.validation.min) {
+                newErrors[field.field_key] = `${field.field_label} must be at least ${field.validation.min}`;
+              }
+              if (field.validation?.max !== undefined && numValue > field.validation.max) {
+                newErrors[field.field_key] = `${field.field_label} must be at most ${field.validation.max}`;
+              }
+            }
+          } else if (typeof value === 'string') {
+            if (field.validation?.minLength && value.length < field.validation.minLength) {
+              newErrors[field.field_key] = `${field.field_label} must be at least ${field.validation.minLength} characters`;
+            }
+            if (field.validation?.maxLength && value.length > field.validation.maxLength) {
+              newErrors[field.field_key] = `${field.field_label} must be at most ${field.validation.maxLength} characters`;
+            }
+            if (field.validation?.pattern) {
+              const regex = new RegExp(field.validation.pattern);
+              if (!regex.test(value)) {
+                newErrors[field.field_key] = `${field.field_label} format is invalid`;
+              }
+            }
+          }
+        }
+      });
+    } else {
+      // Fallback validation for default fields
+      if (entryType === 'vehicle') {
+        if (!formData.license_plate?.trim()) newErrors.license_plate = t('entryForm.licensePlateRequired');
+        if (!formData.vehicle_type?.trim()) newErrors.vehicle_type = t('entryForm.vehicleTypeRequired');
+        if (!formData.driver_name?.trim()) newErrors.driver_name = t('entryForm.driverNameRequired');
+        if (!formData.purpose?.trim()) newErrors.purpose = t('entryForm.purposeRequired');
+      } else if (entryType === 'visitor') {
+        if (!formData.name?.trim()) newErrors.name = t('entryForm.nameRequired');
+        if (!formData.purpose?.trim()) newErrors.purpose = t('entryForm.purposeRequired');
+      } else if (entryType === 'truck') {
+        if (!formData.license_plate?.trim()) newErrors.license_plate = t('entryForm.licensePlateRequired');
+        if (!formData.company?.trim()) newErrors.company = t('entryForm.companyRequired');
+        if (!formData.driver_name?.trim()) newErrors.driver_name = t('entryForm.driverNameRequired');
+        if (!formData.delivery_pickup) newErrors.delivery_pickup = t('entryForm.deliveryPickupRequired');
+      }
+
+      if (formData.expected_duration && (isNaN(formData.expected_duration) || formData.expected_duration < 0)) {
+        newErrors.expected_duration = t('entryForm.expectedDurationInvalid');
+      }
     }
 
     setErrors(newErrors);
@@ -403,235 +485,278 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
             </Select>
           </FormControl>
 
-          {/* Vehicle Fields */}
-          {entryType === 'vehicle' && (
-            <>
-              <TextField
-                inputRef={identifierInputRef}
-                label={t('entryForm.licensePlate')}
-                placeholder={t('entryForm.licensePlatePlaceholder')}
-                value={formData.license_plate || ''}
-                onChange={handleChange('license_plate')}
-                error={!!errors.license_plate}
-                helperText={errors.license_plate}
-                required
-                fullWidth
-                size="small"
-                autoFocus
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.vehicleType')}
-                placeholder={t('entryForm.vehicleTypePlaceholder')}
-                value={formData.vehicle_type || ''}
-                onChange={handleChange('vehicle_type')}
-                error={!!errors.vehicle_type}
-                helperText={errors.vehicle_type}
-                required
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.driverName')}
-                value={formData.driver_name || ''}
-                onChange={handleChange('driver_name')}
-                error={!!errors.driver_name}
-                helperText={errors.driver_name}
-                required
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.company')}
-                value={formData.company || ''}
-                onChange={handleChange('company')}
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.purpose')}
-                value={formData.purpose || ''}
-                onChange={handleChange('purpose')}
-                error={!!errors.purpose}
-                helperText={errors.purpose}
-                required
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-            </>
-          )}
-
-          {/* Visitor Fields */}
-          {entryType === 'visitor' && (
-            <>
-              <TextField
-                inputRef={identifierInputRef}
-                label={t('entryForm.name')}
-                placeholder={t('entryForm.namePlaceholder')}
-                value={formData.name || ''}
-                onChange={handleChange('name')}
-                error={!!errors.name}
-                helperText={errors.name}
-                required
-                fullWidth
-                size="small"
-                autoFocus
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.company')}
-                value={formData.company || ''}
-                onChange={handleChange('company')}
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.contactPhone')}
-                value={formData.contact_phone || ''}
-                onChange={handleChange('contact_phone')}
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.hostContact')}
-                value={formData.host_contact || ''}
-                onChange={handleChange('host_contact')}
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.purpose')}
-                value={formData.purpose || ''}
-                onChange={handleChange('purpose')}
-                error={!!errors.purpose}
-                helperText={errors.purpose}
-                required
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-            </>
-          )}
-
-          {/* Truck Fields */}
-          {entryType === 'truck' && (
-            <>
-              <TextField
-                inputRef={identifierInputRef}
-                label={t('entryForm.licensePlate')}
-                placeholder={t('entryForm.truckPlaceholder')}
-                value={formData.license_plate || ''}
-                onChange={handleChange('license_plate')}
-                error={!!errors.license_plate}
-                helperText={errors.license_plate}
-                required
-                fullWidth
-                size="small"
-                autoFocus
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.truckNumber')}
-                value={formData.truck_number || ''}
-                onChange={handleChange('truck_number')}
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.trailerNumber')}
-                value={formData.trailer_number || ''}
-                onChange={handleChange('trailer_number')}
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.company')}
-                value={formData.company || ''}
-                onChange={handleChange('company')}
-                error={!!errors.company}
-                helperText={errors.company}
-                required
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-              <TextField
-                label={t('entryForm.driverName')}
-                value={formData.driver_name || ''}
-                onChange={handleChange('driver_name')}
-                error={!!errors.driver_name}
-                helperText={errors.driver_name}
-                required
-                fullWidth
-                size="small"
-                autoComplete="off"
-              />
-              <FormControl fullWidth size="small" required error={!!errors.delivery_pickup}>
-                <InputLabel>{t('entryForm.deliveryPickup')}</InputLabel>
-                <Select
-                  value={formData.delivery_pickup || 'delivery'}
-                  onChange={handleSelectChange('delivery_pickup')}
-                  label={t('entryForm.deliveryPickup')}
-                >
-                  <MenuItem value="delivery">{t('entryForm.delivery')}</MenuItem>
-                  <MenuItem value="pickup">{t('entryForm.pickup')}</MenuItem>
-                </Select>
-              </FormControl>
-              <TextField
-                label={t('entryForm.cargoDescription')}
-                value={formData.cargo_description || ''}
-                onChange={handleChange('cargo_description')}
-                fullWidth
-                size="small"
-                multiline
-                rows={2}
-                autoComplete="off"
-              />
-            </>
-          )}
-
-          {/* Optional Fields (Collapsible) */}
-          <Box>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                mb: showOptionalFields ? 1 : 0,
-              }}
-              onClick={() => setShowOptionalFields(!showOptionalFields)}
-            >
-              <Typography variant="body2" sx={{ color: '#b0b0b0', flexGrow: 1 }}>
-                {t('entryForm.additionalInfo')}
-              </Typography>
-              <IconButton size="small">
-                {showOptionalFields ? <ExpandLess /> : <ExpandMore />}
-              </IconButton>
+          {/* Dynamic Fields */}
+          {loadingFields ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+              <CircularProgress size={24} />
             </Box>
-            <Collapse in={showOptionalFields}>
-              <TextField
-                label={t('entryForm.expectedDuration')}
-                type="number"
-                value={formData.expected_duration || ''}
-                onChange={handleChange('expected_duration')}
-                error={!!errors.expected_duration}
-                helperText={errors.expected_duration}
-                fullWidth
-                size="small"
-                inputProps={{ min: 0 }}
-                autoComplete="off"
-              />
-            </Collapse>
-          </Box>
+          ) : fieldConfigs.length > 0 ? (
+            fieldConfigs
+              .sort((a, b) => a.display_order - b.display_order)
+              .map((field, index) => {
+                // Set ref for the first field (identifier field) for autofocus
+                const isFirstField = index === 0;
+                const isIdentifierField = 
+                  (entryType === 'vehicle' && field.field_key === 'license_plate') ||
+                  (entryType === 'visitor' && field.field_key === 'name') ||
+                  (entryType === 'truck' && field.field_key === 'license_plate');
+
+                return (
+                  <Box key={field.id} sx={{ width: '100%' }}>
+                    <DynamicFormField
+                      field={field}
+                      value={formData[field.field_key]}
+                      onChange={(value) => {
+                        setFormData((prev) => ({ ...prev, [field.field_key]: value }));
+                        if (errors[field.field_key]) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors[field.field_key];
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      error={errors[field.field_key]}
+                      gridSize={{}}
+                      size="small"
+                      fullWidth
+                    />
+                  </Box>
+                );
+              })
+          ) : (
+            // Fallback to hardcoded fields if no configurations
+            <>
+              {entryType === 'vehicle' && (
+                <>
+                  <TextField
+                    inputRef={identifierInputRef}
+                    label={t('entryForm.licensePlate')}
+                    placeholder={t('entryForm.licensePlatePlaceholder')}
+                    value={formData.license_plate || ''}
+                    onChange={handleChange('license_plate')}
+                    error={!!errors.license_plate}
+                    helperText={errors.license_plate}
+                    required
+                    fullWidth
+                    size="small"
+                    autoFocus
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.vehicleType')}
+                    placeholder={t('entryForm.vehicleTypePlaceholder')}
+                    value={formData.vehicle_type || ''}
+                    onChange={handleChange('vehicle_type')}
+                    error={!!errors.vehicle_type}
+                    helperText={errors.vehicle_type}
+                    required
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.driverName')}
+                    value={formData.driver_name || ''}
+                    onChange={handleChange('driver_name')}
+                    error={!!errors.driver_name}
+                    helperText={errors.driver_name}
+                    required
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.company')}
+                    value={formData.company || ''}
+                    onChange={handleChange('company')}
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.purpose')}
+                    value={formData.purpose || ''}
+                    onChange={handleChange('purpose')}
+                    error={!!errors.purpose}
+                    helperText={errors.purpose}
+                    required
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                </>
+              )}
+
+              {entryType === 'visitor' && (
+                <>
+                  <TextField
+                    inputRef={identifierInputRef}
+                    label={t('entryForm.name')}
+                    placeholder={t('entryForm.namePlaceholder')}
+                    value={formData.name || ''}
+                    onChange={handleChange('name')}
+                    error={!!errors.name}
+                    helperText={errors.name}
+                    required
+                    fullWidth
+                    size="small"
+                    autoFocus
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.company')}
+                    value={formData.company || ''}
+                    onChange={handleChange('company')}
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.contactPhone')}
+                    value={formData.contact_phone || ''}
+                    onChange={handleChange('contact_phone')}
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.hostContact')}
+                    value={formData.host_contact || ''}
+                    onChange={handleChange('host_contact')}
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.purpose')}
+                    value={formData.purpose || ''}
+                    onChange={handleChange('purpose')}
+                    error={!!errors.purpose}
+                    helperText={errors.purpose}
+                    required
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                </>
+              )}
+
+              {entryType === 'truck' && (
+                <>
+                  <TextField
+                    inputRef={identifierInputRef}
+                    label={t('entryForm.licensePlate')}
+                    placeholder={t('entryForm.truckPlaceholder')}
+                    value={formData.license_plate || ''}
+                    onChange={handleChange('license_plate')}
+                    error={!!errors.license_plate}
+                    helperText={errors.license_plate}
+                    required
+                    fullWidth
+                    size="small"
+                    autoFocus
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.truckNumber')}
+                    value={formData.truck_number || ''}
+                    onChange={handleChange('truck_number')}
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.trailerNumber')}
+                    value={formData.trailer_number || ''}
+                    onChange={handleChange('trailer_number')}
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.company')}
+                    value={formData.company || ''}
+                    onChange={handleChange('company')}
+                    error={!!errors.company}
+                    helperText={errors.company}
+                    required
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label={t('entryForm.driverName')}
+                    value={formData.driver_name || ''}
+                    onChange={handleChange('driver_name')}
+                    error={!!errors.driver_name}
+                    helperText={errors.driver_name}
+                    required
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                  />
+                  <FormControl fullWidth size="small" required error={!!errors.delivery_pickup}>
+                    <InputLabel>{t('entryForm.deliveryPickup')}</InputLabel>
+                    <Select
+                      value={formData.delivery_pickup || 'delivery'}
+                      onChange={handleSelectChange('delivery_pickup')}
+                      label={t('entryForm.deliveryPickup')}
+                    >
+                      <MenuItem value="delivery">{t('entryForm.delivery')}</MenuItem>
+                      <MenuItem value="pickup">{t('entryForm.pickup')}</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    label={t('entryForm.cargoDescription')}
+                    value={formData.cargo_description || ''}
+                    onChange={handleChange('cargo_description')}
+                    fullWidth
+                    size="small"
+                    multiline
+                    rows={2}
+                    autoComplete="off"
+                  />
+                </>
+              )}
+            </>
+          )}
+
+          {/* Optional Fields (Collapsible) - Only show if expected_duration is not in field configs */}
+          {(!fieldConfigs.length || !fieldConfigs.some(f => f.field_key === 'expected_duration')) && (
+            <Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  mb: showOptionalFields ? 1 : 0,
+                }}
+                onClick={() => setShowOptionalFields(!showOptionalFields)}
+              >
+                <Typography variant="body2" sx={{ color: '#b0b0b0', flexGrow: 1 }}>
+                  {t('entryForm.additionalInfo')}
+                </Typography>
+                <IconButton size="small">
+                  {showOptionalFields ? <ExpandLess /> : <ExpandMore />}
+                </IconButton>
+              </Box>
+              <Collapse in={showOptionalFields}>
+                <TextField
+                  label={t('entryForm.expectedDuration')}
+                  type="number"
+                  value={formData.expected_duration || ''}
+                  onChange={handleChange('expected_duration')}
+                  error={!!errors.expected_duration}
+                  helperText={errors.expected_duration}
+                  fullWidth
+                  size="small"
+                  inputProps={{ min: 0 }}
+                  autoComplete="off"
+                />
+              </Collapse>
+            </Box>
+          )}
 
           {/* Photo Upload */}
           <Accordion>

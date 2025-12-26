@@ -149,11 +149,12 @@ export const DashboardPage: React.FC = () => {
   };
 
   // Handle exit processing
-  const handleExit = async (entryId: string, _exitNotes?: string, exitTrailerNumber?: string) => {
+  const handleExit = async (entryId: string, _exitNotes?: string, exitTrailerNumber?: string, exitData?: Record<string, any>) => {
     try {
       await entryService.processExit({ 
         entry_id: entryId,
-        ...(exitTrailerNumber && { trailer_number: exitTrailerNumber })
+        ...(exitData && { exit_data: exitData }),
+        ...(exitTrailerNumber && { trailer_number: exitTrailerNumber }) // Backward compatibility
       });
       // Remove from list immediately
       setOnSiteEntries((prev) => prev.filter((e) => e.id !== entryId));

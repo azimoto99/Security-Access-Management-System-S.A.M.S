@@ -328,7 +328,7 @@ export const exportEntries = async (
     query += ' ORDER BY e.entry_time DESC';
 
     const result = await pool.query(query, params);
-    const csv = exportEntriesToCSV(result.rows);
+    const csv = await exportEntriesToCSV(result.rows);
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=entries-${Date.now()}.csv`);

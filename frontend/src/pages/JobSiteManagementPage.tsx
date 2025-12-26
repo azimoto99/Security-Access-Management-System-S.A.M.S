@@ -22,12 +22,13 @@ import {
   AppBar,
   Toolbar,
 } from '@mui/material';
-import { Edit, Delete, Add, CheckCircle, Cancel, Translate, Logout } from '@mui/icons-material';
+import { Edit, Delete, Add, CheckCircle, Cancel, Translate, Logout, Settings } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { jobSiteService, type JobSite, type CreateJobSiteData, type UpdateJobSiteData } from '../services/jobSiteService';
 import { JobSiteForm } from '../components/JobSiteForm';
+import { EntryFieldConfigManager } from '../components/EntryFieldConfigManager';
 
 export const JobSiteManagementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -39,6 +40,8 @@ export const JobSiteManagementPage: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingJobSite, setEditingJobSite] = useState<JobSite | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<JobSite | null>(null);
+  const [fieldConfigDialogOpen, setFieldConfigDialogOpen] = useState(false);
+  const [selectedJobSiteForFields, setSelectedJobSiteForFields] = useState<JobSite | null>(null);
 
   const isAdmin = user?.role === 'admin';
 
@@ -249,6 +252,17 @@ export const JobSiteManagementPage: React.FC = () => {
                         >
                           <Delete />
                         </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            setSelectedJobSiteForFields(jobSite);
+                            setFieldConfigDialogOpen(true);
+                          }}
+                          color="primary"
+                          title={t('jobSiteManagement.configureFields', { defaultValue: 'Configure Entry Fields' })}
+                        >
+                          <Settings />
+                        </IconButton>
                       </TableCell>
                     )}
                   </TableRow>
@@ -257,6 +271,19 @@ export const JobSiteManagementPage: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Entry Field Configuration Dialog */}
+        {selectedJobSiteForFields && (
+          <EntryFieldConfigManager
+            open={fieldConfigDialogOpen}
+            jobSiteId={selectedJobSiteForFields.id}
+            jobSiteName={selectedJobSiteForFields.name}
+            onClose={() => {
+              setFieldConfigDialogOpen(false);
+              setSelectedJobSiteForFields(null);
+            }}
+          />
+        )}
 
         {/* Create/Edit Dialog */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>

@@ -11,13 +11,17 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
 import type { Entry } from '../services/entryService';
+import { exitFieldService, type CustomField } from '../services/exitFieldService';
+import { DynamicFormField } from './DynamicFormField';
+import { Box as MuiBox } from '@mui/material';
 
 interface ExitConfirmationDialogProps {
   open: boolean;
   entry: Entry | null;
   onClose: () => void;
-  onConfirm: (exitNotes?: string, exitTrailerNumber?: string) => void;
+  onConfirm: (exitData: Record<string, any>) => void;
   processing?: boolean;
 }
 
@@ -36,21 +40,71 @@ export const ExitConfirmationDialog: React.FC<ExitConfirmationDialogProps> = ({
   processing = false,
 }) => {
   const { t } = useTranslation();
-  const [exitNotes, setExitNotes] = useState('');
-  const [exitTrailerNumber, setExitTrailerNumber] = useState('');
+  const [exitFieldConfigs, setExitFieldConfigs] = useState<CustomField[]>([]);
+  const [exitData, setExitData] = useState<Record<string, any>>({});
+  const [loadingFields, setLoadingFields] = useState(false);
+
+  useEffect(() => {
+    if (open && entry) {
+      loadExitFields();
+      // Initialize exit data
+      setExitData({});
+    } else {
+      setExitData({});
+      setExitFieldConfigs([]);
+    }
+  }, [open, entry]);
+
+  const loadExitFields = async () => {
+    if (!entry?.job_site_id || !entry?.entry_type) return;
+    
+    try {
+      setLoadingFields(true);
+      const configs = await exitFieldService.getExitFields(entry.job_site_id, entry.entry_type);
+      const activeConfigs = configs.filter((f) => f.is_active);
+      setExitFieldConfigs(activeConfigs);
+      
+      // Initialize exit data with default values
+      const initialData: Record<string, any> = {};
+      activeConfigs.forEach((field) => {
+        if (field.field_type === 'boolean') {
+          initialData[field.field_key] = false;
+        } else if (field.field_type === 'select' && field.options && field.options.length > 0) {
+          initialData[field.field_key] = field.options[0].value;
+        } else {
+          initialData[field.field_key] = '';
+        }
+      });
+      setExitData(initialData);
+    } catch (error) {
+      console.error('Failed to load exit field configurations:', error);
+      // Fallback: initialize with exit_trailer_number for trucks
+      if (entry.entry_type === 'truck') {
+        setExitData({ exit_trailer_number: '' });
+      }
+    } finally {
+      setLoadingFields(false);
+    }
+  };
 
   const handleClose = () => {
     if (!processing) {
-      setExitNotes('');
-      setExitTrailerNumber('');
+      setExitData({});
       onClose();
     }
   };
 
   const handleConfirm = () => {
-    onConfirm(exitNotes.trim() || undefined, exitTrailerNumber.trim() || undefined);
-    setExitNotes('');
-    setExitTrailerNumber('');
+    // Clean up empty values
+    const cleanedData: Record<string, any> = {};
+    Object.keys(exitData).forEach((key) => {
+      const value = exitData[key];
+      if (value !== undefined && value !== null && value !== '') {
+        cleanedData[key] = value;
+      }
+    });
+    onConfirm(cleanedData);
+    setExitData({});
   };
 
   if (!entry) return null;
@@ -98,36 +152,56 @@ export const ExitConfirmationDialog: React.FC<ExitConfirmationDialogProps> = ({
           </Typography>
         </Box>
 
-        {entry.entry_type === 'truck' && (
+        {/* Show entry trailer for trucks */}
+        {entry.entry_type === 'truck' && entry.entry_data?.trailer_number && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="body2" sx={{ color: '#b0b0b0', mb: 1 }}>
               {t('exitDialog.entryTrailer')}
             </Typography>
             <Typography variant="body1">
-              {entry.entry_data?.trailer_number || t('manualExit.none')}
+              {entry.entry_data.trailer_number}
             </Typography>
-            <TextField
-              label={t('exitDialog.exitTrailerNumber')}
-              placeholder={t('exitDialog.exitTrailerPlaceholder')}
-              value={exitTrailerNumber}
-              onChange={(e) => setExitTrailerNumber(e.target.value)}
-              fullWidth
-              sx={{ mt: 2 }}
-              helperText={t('exitDialog.exitTrailerHelper')}
-            />
           </Box>
         )}
 
-        <TextField
-          label={t('exitDialog.exitNotes')}
-          placeholder={t('exitDialog.exitNotesPlaceholder')}
-          value={exitNotes}
-          onChange={(e) => setExitNotes(e.target.value)}
-          fullWidth
-          multiline
-          rows={3}
-          sx={{ mt: 2 }}
-        />
+        {/* Dynamic Exit Fields */}
+        {loadingFields ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : exitFieldConfigs.length > 0 ? (
+          <MuiBox sx={{ mb: 2 }}>
+            {exitFieldConfigs
+              .sort((a, b) => a.display_order - b.display_order)
+              .map((field) => (
+                <MuiBox key={field.id} sx={{ mb: 2 }}>
+                  <DynamicFormField
+                    field={field}
+                    value={exitData[field.field_key]}
+                    onChange={(value) => {
+                      setExitData((prev) => ({ ...prev, [field.field_key]: value }));
+                    }}
+                    gridSize={{}}
+                    size="medium"
+                    fullWidth
+                  />
+                </MuiBox>
+              ))}
+          </MuiBox>
+        ) : (
+          // Fallback: show exit_trailer_number for trucks if no configs
+          entry.entry_type === 'truck' && (
+            <TextField
+              label={t('exitDialog.exitTrailerNumber')}
+              placeholder={t('exitDialog.exitTrailerPlaceholder')}
+              value={exitData.exit_trailer_number || ''}
+              onChange={(e) => setExitData({ ...exitData, exit_trailer_number: e.target.value })}
+              fullWidth
+              sx={{ mt: 2, mb: 2 }}
+              helperText={t('exitDialog.exitTrailerHelper')}
+            />
+          )
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} disabled={processing}>
