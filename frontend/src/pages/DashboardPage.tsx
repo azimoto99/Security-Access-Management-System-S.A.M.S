@@ -568,38 +568,6 @@ export const DashboardPage: React.FC = () => {
             <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
-                startIcon={<Assessment />}
-                onClick={() => navigate('/reports')}
-                sx={{
-                  borderColor: '#ffd700',
-                  color: '#ffd700',
-                  '&:hover': {
-                    borderColor: '#ffed4e',
-                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                  },
-                }}
-                size="small"
-              >
-                {t('dashboard.reports')}
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Search />}
-                onClick={() => navigate('/audit-logs')}
-                sx={{
-                  borderColor: '#ffd700',
-                  color: '#ffd700',
-                  '&:hover': {
-                    borderColor: '#ffed4e',
-                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                  },
-                }}
-                size="small"
-              >
-                {t('dashboard.auditLogs')}
-              </Button>
-              <Button
-                variant="outlined"
                 startIcon={<Description />}
                 onClick={() => navigate('/hr/documents')}
                 sx={{
