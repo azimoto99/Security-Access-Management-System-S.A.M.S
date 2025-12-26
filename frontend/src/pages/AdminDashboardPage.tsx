@@ -19,6 +19,12 @@ import {
   TextField,
   InputAdornment,
   Badge,
+  Menu,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
 } from '@mui/material';
 import {
   Logout,
@@ -29,6 +35,8 @@ import {
   Notifications,
   Search,
   Translate,
+  AccountCircle,
+  LockReset,
 } from '@mui/icons-material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +44,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { adminDashboardService } from '../services/adminDashboardService';
+import { userService } from '../services/userService';
 import { AdminMetricCard } from '../components/AdminMetricCard';
 import { SiteStatusGrid } from '../components/SiteStatusGrid';
 import { RecentActivityFeed } from '../components/RecentActivityFeed';
@@ -54,6 +63,12 @@ export const AdminDashboardPage: React.FC = () => {
   const [jobSiteFilter, setJobSiteFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
 
   // Update time every second
   useEffect(() => {
@@ -120,6 +135,48 @@ export const AdminDashboardPage: React.FC = () => {
     navigate('/login');
   };
 
+  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setUserMenuAnchor(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchor(null);
+  };
+
+  const handleChangePasswordClick = () => {
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError(null);
+    setChangePasswordDialogOpen(true);
+    handleUserMenuClose();
+  };
+
+  const handleChangePasswordSubmit = async () => {
+    if (!user?.id) return;
+
+    // Validate passwords
+    if (!newPassword || newPassword.length < 8) {
+      setPasswordError(t('userManagement.passwordMinLength'));
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError(t('userManagement.passwordsDoNotMatch'));
+      return;
+    }
+
+    try {
+      setPasswordError(null);
+      await userService.changeUserPassword(user.id, newPassword);
+      setPasswordSuccess(t('userManagement.passwordChanged'));
+      setChangePasswordDialogOpen(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPasswordError(err.message || t('userManagement.failedToChangePassword'));
+    }
+  };
+
   // Filter sites based on search and filters
   const filteredSites = sitesStatus?.filter((site) => {
     if (searchTerm && !site.name.toLowerCase().includes(searchTerm.toLowerCase())) {
@@ -158,14 +215,38 @@ export const AdminDashboardPage: React.FC = () => {
           <Chip
             label={`${user?.username} (${t('common.admin')})`}
             size="small"
+            onClick={handleUserMenuOpen}
+            icon={<AccountCircle sx={{ color: '#ffffff !important' }} />}
             sx={{
               backgroundColor: '#2a2a2a',
               color: '#ffffff',
               mr: 1,
               height: '28px',
               fontSize: '0.75rem',
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: '#3a3a3a',
+              },
             }}
           />
+          <Menu
+            anchorEl={userMenuAnchor}
+            open={!!userMenuAnchor}
+            onClose={handleUserMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem onClick={handleChangePasswordClick}>
+              <LockReset sx={{ mr: 1 }} fontSize="small" />
+              {t('userManagement.changePassword')}
+            </MenuItem>
+          </Menu>
           <Button
             onClick={toggleLanguage}
             size="small"
@@ -359,6 +440,65 @@ export const AdminDashboardPage: React.FC = () => {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Change Password Dialog */}
+      <Dialog open={changePasswordDialogOpen} onClose={() => setChangePasswordDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{t('userManagement.changePasswordFor', { username: user?.username })}</DialogTitle>
+        <DialogContent>
+          {passwordError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPasswordError(null)}>
+              {passwordError}
+            </Alert>
+          )}
+          <TextField
+            fullWidth
+            label={t('userManagement.newPassword')}
+            type="password"
+            value={newPassword}
+            onChange={(e) => {
+              setNewPassword(e.target.value);
+              setPasswordError(null);
+            }}
+            margin="normal"
+            required
+            helperText={t('userManagement.passwordMinLength')}
+            autoFocus
+          />
+          <TextField
+            fullWidth
+            label={t('userManagement.confirmPassword')}
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              setPasswordError(null);
+            }}
+            margin="normal"
+            required
+            error={!!passwordError && confirmPassword !== ''}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setChangePasswordDialogOpen(false)}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            onClick={handleChangePasswordSubmit}
+            variant="contained"
+            disabled={!newPassword || !confirmPassword || newPassword.length < 8}
+          >
+            {t('userManagement.changePassword')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!passwordSuccess}
+        autoHideDuration={6000}
+        onClose={() => setPasswordSuccess(null)}
+        message={passwordSuccess}
+      />
     </Box>
   );
 };
