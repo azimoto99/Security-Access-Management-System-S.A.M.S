@@ -32,6 +32,7 @@ import {
   Add,
   Edit,
   Delete,
+  Remove,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import {
@@ -127,6 +128,20 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
     try {
       setError(null);
       if (editingField) {
+        // Validate select field has options
+        if (formData.field_type === 'select') {
+          const options = formData.options || [];
+          if (options.length === 0) {
+            setError('Select fields must have at least one option');
+            return;
+          }
+          for (let i = 0; i < options.length; i++) {
+            if (!options[i].value || !options[i].label) {
+              setError(`Option ${i + 1} must have both a value and label`);
+              return;
+            }
+          }
+        }
         // Only send allowed fields for update (exclude field_key, job_site_id, entry_type, is_custom)
         const updateData: UpdateCustomFieldData = {};
         if (formData.field_label !== undefined) updateData.field_label = formData.field_label;
@@ -153,6 +168,20 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
         if (!/^[a-z]/.test(formData.field_key)) {
           setError('Field key must start with a letter');
           return;
+        }
+        // Validate select field has options
+        if (formData.field_type === 'select') {
+          const options = formData.options || [];
+          if (options.length === 0) {
+            setError('Select fields must have at least one option');
+            return;
+          }
+          for (let i = 0; i < options.length; i++) {
+            if (!options[i].value || !options[i].label) {
+              setError(`Option ${i + 1} must have both a value and label`);
+              return;
+            }
+          }
         }
         // Only send allowed fields for create
         await customFieldService.createCustomField({
@@ -464,6 +493,68 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
                 multiline
                 rows={2}
               />
+              
+              {/* Options for select field type */}
+              {formData.field_type === 'select' && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                    {t('customFields.dropdownOptions', { defaultValue: 'Dropdown Options' })}
+                  </Typography>
+                  {(formData.options || []).map((option: any, index: number) => (
+                    <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                      <TextField
+                        label={t('customFields.optionValue', { defaultValue: 'Value' })}
+                        value={option.value || ''}
+                        onChange={(e) => {
+                          const newOptions = [...(formData.options || [])];
+                          newOptions[index] = { ...newOptions[index], value: e.target.value };
+                          setFormData({ ...formData, options: newOptions });
+                        }}
+                        size="small"
+                        sx={{ flex: 1 }}
+                        required
+                      />
+                      <TextField
+                        label={t('customFields.optionLabel', { defaultValue: 'Label' })}
+                        value={option.label || ''}
+                        onChange={(e) => {
+                          const newOptions = [...(formData.options || [])];
+                          newOptions[index] = { ...newOptions[index], label: e.target.value };
+                          setFormData({ ...formData, options: newOptions });
+                        }}
+                        size="small"
+                        sx={{ flex: 1 }}
+                        required
+                      />
+                      <IconButton
+                        onClick={() => {
+                          const newOptions = [...(formData.options || [])];
+                          newOptions.splice(index, 1);
+                          setFormData({ ...formData, options: newOptions });
+                        }}
+                        color="error"
+                        size="small"
+                      >
+                        <Remove />
+                      </IconButton>
+                    </Box>
+                  ))}
+                  <Button
+                    startIcon={<Add />}
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        options: [...(formData.options || []), { value: '', label: '' }],
+                      });
+                    }}
+                    size="small"
+                    variant="outlined"
+                    sx={{ mt: 1 }}
+                  >
+                    {t('customFields.addOption', { defaultValue: 'Add Option' })}
+                  </Button>
+                </Box>
+              )}
             </Box>
           </DialogContent>
           <DialogActions>
