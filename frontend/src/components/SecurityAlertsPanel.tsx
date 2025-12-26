@@ -15,6 +15,7 @@ import {
   Warning,
   CheckCircle,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import type { ActiveAlert } from '../services/adminDashboardService';
 
 interface SecurityAlertsPanelProps {
@@ -36,18 +37,18 @@ const getPriorityColor = (priority: string) => {
   }
 };
 
-const formatTimeAgo = (dateString: string): string => {
+const formatTimeAgo = (dateString: string, t: any): string => {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / (1000 * 60));
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffMins < 1) return t('adminDashboard.justNow');
+  if (diffMins < 60) return t('adminDashboard.minAgo', { count: diffMins });
   const hours = Math.floor(diffMins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('adminDashboard.hoursAgo', { hours });
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return t('adminDashboard.daysAgo', { days });
 };
 
 export const SecurityAlertsPanel: React.FC<SecurityAlertsPanelProps> = ({
@@ -55,6 +56,7 @@ export const SecurityAlertsPanel: React.FC<SecurityAlertsPanelProps> = ({
   loading,
   onAlertClick,
 }) => {
+  const { t } = useTranslation();
   if (loading) {
     return (
       <Card sx={{ backgroundColor: '#1a1a1a' }}>
@@ -74,7 +76,7 @@ export const SecurityAlertsPanel: React.FC<SecurityAlertsPanelProps> = ({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Badge badgeContent={alerts.length} color="error">
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Active Alerts
+              {t('adminDashboard.activeAlertsTitle')}
             </Typography>
           </Badge>
         </Box>
@@ -83,7 +85,7 @@ export const SecurityAlertsPanel: React.FC<SecurityAlertsPanelProps> = ({
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <CheckCircle sx={{ fontSize: 48, color: '#4caf50', mb: 1 }} />
             <Typography variant="body2" color="text.secondary">
-              No active alerts - all clear! ✅
+              {t('adminDashboard.noActiveAlerts')}
             </Typography>
           </Box>
         ) : (
@@ -112,7 +114,7 @@ export const SecurityAlertsPanel: React.FC<SecurityAlertsPanelProps> = ({
                         {alert.type.replace(/_/g, ' ').toUpperCase()}
                       </Typography>
                       <Chip
-                        label={alert.priority}
+                        label={t(`adminDashboard.${alert.priority}`)}
                         size="small"
                         color={getPriorityColor(alert.priority)}
                         sx={{ height: 18, fontSize: '0.65rem' }}
@@ -130,7 +132,7 @@ export const SecurityAlertsPanel: React.FC<SecurityAlertsPanelProps> = ({
                         </Typography>
                       )}
                       <Typography variant="caption" sx={{ color: '#888', display: 'block', mt: 0.5 }}>
-                        {formatTimeAgo(alert.createdAt)}
+                        {formatTimeAgo(alert.createdAt, t)}
                       </Typography>
                     </Box>
                   }

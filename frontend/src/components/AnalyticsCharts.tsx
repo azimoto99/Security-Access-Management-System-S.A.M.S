@@ -27,6 +27,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Download } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import type { AnalyticsData } from '../services/adminDashboardService';
 
 interface AnalyticsChartsProps {
@@ -44,6 +45,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
   period,
   onPeriodChange,
 }) => {
+  const { t } = useTranslation();
   const handleExport = async (chartType: string) => {
     try {
       // Get chart element by type
@@ -115,7 +117,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
       <Card sx={{ backgroundColor: '#1a1a1a' }}>
         <CardContent>
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-            No analytics data available
+            {t('adminDashboard.noAnalyticsData')}
           </Typography>
         </CardContent>
       </Card>
@@ -127,18 +129,18 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Analytics
+            {t('adminDashboard.analytics')}
           </Typography>
           <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Period</InputLabel>
+            <InputLabel>{t('adminDashboard.period')}</InputLabel>
             <Select
               value={period}
               onChange={(e) => onPeriodChange(e.target.value as 'today' | 'week' | 'month')}
-              label="Period"
+              label={t('adminDashboard.period')}
             >
-              <MenuItem value="today">Today</MenuItem>
-              <MenuItem value="week">This Week</MenuItem>
-              <MenuItem value="month">This Month</MenuItem>
+              <MenuItem value="today">{t('adminDashboard.today')}</MenuItem>
+              <MenuItem value="week">{t('adminDashboard.thisWeek')}</MenuItem>
+              <MenuItem value="month">{t('adminDashboard.thisMonth')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -147,7 +149,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         <Box id="chart-entriesOverTime" sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography variant="subtitle2" sx={{ color: '#b0b0b0' }}>
-              Entries Over Time
+              {t('adminDashboard.entriesOverTime')}
             </Typography>
             <Button
               size="small"
@@ -155,7 +157,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
               onClick={() => handleExport('entriesOverTime')}
               sx={{ minWidth: 'auto' }}
             >
-              Export
+              {t('adminDashboard.export')}
             </Button>
           </Box>
           <ResponsiveContainer width="100%" height={220}>
@@ -187,7 +189,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         <Box id="chart-entriesBySite" sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography variant="subtitle2" sx={{ color: '#b0b0b0' }}>
-              Site Activity Comparison
+              {t('adminDashboard.siteActivityComparison')}
             </Typography>
             <Button
               size="small"
@@ -195,7 +197,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
               onClick={() => handleExport('entriesBySite')}
               sx={{ minWidth: 'auto' }}
             >
-              Export
+              {t('adminDashboard.export')}
             </Button>
           </Box>
           <ResponsiveContainer width="100%" height={250}>
@@ -227,7 +229,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         <Box id="chart-entryTypeBreakdown">
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography variant="subtitle2" sx={{ color: '#b0b0b0' }}>
-              Entry Type Breakdown
+              {t('adminDashboard.entryTypeBreakdown')}
             </Typography>
             <Button
               size="small"
@@ -235,7 +237,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
               onClick={() => handleExport('entryTypeBreakdown')}
               sx={{ minWidth: 'auto' }}
             >
-              Export
+              {t('adminDashboard.export')}
             </Button>
           </Box>
           <ResponsiveContainer width="100%" height={240}>

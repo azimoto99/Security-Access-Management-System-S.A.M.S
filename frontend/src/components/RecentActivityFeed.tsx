@@ -24,6 +24,7 @@ import {
   Search,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { RecentActivity } from '../services/adminDashboardService';
 import { photoService } from '../services/photoService';
 import { adminDashboardService } from '../services/adminDashboardService';
@@ -48,18 +49,18 @@ const getEntryIcon = (entryType: string) => {
   }
 };
 
-const formatTimeAgo = (dateString: string): string => {
+const formatTimeAgo = (dateString: string, t: any): string => {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / (1000 * 60));
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffMins < 1) return t('adminDashboard.justNow');
+  if (diffMins < 60) return t('adminDashboard.minAgo', { count: diffMins });
   const hours = Math.floor(diffMins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('adminDashboard.hoursAgo', { hours });
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return t('adminDashboard.daysAgo', { days });
 };
 
 export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
@@ -68,6 +69,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
   onActivityClick,
   initialHasMore = false,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [allActivities, setAllActivities] = useState<RecentActivity[]>(initialActivities);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -177,12 +179,12 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
     <Card sx={{ backgroundColor: '#1a1a1a', height: '100%', maxHeight: 600, display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2, minHeight: 0 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-          Recent Activity
+          {t('adminDashboard.recentActivity')}
         </Typography>
         
         {/* Search Bar */}
         <TextField
-          placeholder="Search activities..."
+          placeholder={t('adminDashboard.searchActivities')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           size="small"
@@ -204,13 +206,13 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
           {allActivities.length === 0 && !initialLoading ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="body2" color="text.secondary">
-                No recent activity
+                {t('adminDashboard.noRecentActivity')}
               </Typography>
             </Box>
           ) : filteredActivities.length === 0 && searchTerm ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="body2" color="text.secondary">
-                No activities match your search
+                {t('adminDashboard.noActivitiesMatch')}
               </Typography>
             </Box>
           ) : (
@@ -254,7 +256,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                           {activity.hasAlert && (
                             <Chip
                               icon={<Warning />}
-                              label="ALERT"
+                              label={t('adminDashboard.alert').toUpperCase()}
                               size="small"
                               color="error"
                               sx={{ height: 18, fontSize: '0.65rem' }}
@@ -269,23 +271,23 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                           </Typography>
                           {activity.driverName && (
                             <Typography variant="caption" sx={{ color: '#b0b0b0', display: 'block', mt: 0.5 }}>
-                              Driver: {activity.driverName}
+                              {t('adminDashboard.driver')}: {activity.driverName}
                             </Typography>
                           )}
                           {(activity.truckNumber || activity.trailerNumber) && (
                             <Typography variant="caption" sx={{ color: '#b0b0b0', display: 'block', mt: 0.5 }}>
-                              {activity.truckNumber && `Truck: ${activity.truckNumber}`}
+                              {activity.truckNumber && `${t('adminDashboard.truck')}: ${activity.truckNumber}`}
                               {activity.truckNumber && activity.trailerNumber && ' • '}
-                              {activity.trailerNumber && `Trailer: ${activity.trailerNumber}`}
+                              {activity.trailerNumber && `${t('adminDashboard.trailer')}: ${activity.trailerNumber}`}
                               {isExited && activity.exitTrailerNumber && activity.exitTrailerNumber !== activity.trailerNumber && (
-                                <span> → Exit Trailer: {activity.exitTrailerNumber}</span>
+                                <span> → {t('adminDashboard.exitTrailer')}: {activity.exitTrailerNumber}</span>
                               )}
                             </Typography>
                           )}
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                             {getEntryIcon(activity.entryType)}
                             <Typography variant="caption" sx={{ color: '#888' }}>
-                              {formatTimeAgo(activity.entryTime)} • {isExited ? 'Exited' : 'Entered'}
+                              {formatTimeAgo(activity.entryTime, t)} • {isExited ? t('adminDashboard.exited') : t('adminDashboard.entered')}
                             </Typography>
                           </Box>
                         </Box>
@@ -304,14 +306,14 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
           {!hasMore && allActivities.length > 0 && (
             <Box sx={{ textAlign: 'center', py: 2 }}>
               <Typography variant="caption" color="text.secondary">
-                No more activities to load
+                {t('common.noData')}
               </Typography>
             </Box>
           )}
         </Box>
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button variant="outlined" size="small" onClick={() => navigate('/search')}>
-            View All Logs
+            {t('adminDashboard.viewAllLogs')}
           </Button>
         </Box>
       </CardContent>

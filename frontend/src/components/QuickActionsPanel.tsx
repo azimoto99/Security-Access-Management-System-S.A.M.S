@@ -15,24 +15,26 @@ import {
   Warning,
   Description,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 export const QuickActionsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const actions = [
-    { icon: <PersonAdd />, label: 'Users', path: '/users?action=create' },
-    { icon: <Business />, label: 'Job Sites', path: '/job-sites?action=create' },
-    { icon: <Assessment />, label: 'Generate Report', path: '/reports' },
-    { icon: <Warning />, label: 'View All Alerts', path: '/alerts' },
-    { icon: <Security />, label: 'Manage Watchlist', path: '/watchlist' },
-    { icon: <Description />, label: 'HR Docs', path: '/hr/manage' },
+    { icon: <PersonAdd />, label: t('adminDashboard.users'), path: '/users?action=create' },
+    { icon: <Business />, label: t('adminDashboard.jobSites'), path: '/job-sites?action=create' },
+    { icon: <Assessment />, label: t('adminDashboard.generateReport'), path: '/reports' },
+    { icon: <Warning />, label: t('adminDashboard.viewAllAlerts'), path: '/alerts' },
+    { icon: <Security />, label: t('adminDashboard.manageWatchlist'), path: '/watchlist' },
+    { icon: <Description />, label: t('adminDashboard.hrDocs'), path: '/hr/manage' },
   ];
 
   return (
     <Card sx={{ backgroundColor: '#1a1a1a' }}>
       <CardContent>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-          Quick Actions
+          {t('adminDashboard.quickActions')}
         </Typography>
         <Grid container spacing={1.5}>
           {actions.map((action, index) => (

@@ -16,6 +16,7 @@ import {
   DirectionsCar,
   Warning,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import type { SiteStatus } from '../services/adminDashboardService';
 
 interface SiteStatusGridProps {
@@ -39,35 +40,35 @@ const getStatusColor = (status: SiteStatus['status']) => {
   }
 };
 
-const getStatusLabel = (status: SiteStatus['status']): string => {
+const getStatusLabel = (status: SiteStatus['status'], t: any): string => {
   switch (status) {
     case 'active':
-      return 'ACTIVE';
+      return t('adminDashboard.active').toUpperCase();
     case 'moderate':
-      return 'MODERATE';
+      return t('adminDashboard.moderate').toUpperCase();
     case 'quiet':
-      return 'QUIET';
+      return t('adminDashboard.quiet').toUpperCase();
     case 'alert':
-      return 'ALERT';
+      return t('adminDashboard.alert').toUpperCase();
     default:
-      return 'UNKNOWN';
+      return t('adminDashboard.unknown').toUpperCase();
   }
 };
 
-const formatTimeAgo = (dateString: string | null): string => {
-  if (!dateString) return 'No entries';
+const formatTimeAgo = (dateString: string | null, t: any): string => {
+  if (!dateString) return t('adminDashboard.noEntries');
   
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / (1000 * 60));
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffMins < 1) return t('adminDashboard.justNow');
+  if (diffMins < 60) return t('adminDashboard.minAgo', { count: diffMins });
   const hours = Math.floor(diffMins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('adminDashboard.hoursAgo', { hours });
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return t('adminDashboard.daysAgo', { days });
 };
 
 export const SiteStatusGrid: React.FC<SiteStatusGridProps> = ({
@@ -75,6 +76,7 @@ export const SiteStatusGrid: React.FC<SiteStatusGridProps> = ({
   loading,
   onSiteClick,
 }) => {
+  const { t } = useTranslation();
   const [sortBy, setSortBy] = useState<'activity' | 'name' | 'alert'>('activity');
 
   const sortedSites = [...sites].sort((a, b) => {
@@ -120,18 +122,18 @@ export const SiteStatusGrid: React.FC<SiteStatusGridProps> = ({
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            Site Status Overview
+            {t('adminDashboard.siteStatusOverview')}
           </Typography>
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Sort By</InputLabel>
+            <InputLabel>{t('adminDashboard.sortBy')}</InputLabel>
             <Select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'activity' | 'name' | 'alert')}
-              label="Sort By"
+              label={t('adminDashboard.sortBy')}
             >
-              <MenuItem value="activity">Activity</MenuItem>
-              <MenuItem value="name">Name</MenuItem>
-              <MenuItem value="alert">Alert Status</MenuItem>
+              <MenuItem value="activity">{t('adminDashboard.activity')}</MenuItem>
+              <MenuItem value="name">{t('adminDashboard.name')}</MenuItem>
+              <MenuItem value="alert">{t('adminDashboard.alertStatus')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -139,7 +141,7 @@ export const SiteStatusGrid: React.FC<SiteStatusGridProps> = ({
         {sortedSites.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Typography variant="body1" color="text.secondary">
-              No sites found
+              {t('adminDashboard.noSitesFound')}
             </Typography>
           </Box>
         ) : (
@@ -166,7 +168,7 @@ export const SiteStatusGrid: React.FC<SiteStatusGridProps> = ({
                         {site.name}
                       </Typography>
                       <Chip
-                        label={getStatusLabel(site.status)}
+                        label={getStatusLabel(site.status, t)}
                         color={getStatusColor(site.status)}
                         size="small"
                         sx={{ fontWeight: 600 }}
@@ -174,25 +176,25 @@ export const SiteStatusGrid: React.FC<SiteStatusGridProps> = ({
                     </Box>
                     {site.clientName && (
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        Client: {site.clientName}
+                        {t('adminDashboard.client')}: {site.clientName}
                       </Typography>
                     )}
                     <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <DirectionsCar fontSize="small" sx={{ color: '#b0b0b0' }} />
                         <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                          {site.currentOccupancy} on site
+                          {site.currentOccupancy} {t('adminDashboard.onSite')}
                         </Typography>
                       </Box>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                        {site.todayEntries} entries today
+                        {site.todayEntries} {t('adminDashboard.entriesToday')}
                       </Typography>
                       {site.hasAlerts && (
                         <Chip
                           icon={<Warning />}
-                          label="Alert"
+                          label={t('adminDashboard.alert')}
                           size="small"
                           color="error"
                           sx={{ height: 20 }}
@@ -200,7 +202,7 @@ export const SiteStatusGrid: React.FC<SiteStatusGridProps> = ({
                       )}
                     </Box>
                     <Typography variant="caption" sx={{ color: '#888', mt: 1, display: 'block' }}>
-                      Last entry: {formatTimeAgo(site.lastEntryTime)}
+                      {t('adminDashboard.lastEntry')}: {formatTimeAgo(site.lastEntryTime, t)}
                     </Typography>
                   </CardContent>
                 </Card>

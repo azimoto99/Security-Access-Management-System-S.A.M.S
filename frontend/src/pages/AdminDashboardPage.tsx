@@ -156,7 +156,7 @@ export const AdminDashboardPage: React.FC = () => {
             </Badge>
           </Box>
           <Chip
-            label={`${user?.username} (Admin)`}
+            label={`${user?.username} (${t('common.admin')})`}
             size="small"
             sx={{
               backgroundColor: '#2a2a2a',
