@@ -157,7 +157,7 @@ export const EmergencyManagementPage: React.FC = () => {
 
     try {
       setError(null);
-      const result = await emergencyService.processBulkExit({
+      await emergencyService.processBulkExit({
         emergency_mode_id: selectedEmergencyMode.id,
         job_site_id: selectedJobSiteForExit,
       });
