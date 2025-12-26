@@ -28,7 +28,6 @@ import {
   Image as ImageIcon,
   Search,
   ZoomIn,
-  ZoomOut,
   Close,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';

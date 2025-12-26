@@ -18,7 +18,6 @@ import {
   DirectionsCar,
   Person,
   LocalShipping,
-  Image as ImageIcon,
   ZoomIn,
   ZoomOut,
 } from '@mui/icons-material';
