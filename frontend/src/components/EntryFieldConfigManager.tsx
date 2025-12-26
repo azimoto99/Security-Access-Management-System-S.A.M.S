@@ -125,7 +125,18 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
     try {
       setError(null);
       if (editingField) {
-        await customFieldService.updateCustomField(editingField.id, formData as UpdateCustomFieldData);
+        // Only send allowed fields for update (exclude field_key, job_site_id, entry_type, is_custom)
+        const updateData: UpdateCustomFieldData = {};
+        if (formData.field_label !== undefined) updateData.field_label = formData.field_label;
+        if (formData.field_type !== undefined) updateData.field_type = formData.field_type;
+        if (formData.is_required !== undefined) updateData.is_required = formData.is_required;
+        if (formData.is_active !== undefined) updateData.is_active = formData.is_active;
+        if (formData.options !== undefined) updateData.options = formData.options;
+        if (formData.validation !== undefined) updateData.validation = formData.validation;
+        if (formData.display_order !== undefined) updateData.display_order = formData.display_order;
+        if (formData.placeholder !== undefined) updateData.placeholder = formData.placeholder;
+        if (formData.help_text !== undefined) updateData.help_text = formData.help_text;
+        await customFieldService.updateCustomField(editingField.id, updateData);
       } else {
         if (!formData.field_key || !formData.field_label) {
           setError('Field key and label are required');
