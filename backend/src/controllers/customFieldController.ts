@@ -7,6 +7,8 @@ import type {
   EntryFieldConfig,
   CreateFieldConfigRequest,
   UpdateFieldConfigRequest,
+  CreateCustomFieldRequest,
+  UpdateCustomFieldRequest,
 } from '../types/customField';
 
 // Default field configurations for each entry type

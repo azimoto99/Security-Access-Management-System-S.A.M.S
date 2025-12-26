@@ -64,7 +64,7 @@ const reorderCustomFieldsSchema = Joi.object({
 
 // All routes require authentication and admin role
 router.use(authenticateToken);
-router.use(authorizeRole(['admin']));
+router.use(authorizeRole('admin'));
 
 // Get custom fields for a job site (optionally filtered by entry_type)
 router.get('/', customFieldController.getCustomFields);

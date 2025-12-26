@@ -619,17 +619,18 @@ export const EntryForm: React.FC<EntryFormProps> = ({
         {renderDynamicFields()}
         {!fieldConfigs.length && (
           <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Expected Duration (minutes)"
-            type="number"
-            value={formData.expected_duration || ''}
-            onChange={handleChange('expected_duration')}
-            error={!!errors.expected_duration}
-            helperText={errors.expected_duration}
-            inputProps={{ min: 0 }}
-          />
-        </Grid>
+            <TextField
+              fullWidth
+              label="Expected Duration (minutes)"
+              type="number"
+              value={formData.expected_duration || ''}
+              onChange={handleChange('expected_duration')}
+              error={!!errors.expected_duration}
+              helperText={errors.expected_duration}
+              inputProps={{ min: 0 }}
+            />
+          </Grid>
+        )}
         <Grid item xs={12}>
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMore />}>
