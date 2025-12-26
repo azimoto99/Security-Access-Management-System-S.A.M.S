@@ -9,8 +9,6 @@ import {
   Security,
   Warning,
   Description,
-  DirectionsCar,
-  Person,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
