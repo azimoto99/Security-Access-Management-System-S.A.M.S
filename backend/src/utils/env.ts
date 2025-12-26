@@ -39,7 +39,11 @@ const envSchema = Joi.object({
   JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
 
   // File Upload
+  // On Render, use a persistent disk mount path (e.g., /var/data/uploads)
+  // In development, use ./uploads
+  // Set RENDER_DISK_PATH environment variable to the mount path (e.g., /var/data)
   UPLOAD_DIR: Joi.string().default('./uploads'),
+  RENDER_DISK_PATH: Joi.string().optional(), // Optional: path to Render persistent disk mount
   MAX_FILE_SIZE: Joi.number().default(10485760), // 10MB
 
   // DocuSign (for HR documents)
@@ -84,7 +88,11 @@ export const config = {
     refreshExpiresIn: envVars.JWT_REFRESH_EXPIRES_IN,
   },
   upload: {
-    dir: envVars.UPLOAD_DIR,
+    // If RENDER_DISK_PATH is set, use it for persistent storage
+    // Otherwise, use the default UPLOAD_DIR
+    dir: envVars.RENDER_DISK_PATH 
+      ? `${envVars.RENDER_DISK_PATH}/uploads` 
+      : envVars.UPLOAD_DIR,
     maxFileSize: envVars.MAX_FILE_SIZE,
   },
   docusign: {
