@@ -53,6 +53,10 @@ const envSchema = Joi.object({
   DOCUSIGN_RSA_PRIVATE_KEY: Joi.string().optional(),
   DOCUSIGN_API_BASE_PATH: Joi.string().default('https://demo.docusign.net/restapi'),
   DOCUSIGN_WEBHOOK_SECRET: Joi.string().optional(),
+
+  // Error Tracking (Sentry)
+  SENTRY_DSN: Joi.string().optional(),
+  SENTRY_ENVIRONMENT: Joi.string().default('production'),
 }).unknown();
 
 const { error, value: envVars } = envSchema.validate(process.env);
@@ -102,6 +106,10 @@ export const config = {
     rsaPrivateKey: envVars.DOCUSIGN_RSA_PRIVATE_KEY,
     apiBasePath: envVars.DOCUSIGN_API_BASE_PATH,
     webhookSecret: envVars.DOCUSIGN_WEBHOOK_SECRET,
+  },
+  sentry: {
+    dsn: envVars.SENTRY_DSN,
+    environment: envVars.SENTRY_ENVIRONMENT,
   },
 };
 
