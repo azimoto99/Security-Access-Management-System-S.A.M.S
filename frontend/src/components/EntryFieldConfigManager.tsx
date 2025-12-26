@@ -147,13 +147,26 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
           setError('Field key and label are required');
           return;
         }
+        // Validate field_key starts with a letter
+        if (!/^[a-z]/.test(formData.field_key)) {
+          setError('Field key must start with a letter');
+          return;
+        }
+        // Only send allowed fields for create
         await customFieldService.createCustomField({
-          ...formData,
           job_site_id: jobSiteId,
           entry_type: selectedEntryType,
+          field_key: formData.field_key,
+          field_label: formData.field_label,
+          field_type: formData.field_type || 'text',
+          is_required: formData.is_required || false,
+          is_active: formData.is_active !== false,
+          options: formData.options || [],
+          validation: formData.validation || {},
+          display_order: formData.display_order ?? fieldConfigs.length,
           placeholder: formData.placeholder ?? '',
           help_text: formData.help_text ?? '',
-        } as CreateCustomFieldData);
+        });
       }
       setEditingField(null);
       setFormData({
@@ -361,7 +374,15 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
                   fullWidth
                   label={t('customFields.fieldKey', { defaultValue: 'Field Key' })}
                   value={formData.field_key || ''}
-                  onChange={(e) => setFormData({ ...formData, field_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+                  onChange={(e) => {
+                    let value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                    // Ensure it starts with a letter - if first char is not a letter, remove leading non-letters
+                    if (value.length > 0 && !/^[a-z]/.test(value)) {
+                      // Remove leading numbers/underscores and prepend 'a' if empty
+                      value = value.replace(/^[^a-z]+/, '') || 'a';
+                    }
+                    setFormData({ ...formData, field_key: value });
+                  }}
                   margin="normal"
                   required
                   helperText={t('customFields.fieldKeyHelper', { defaultValue: 'Lowercase letters, numbers, and underscores only. Must start with a letter.' })}
