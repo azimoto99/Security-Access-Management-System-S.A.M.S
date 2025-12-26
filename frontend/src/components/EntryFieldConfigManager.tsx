@@ -116,8 +116,8 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
       options: field.options || [],
       validation: field.validation || {},
       display_order: field.display_order,
-      placeholder: field.placeholder,
-      help_text: field.help_text,
+      placeholder: field.placeholder ?? '',
+      help_text: field.help_text ?? '',
     });
   };
 
@@ -134,8 +134,13 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
         if (formData.options !== undefined) updateData.options = formData.options;
         if (formData.validation !== undefined) updateData.validation = formData.validation;
         if (formData.display_order !== undefined) updateData.display_order = formData.display_order;
-        if (formData.placeholder !== undefined) updateData.placeholder = formData.placeholder;
-        if (formData.help_text !== undefined) updateData.help_text = formData.help_text;
+        // Convert null to empty string for placeholder and help_text
+        if (formData.placeholder !== undefined) {
+          updateData.placeholder = formData.placeholder ?? '';
+        }
+        if (formData.help_text !== undefined) {
+          updateData.help_text = formData.help_text ?? '';
+        }
         await customFieldService.updateCustomField(editingField.id, updateData);
       } else {
         if (!formData.field_key || !formData.field_label) {
@@ -146,6 +151,8 @@ export const EntryFieldConfigManager: React.FC<EntryFieldConfigManagerProps> = (
           ...formData,
           job_site_id: jobSiteId,
           entry_type: selectedEntryType,
+          placeholder: formData.placeholder ?? '',
+          help_text: formData.help_text ?? '',
         } as CreateCustomFieldData);
       }
       setEditingField(null);
