@@ -493,14 +493,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
           ) : fieldConfigs.length > 0 ? (
             fieldConfigs
               .sort((a, b) => a.display_order - b.display_order)
-              .map((field, index) => {
-                // Set ref for the first field (identifier field) for autofocus
-                const isFirstField = index === 0;
-                const isIdentifierField = 
-                  (entryType === 'vehicle' && field.field_key === 'license_plate') ||
-                  (entryType === 'visitor' && field.field_key === 'name') ||
-                  (entryType === 'truck' && field.field_key === 'license_plate');
-
+              .map((field) => {
                 return (
                   <Box key={field.id} sx={{ width: '100%' }}>
                     <DynamicFormField

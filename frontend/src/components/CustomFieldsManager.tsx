@@ -18,7 +18,6 @@ import {
   Chip,
   Alert,
   CircularProgress,
-  Grid,
   Tabs,
   Tab,
   Paper,
@@ -33,8 +32,6 @@ import {
   Edit,
   Delete,
   DragIndicator,
-  Check,
-  Close,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import {

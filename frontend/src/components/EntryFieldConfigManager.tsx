@@ -32,10 +32,6 @@ import {
   Add,
   Edit,
   Delete,
-  Visibility,
-  VisibilityOff,
-  Check,
-  Close,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import {
@@ -46,7 +42,6 @@ import {
   type EntryType,
   type CustomFieldType,
 } from '../services/customFieldService';
-import { exitFieldService } from '../services/exitFieldService';
 
 interface EntryFieldConfigManagerProps {
   open: boolean;

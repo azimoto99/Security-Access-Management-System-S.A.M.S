@@ -2,6 +2,9 @@ import api from './api';
 import type { ApiResponse } from './api';
 import type { CustomField, CreateCustomFieldData, UpdateCustomFieldData, EntryType } from './customFieldService';
 
+// Re-export CustomField type for convenience
+export type { CustomField, CreateCustomFieldData, UpdateCustomFieldData, EntryType };
+
 export const exitFieldService = {
   /**
    * Get all exit field configurations for a job site

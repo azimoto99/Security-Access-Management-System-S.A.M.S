@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,11 +11,10 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
 import type { Entry } from '../services/entryService';
-import { exitFieldService, type CustomField } from '../services/exitFieldService';
+import { exitFieldService } from '../services/exitFieldService';
+import type { CustomField } from '../services/customFieldService';
 import { DynamicFormField } from './DynamicFormField';
-import { Box as MuiBox } from '@mui/material';
 
 interface ExitConfirmationDialogProps {
   open: boolean;
