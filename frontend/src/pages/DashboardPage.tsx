@@ -59,6 +59,7 @@ import { OccupancyCard } from '../components/OccupancyCard';
 import { dashboardService, type DashboardSummary } from '../services/dashboardService';
 import { DashboardSummaryCard } from '../components/DashboardSummaryCard';
 import { RecentActivityList } from '../components/RecentActivityList';
+import { EntryDetailDialog } from '../components/EntryDetailDialog';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { QuickEntryForm } from '../components/QuickEntryForm';
 import { OnSiteVehiclesList } from '../components/OnSiteVehiclesList';
@@ -94,6 +95,8 @@ export const DashboardPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [entryDetailDialogOpen, setEntryDetailDialogOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -242,6 +245,22 @@ export const DashboardPage: React.FC = () => {
     refetchInterval: 30000, // Refetch every 30 seconds
     staleTime: 10000, // Consider data stale after 10 seconds
   });
+
+  // React Query for guard dashboard recent activity
+  const {
+    data: guardRecentActivity,
+  } = useQuery({
+    queryKey: ['guardRecentActivity', guardSelectedSiteId],
+    queryFn: () => dashboardService.getRecentEntries(guardSelectedSiteId!, 10, 0),
+    enabled: user?.role === 'guard' && guardSelectedSiteId !== null,
+    refetchInterval: 30000,
+    staleTime: 10000,
+  });
+
+  const handleEntryClick = (entryId: string) => {
+    setSelectedEntryId(entryId);
+    setEntryDetailDialogOpen(true);
+  };
 
   const loadOccupancy = async () => {
     try {
@@ -647,7 +666,26 @@ export const DashboardPage: React.FC = () => {
               </Grid>
             </Grid>
           )}
+
+          {/* Recent Activity Feed */}
+          <Box sx={{ mt: 2, flexShrink: 0 }}>
+            <RecentActivityList
+              entries={guardRecentActivity?.entries || []}
+              siteId={guardSelectedSiteId || undefined}
+              onEntryClick={handleEntryClick}
+            />
+          </Box>
         </Container>
+
+        {/* Entry Detail Dialog */}
+        <EntryDetailDialog
+          open={entryDetailDialogOpen}
+          entryId={selectedEntryId}
+          onClose={() => {
+            setEntryDetailDialogOpen(false);
+            setSelectedEntryId(null);
+          }}
+        />
 
         {/* Manual Exit Dialog */}
         <Dialog
@@ -883,6 +921,7 @@ export const DashboardPage: React.FC = () => {
                 entries={dashboardData.recentEntries}
                 siteId={selectedSiteId || undefined}
                 onViewAll={() => navigate('/audit-logs')}
+                onEntryClick={handleEntryClick}
               />
             </Box>
           ) : null}
@@ -926,6 +965,16 @@ export const DashboardPage: React.FC = () => {
             </Box>
           </Box>
         </Container>
+
+        {/* Entry Detail Dialog */}
+        <EntryDetailDialog
+          open={entryDetailDialogOpen}
+          entryId={selectedEntryId}
+          onClose={() => {
+            setEntryDetailDialogOpen(false);
+            setSelectedEntryId(null);
+          }}
+        />
       </Box>
     );
   }

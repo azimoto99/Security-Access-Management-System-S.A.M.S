@@ -18,6 +18,8 @@ import {
   CircularProgress,
   TextField,
   InputAdornment,
+  Modal,
+  IconButton,
 } from '@mui/material';
 import {
   DirectionsCar,
@@ -25,6 +27,9 @@ import {
   LocalShipping,
   Image as ImageIcon,
   Search,
+  ZoomIn,
+  ZoomOut,
+  Close,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -36,6 +41,7 @@ interface RecentActivityListProps {
   entries: RecentEntry[];
   siteId?: string;
   onViewAll?: () => void;
+  onEntryClick?: (entryId: string) => void;
 }
 
 const getEntryTypeIcon = (entryType: string) => {
@@ -76,9 +82,11 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
   entries: initialEntries,
   siteId,
   onViewAll,
+  onEntryClick,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [expandedImageIndex, setExpandedImageIndex] = useState<{ entryId: string; index: number } | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [allEntries, setAllEntries] = useState<RecentEntry[]>(initialEntries);
@@ -157,7 +165,20 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
   }, [hasMore, loadingMore, loadMore]);
 
   const handleEntryClick = (entryId: string) => {
-    navigate(`/search?entry_id=${entryId}`);
+    if (onEntryClick) {
+      onEntryClick(entryId);
+    } else {
+      navigate(`/search?entry_id=${entryId}`);
+    }
+  };
+
+  const handleImageClick = (e: React.MouseEvent, entryId: string, index: number) => {
+    e.stopPropagation();
+    if (expandedImageIndex?.entryId === entryId && expandedImageIndex?.index === index) {
+      setExpandedImageIndex(null);
+    } else {
+      setExpandedImageIndex({ entryId, index });
+    }
   };
 
   if (allEntries.length === 0) {
@@ -234,17 +255,48 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                   transition: 'all 0.2s ease',
                 }}
               >
-                <Avatar
-                  src={entry.photoUrl ? photoService.getPhotoUrl(entry.photoUrl, true) : undefined}
+                <Box
                   sx={{
-                    width: 60,
-                    height: 60,
-                    borderRadius: '8px',
-                    backgroundColor: '#2a2a2a',
+                    position: 'relative',
+                    cursor: entry.photoUrl ? 'pointer' : 'default',
+                  }}
+                  onClick={(e) => {
+                    if (entry.photoUrl) {
+                      handleImageClick(e, entry.id, 0);
+                    }
                   }}
                 >
-                  {!entry.photoUrl && <ImageIcon />}
-                </Avatar>
+                  <Avatar
+                    src={entry.photoUrl ? photoService.getPhotoUrl(entry.photoUrl, true) : undefined}
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: '8px',
+                      backgroundColor: '#2a2a2a',
+                      border: expandedImageIndex?.entryId === entry.id ? '2px solid #ffd700' : 'none',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {!entry.photoUrl && <ImageIcon />}
+                  </Avatar>
+                  {entry.photoUrl && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: -4,
+                        right: -4,
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        borderRadius: '50%',
+                        p: 0.25,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <ZoomIn sx={{ color: '#ffffff', fontSize: '0.75rem' }} />
+                    </Box>
+                  )}
+                </Box>
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                   <Typography
                     variant="body2"
@@ -365,6 +417,11 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
       </Card>
     );
   }
+
+  // Find the entry with expanded image
+  const expandedEntry = expandedImageIndex
+    ? allEntries.find((e) => e.id === expandedImageIndex.entryId)
+    : null;
 
   // Desktop: Table layout
   return (
@@ -563,6 +620,60 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
         )}
       </CardContent>
     </Card>
+    {/* Image Expansion Modal */}
+    <Modal
+      open={!!expandedImageIndex && !!expandedEntry}
+      onClose={() => setExpandedImageIndex(null)}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+      }}
+    >
+      <Box
+        sx={{
+          position: 'relative',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          outline: 'none',
+        }}
+        onClick={() => setExpandedImageIndex(null)}
+      >
+        {expandedEntry && expandedImageIndex && (
+          <>
+            <IconButton
+              onClick={() => setExpandedImageIndex(null)}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                color: '#ffffff',
+                zIndex: 1,
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                },
+              }}
+            >
+              <Close />
+            </IconButton>
+            <Box
+              component="img"
+              src={photoService.getPhotoUrl(expandedEntry.photoUrl!, true)}
+              alt="Expanded photo"
+              sx={{
+                maxWidth: '100%',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </>
+        )}
+      </Box>
+    </Modal>
   );
 };
 
