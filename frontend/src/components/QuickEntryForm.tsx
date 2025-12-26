@@ -71,6 +71,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
         setLoadingFields(true);
         const configs = await customFieldService.getCustomFields(jobSiteId, entryType);
         const activeConfigs = configs.filter((f) => f.is_active);
+        console.log('QuickEntryForm: Loaded field configs', { jobSiteId, entryType, total: configs.length, active: activeConfigs.length });
         setFieldConfigs(activeConfigs);
         
         // Initialize form data based on field configurations
@@ -89,6 +90,8 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
         setFormData(initialFormData);
       } catch (error) {
         console.error('Failed to load field configurations:', error);
+        // Clear field configs on error so we fall back to hardcoded fields
+        setFieldConfigs([]);
         // Fallback to default initialization
         switch (entryType) {
           case 'vehicle':
