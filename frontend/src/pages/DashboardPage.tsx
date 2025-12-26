@@ -26,7 +26,10 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   Snackbar,
+  Menu,
+  TextField,
 } from '@mui/material';
 import {
   Logout,
@@ -43,6 +46,8 @@ import {
   Login as LoginIcon,
   Logout as LogoutIcon,
   Translate,
+  AccountCircle,
+  LockReset,
 } from '@mui/icons-material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -59,6 +64,8 @@ import { QuickEntryForm } from '../components/QuickEntryForm';
 import { OnSiteVehiclesList } from '../components/OnSiteVehiclesList';
 import { ManualExitForm } from '../components/ManualExitForm';
 import { entryService, type Entry } from '../services/entryService';
+import { userService } from '../services/userService';
+import { authService } from '../services/authService';
 import { AdminDashboardPage } from './AdminDashboardPage';
 
 export const DashboardPage: React.FC = () => {
@@ -82,6 +89,12 @@ export const DashboardPage: React.FC = () => {
   const [manualExitDialogOpen, setManualExitDialogOpen] = useState(false);
   const [manualExitSuccess, setManualExitSuccess] = useState<string | null>(null);
   const [manualExitError, setManualExitError] = useState<string | null>(null);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -269,6 +282,50 @@ export const DashboardPage: React.FC = () => {
     navigate('/login');
   };
 
+  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setUserMenuAnchor(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchor(null);
+  };
+
+  const handleChangePasswordClick = () => {
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError(null);
+    setChangePasswordDialogOpen(true);
+    handleUserMenuClose();
+  };
+
+  const handleChangePasswordSubmit = async () => {
+    if (!user?.id) return;
+
+    // Validate passwords
+    if (!newPassword || newPassword.length < 8) {
+      setPasswordError(t('userManagement.passwordMinLength'));
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError(t('userManagement.passwordsDoNotMatch'));
+      return;
+    }
+
+    try {
+      setPasswordError(null);
+      // Use self-service endpoint for all users (guards, clients, etc.)
+      // Admins can also use this endpoint to change their own password
+      await authService.changeOwnPassword(newPassword);
+      setPasswordSuccess(t('userManagement.passwordChanged'));
+      setChangePasswordDialogOpen(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPasswordError(err.message || t('userManagement.failedToChangePassword'));
+    }
+  };
+
   const getActionIcon = (action: string) => {
     const icons: { [key: string]: React.ReactElement } = {
       entry: <DirectionsCar fontSize="small" />,
@@ -363,14 +420,38 @@ export const DashboardPage: React.FC = () => {
             <Chip
               label={`${user?.username} (${user?.role})`}
               size="small"
+              onClick={handleUserMenuOpen}
+              icon={<AccountCircle sx={{ color: '#ffffff !important' }} />}
               sx={{
                 backgroundColor: '#2a2a2a',
                 color: '#ffffff',
                 mr: 1,
                 height: '28px',
                 fontSize: '0.75rem',
+                cursor: 'pointer',
+                '&:hover': {
+                  backgroundColor: '#3a3a3a',
+                },
               }}
             />
+            <Menu
+              anchorEl={userMenuAnchor}
+              open={!!userMenuAnchor}
+              onClose={handleUserMenuClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+            >
+              <MenuItem onClick={handleChangePasswordClick}>
+                <LockReset sx={{ mr: 1 }} fontSize="small" />
+                {t('userManagement.changePassword')}
+              </MenuItem>
+            </Menu>
             <Button
               onClick={toggleLanguage}
               size="small"
@@ -618,14 +699,38 @@ export const DashboardPage: React.FC = () => {
             <Chip
               label={`${user?.username} (${user?.role})`}
               size="small"
+              onClick={handleUserMenuOpen}
+              icon={<AccountCircle sx={{ color: '#ffffff !important' }} />}
               sx={{
                 backgroundColor: '#2a2a2a',
                 color: '#ffffff',
                 mr: 1,
                 height: '28px',
                 fontSize: '0.75rem',
+                cursor: 'pointer',
+                '&:hover': {
+                  backgroundColor: '#3a3a3a',
+                },
               }}
             />
+            <Menu
+              anchorEl={userMenuAnchor}
+              open={!!userMenuAnchor}
+              onClose={handleUserMenuClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+            >
+              <MenuItem onClick={handleChangePasswordClick}>
+                <LockReset sx={{ mr: 1 }} fontSize="small" />
+                {t('userManagement.changePassword')}
+              </MenuItem>
+            </Menu>
             <Button
               onClick={toggleLanguage}
               size="small"
@@ -818,14 +923,38 @@ export const DashboardPage: React.FC = () => {
           <Chip
             label={`${user?.username} (${user?.role})`}
             size="small"
+            onClick={handleUserMenuOpen}
+            icon={<AccountCircle sx={{ color: '#ffffff !important' }} />}
             sx={{
               backgroundColor: '#2a2a2a',
               color: '#ffffff',
               mr: 1,
               height: '28px',
               fontSize: '0.75rem',
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: '#3a3a3a',
+              },
             }}
           />
+          <Menu
+            anchorEl={userMenuAnchor}
+            open={!!userMenuAnchor}
+            onClose={handleUserMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem onClick={handleChangePasswordClick}>
+              <LockReset sx={{ mr: 1 }} fontSize="small" />
+              {t('userManagement.changePassword')}
+            </MenuItem>
+          </Menu>
           <Button
             onClick={toggleLanguage}
             size="small"
@@ -972,7 +1101,92 @@ export const DashboardPage: React.FC = () => {
           </Grid>
         </Box>
       </Container>
+
+      {/* Change Password Dialog */}
+      <Dialog open={changePasswordDialogOpen} onClose={() => setChangePasswordDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{t('userManagement.changePasswordFor', { username: user?.username })}</DialogTitle>
+        <DialogContent>
+          {passwordError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPasswordError(null)}>
+              {passwordError}
+            </Alert>
+          )}
+          <TextField
+            fullWidth
+            label={t('userManagement.newPassword')}
+            type="password"
+            value={newPassword}
+            onChange={(e) => {
+              setNewPassword(e.target.value);
+              setPasswordError(null);
+            }}
+            margin="normal"
+            required
+            helperText={t('userManagement.passwordMinLength')}
+            autoFocus
+          />
+          <TextField
+            fullWidth
+            label={t('userManagement.confirmPassword')}
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              setPasswordError(null);
+            }}
+            margin="normal"
+            required
+            error={!!passwordError && confirmPassword !== ''}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setChangePasswordDialogOpen(false)}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            onClick={handleChangePasswordSubmit}
+            variant="contained"
+            disabled={!newPassword || !confirmPassword || newPassword.length < 8}
+          >
+            {t('userManagement.changePassword')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!passwordSuccess}
+        autoHideDuration={6000}
+        onClose={() => setPasswordSuccess(null)}
+        message={passwordSuccess}
+      />
     </Box>
   );
 };
 
+2025-12-25T19:33:45.538509787Z ==> Downloading cache...
+2025-12-25T19:33:45.577571959Z ==> Cloning from https://github.com/azimoto99/Security-Access-Management-System-S.A.M.S
+2025-12-25T19:33:45.924852089Z ==> Checking out commit da4570147bf57e3a8fb0d9e3f5c569b55d39a2f3 in branch main
+2025-12-25T19:33:59.623471914Z ==> Downloaded 378MB in 4s. Extraction took 10s.
+2025-12-25T19:34:11.972313357Z ==> Using Node.js version 22.16.0 (default)
+2025-12-25T19:34:11.997532094Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2025-12-25T19:34:12.119336575Z ==> Running build command 'npm install; npm run build'...
+2025-12-25T19:34:13.012451688Z 
+2025-12-25T19:34:13.012477199Z up to date, audited 459 packages in 827ms
+2025-12-25T19:34:13.01248844Z 
+2025-12-25T19:34:13.01249275Z 102 packages are looking for funding
+2025-12-25T19:34:13.012496761Z   run `npm fund` for details
+2025-12-25T19:34:13.013412067Z 
+2025-12-25T19:34:13.013427378Z found 0 vulnerabilities
+2025-12-25T19:34:13.165614174Z 
+2025-12-25T19:34:13.165635645Z > frontend@0.0.0 build
+2025-12-25T19:34:13.165639196Z > tsc -b && vite build
+2025-12-25T19:34:13.165641376Z 
+2025-12-25T19:34:18.96427646Z src/pages/EntryPage.tsx(128,14): error TS2304: Cannot find name 'Button'.
+2025-12-25T19:34:18.964389456Z src/pages/EntryPage.tsx(150,15): error TS2304: Cannot find name 'Button'.
+2025-12-25T19:34:18.964397577Z src/pages/EntryPage.tsx(173,14): error TS2304: Cannot find name 'Button'.
+2025-12-25T19:34:18.964406268Z src/pages/EntryPage.tsx(195,15): error TS2304: Cannot find name 'Button'.
+2025-12-25T19:34:18.964409168Z src/pages/EntryPage.tsx(212,12): error TS2304: Cannot find name 'Button'.
+2025-12-25T19:34:18.964414938Z src/pages/EntryPage.tsx(234,13): error TS2304: Cannot find name 'Button'.
+2025-12-25T19:34:19.266251164Z ==> Build failed 😞
+2025-12-25T19:34:19.266265805Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys

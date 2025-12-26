@@ -386,3 +386,73 @@ export const getCurrentUser = async (req: AuthRequest, res: Response, next: Next
   }
 };
 
+/**
+ * Change own password (self-service)
+ */
+export const changeOwnPassword = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      const error: AppError = new Error('Authentication required');
+      error.statusCode = 401;
+      error.code = 'UNAUTHORIZED';
+      return next(error);
+    }
+
+    const { newPassword } = req.body;
+
+    // Validate password
+    if (!newPassword) {
+      const error: AppError = new Error('New password is required');
+      error.statusCode = 400;
+      error.code = 'VALIDATION_ERROR';
+      return next(error);
+    }
+
+    if (newPassword.length < 8) {
+      const error: AppError = new Error('Password must be at least 8 characters long');
+      error.statusCode = 400;
+      error.code = 'VALIDATION_ERROR';
+      return next(error);
+    }
+
+    // Get user info
+    const userResult = await pool.query('SELECT id, username FROM users WHERE id = $1', [req.user.id]);
+    if (userResult.rows.length === 0) {
+      const error: AppError = new Error('User not found');
+      error.statusCode = 404;
+      error.code = 'USER_NOT_FOUND';
+      return next(error);
+    }
+
+    const user = userResult.rows[0];
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, req.user.id]);
+
+    // Log action
+    await pool.query(
+      `INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        req.user.id,
+        'change_password',
+        'user',
+        req.user.id,
+        JSON.stringify({ username: user.username, self_service: true }),
+      ]
+    );
+
+    logger.info(`Password changed by user: ${user.username} (${req.user.id})`);
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

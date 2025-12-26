@@ -114,6 +114,16 @@ export const authService = {
   },
 
   /**
+   * Change own password (self-service)
+   */
+  async changeOwnPassword(newPassword: string): Promise<void> {
+    const response = await api.post<ApiResponse<{ message: string }>>('/auth/change-password', { newPassword });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to change password');
+    }
+  },
+
+  /**
    * Get stored user from localStorage
    */
   getStoredUser(): User | null {
