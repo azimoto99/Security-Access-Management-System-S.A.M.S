@@ -34,7 +34,9 @@ import {
   LockReset,
   MoreVert,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import {
   userService,
   type User,
@@ -43,9 +45,12 @@ import {
 } from '../services/userService';
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { UserForm } from '../components/UserForm';
+import { Translate, Logout } from '@mui/icons-material';
 
 export const UserManagementPage: React.FC = () => {
-  const { user: currentUser } = useAuth();
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
+  const { user: currentUser, logout } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +82,7 @@ export const UserManagementPage: React.FC = () => {
       setUsers(usersData);
       setJobSites(jobSitesData);
     } catch (err: any) {
-      setError(err.message || 'Failed to load data');
+      setError(err.message || t('userManagement.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -110,16 +115,16 @@ export const UserManagementPage: React.FC = () => {
       setError(null);
       if (editingUser) {
         await userService.updateUser(editingUser.id, data as UpdateUserData);
-        setSuccess('User updated successfully');
+        setSuccess(t('userManagement.userUpdated'));
       } else {
         await userService.createUser(data as CreateUserData);
-        setSuccess('User created successfully');
+        setSuccess(t('userManagement.userCreated'));
       }
       setOpenDialog(false);
       setEditingUser(null);
       await loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to save user');
+      setError(err.message || t('userManagement.failedToSave'));
     }
   };
 
@@ -128,15 +133,15 @@ export const UserManagementPage: React.FC = () => {
       setError(null);
       if (user.is_active) {
         await userService.deactivateUser(user.id);
-        setSuccess('User deactivated successfully');
+        setSuccess(t('userManagement.userDeactivated'));
       } else {
         await userService.activateUser(user.id);
-        setSuccess('User activated successfully');
+        setSuccess(t('userManagement.userActivated'));
       }
       handleMenuClose();
       await loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to update user status');
+      setError(err.message || t('userManagement.failedToUpdateStatus'));
     }
   };
 
@@ -150,7 +155,7 @@ export const UserManagementPage: React.FC = () => {
       setPasswordDialogOpen(true);
       handleMenuClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to reset password');
+      setError(err.message || t('userManagement.failedToResetPassword'));
       handleMenuClose();
     }
   };
@@ -169,12 +174,12 @@ export const UserManagementPage: React.FC = () => {
 
     // Validate passwords
     if (!newPassword || newPassword.length < 8) {
-      setPasswordError('Password must be at least 8 characters long');
+      setPasswordError(t('userManagement.passwordMinLength'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError('Passwords do not match');
+      setPasswordError(t('userManagement.passwordsDoNotMatch'));
       return;
     }
 
@@ -182,12 +187,12 @@ export const UserManagementPage: React.FC = () => {
       setError(null);
       setPasswordError(null);
       await userService.changeUserPassword(selectedUser.id, newPassword);
-      setSuccess('Password changed successfully');
+      setSuccess(t('userManagement.passwordChanged'));
       setChangePasswordDialogOpen(false);
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      setPasswordError(err.message || 'Failed to change password');
+      setPasswordError(err.message || t('userManagement.failedToChangePassword'));
     }
   };
 
@@ -230,17 +235,48 @@ export const UserManagementPage: React.FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            User Management
+            {t('userManagement.title')}
           </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
+          <Button
+            onClick={logout}
+            color="inherit"
+            startIcon={<Logout />}
+            sx={{ ml: 1 }}
+          >
+            {t('common.logout')}
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1">
-            Users
+            {t('userManagement.users')}
           </Typography>
           <Button variant="contained" startIcon={<Add />} onClick={handleCreate}>
-            Create User
+            {t('userManagement.createUser')}
           </Button>
         </Box>
 
@@ -263,21 +299,21 @@ export const UserManagementPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Username</TableCell>
-                <TableCell>Role</TableCell>
-                <TableCell>Job Site Access</TableCell>
-                <TableCell>Employee ID</TableCell>
-                <TableCell>Onboarding Status</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>{t('userManagement.username')}</TableCell>
+                <TableCell>{t('userManagement.role')}</TableCell>
+                <TableCell>{t('userManagement.jobSiteAccess')}</TableCell>
+                <TableCell>{t('userManagement.employeeId')}</TableCell>
+                <TableCell>{t('userManagement.onboardingStatus')}</TableCell>
+                <TableCell>{t('userManagement.status')}</TableCell>
+                <TableCell>{t('userManagement.created')}</TableCell>
+                <TableCell align="right">{t('userManagement.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} align="center">
-                    No users found
+                    {t('userManagement.noUsersFound')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -290,13 +326,13 @@ export const UserManagementPage: React.FC = () => {
                     <TableCell>
                       {user.job_site_access && user.job_site_access.length > 0 ? (
                         <Chip
-                          label={`${user.job_site_access.length} site(s)`}
+                          label={`${user.job_site_access.length} ${t('userManagement.sites')}`}
                           size="small"
                           variant="outlined"
                         />
                       ) : (
                         <Typography variant="body2" color="text.secondary">
-                          None
+                          {t('userManagement.none')}
                         </Typography>
                       )}
                     </TableCell>
@@ -314,7 +350,7 @@ export const UserManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={user.is_active ? 'Active' : 'Inactive'}
+                        label={user.is_active ? t('userManagement.active') : t('userManagement.inactive')}
                         color={user.is_active ? 'success' : 'default'}
                         size="small"
                       />
@@ -340,7 +376,7 @@ export const UserManagementPage: React.FC = () => {
 
         {/* Create/Edit Dialog */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>{editingUser ? 'Edit User' : 'Create User'}</DialogTitle>
+          <DialogTitle>{editingUser ? t('userManagement.editUser') : t('userManagement.createUser')}</DialogTitle>
           <DialogContent>
             <UserForm
               user={editingUser}
@@ -358,7 +394,7 @@ export const UserManagementPage: React.FC = () => {
         <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={handleMenuClose}>
           <MenuItem onClick={() => selectedUser && handleEdit(selectedUser)}>
             <Edit sx={{ mr: 1 }} fontSize="small" />
-            Edit
+            {t('userManagement.edit')}
           </MenuItem>
           <MenuItem
             onClick={() => selectedUser && handleToggleActive(selectedUser)}
@@ -367,28 +403,28 @@ export const UserManagementPage: React.FC = () => {
             {selectedUser?.is_active ? (
               <>
                 <Cancel sx={{ mr: 1 }} fontSize="small" />
-                Deactivate
+                {t('userManagement.deactivate')}
               </>
             ) : (
               <>
                 <CheckCircle sx={{ mr: 1 }} fontSize="small" />
-                Activate
+                {t('userManagement.activate')}
               </>
             )}
           </MenuItem>
           <MenuItem onClick={handleChangePassword}>
             <LockReset sx={{ mr: 1 }} fontSize="small" />
-            Change Password
+            {t('userManagement.changePassword')}
           </MenuItem>
           <MenuItem onClick={handleResetPassword}>
             <LockReset sx={{ mr: 1 }} fontSize="small" />
-            Reset Password (Generate Temp)
+            {t('userManagement.resetPassword')}
           </MenuItem>
         </Menu>
 
         {/* Change Password Dialog */}
         <Dialog open={changePasswordDialogOpen} onClose={() => setChangePasswordDialogOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Change Password for {selectedUser?.username}</DialogTitle>
+          <DialogTitle>{t('userManagement.changePasswordFor', { username: selectedUser?.username })}</DialogTitle>
           <DialogContent>
             {passwordError && (
               <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPasswordError(null)}>
@@ -397,7 +433,7 @@ export const UserManagementPage: React.FC = () => {
             )}
             <TextField
               fullWidth
-              label="New Password"
+              label={t('userManagement.newPassword')}
               type="password"
               value={newPassword}
               onChange={(e) => {
@@ -406,12 +442,12 @@ export const UserManagementPage: React.FC = () => {
               }}
               margin="normal"
               required
-              helperText="Password must be at least 8 characters long"
+              helperText={t('userManagement.passwordMinLength')}
               autoFocus
             />
             <TextField
               fullWidth
-              label="Confirm Password"
+              label={t('userManagement.confirmPassword')}
               type="password"
               value={confirmPassword}
               onChange={(e) => {
@@ -425,33 +461,33 @@ export const UserManagementPage: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setChangePasswordDialogOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleChangePasswordSubmit}
               variant="contained"
               disabled={!newPassword || !confirmPassword || newPassword.length < 8}
             >
-              Change Password
+              {t('userManagement.changePassword')}
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* Temporary Password Dialog */}
         <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)}>
-          <DialogTitle>Password Reset Successful</DialogTitle>
+          <DialogTitle>{t('userManagement.passwordResetSuccess')}</DialogTitle>
           <DialogContent>
             <Alert severity="success" sx={{ mb: 2 }}>
-              A temporary password has been generated. Please copy it now as it will not be shown again.
+              {t('userManagement.tempPasswordGenerated')}
             </Alert>
             <TextField
               fullWidth
-              label="Temporary Password"
+              label={t('userManagement.temporaryPassword')}
               value={tempPassword || ''}
               InputProps={{
                 readOnly: true,
               }}
-              helperText="Copy this password and share it securely with the user"
+              helperText={t('userManagement.copyPasswordHelper')}
             />
           </DialogContent>
           <DialogActions>
@@ -459,14 +495,14 @@ export const UserManagementPage: React.FC = () => {
               onClick={() => {
                 if (tempPassword) {
                   navigator.clipboard.writeText(tempPassword);
-                  setSuccess('Password copied to clipboard');
+                  setSuccess(t('userManagement.passwordCopied'));
                 }
               }}
             >
-              Copy
+              {t('userManagement.copy')}
             </Button>
             <Button onClick={() => setPasswordDialogOpen(false)} variant="contained">
-              Close
+              {t('userManagement.close')}
             </Button>
           </DialogActions>
         </Dialog>

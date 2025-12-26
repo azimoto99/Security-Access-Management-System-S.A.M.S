@@ -10,9 +10,11 @@ import {
   Alert,
   Link,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 
 export const LoginPage: React.FC = () => {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export const LoginPage: React.FC = () => {
       const from = (location.state as any)?.from?.pathname || '/';
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.message || t('login.loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -84,14 +86,14 @@ export const LoginPage: React.FC = () => {
             gutterBottom
             sx={{ fontWeight: 600, mb: 1 }}
           >
-            Security Access Management
+            {t('login.title')}
           </Typography>
           <Typography
             variant="body2"
             align="center"
             sx={{ mb: 3, color: '#b0b0b0', fontSize: '0.75rem' }}
           >
-            Sign in to your account
+            {t('login.signInToAccount')}
           </Typography>
 
           {error && (
@@ -115,7 +117,7 @@ export const LoginPage: React.FC = () => {
               required
               fullWidth
               id="username"
-              label="Username"
+              label={t('common.username')}
               name="username"
               autoComplete="username"
               autoFocus
@@ -144,7 +146,7 @@ export const LoginPage: React.FC = () => {
               required
               fullWidth
               name="password"
-              label="Password"
+              label={t('common.password')}
               type="password"
               id="password"
               autoComplete="current-password"
@@ -189,7 +191,7 @@ export const LoginPage: React.FC = () => {
               }}
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? t('common.signingIn') : t('common.signIn')}
             </Button>
             <Box textAlign="center">
               <Link
@@ -204,7 +206,7 @@ export const LoginPage: React.FC = () => {
                   },
                 }}
               >
-                Forgot password?
+                {t('common.forgotPassword')}
               </Link>
             </Box>
           </Box>

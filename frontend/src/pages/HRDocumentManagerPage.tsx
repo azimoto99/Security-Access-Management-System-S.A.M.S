@@ -31,14 +31,23 @@ import {
   Delete,
   Description,
   Assignment,
+  Translate,
+  Logout,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import {
   hrDocumentService,
   type HRDocument,
 } from '../services/hrDocumentService';
 import { userService, type User } from '../services/userService';
+import { AppBar, Toolbar } from '@mui/material';
 
 export const HRDocumentManagerPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
+  const { logout } = useAuth();
   const [documents, setDocuments] = useState<HRDocument[]>([]);
   const [employees, setEmployees] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +84,7 @@ export const HRDocumentManagerPage: React.FC = () => {
       setDocuments(docsData);
       setEmployees(employeesData);
     } catch (err: any) {
-      setError(err.message || 'Failed to load data');
+      setError(err.message || t('hrDocumentManager.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -97,14 +106,14 @@ export const HRDocumentManagerPage: React.FC = () => {
     try {
       setError(null);
       if (!selectedFile && !selectedDocument) {
-        setError('Please select a file');
+        setError(t('hrDocumentManager.selectFile'));
         return;
       }
 
       if (selectedDocument) {
         // Update existing
         await hrDocumentService.updateDocument(selectedDocument.id, formData);
-        setSuccess('Document updated successfully');
+        setSuccess(t('hrDocumentManager.documentUpdated'));
       } else {
         // Create new
         const formDataToSend = new FormData();
@@ -117,28 +126,28 @@ export const HRDocumentManagerPage: React.FC = () => {
         }
 
         await hrDocumentService.createDocument(formDataToSend);
-        setSuccess('Document created successfully');
+        setSuccess(t('hrDocumentManager.documentCreated'));
       }
 
       setOpenDialog(false);
       await loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to save document');
+      setError(err.message || t('hrDocumentManager.failedToSave'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this document?')) {
+    if (!window.confirm(t('hrDocumentManager.deleteConfirm'))) {
       return;
     }
 
     try {
       setError(null);
       await hrDocumentService.deleteDocument(id);
-      setSuccess('Document deleted successfully');
+      setSuccess(t('hrDocumentManager.documentDeleted'));
       await loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to delete document');
+      setError(err.message || t('hrDocumentManager.failedToDelete'));
     }
   };
 
@@ -155,7 +164,7 @@ export const HRDocumentManagerPage: React.FC = () => {
     try {
       setError(null);
       if (assignmentData.employee_ids.length === 0) {
-        setError('Please select at least one employee');
+        setError(t('hrDocumentManager.selectEmployees'));
         return;
       }
 
@@ -165,10 +174,10 @@ export const HRDocumentManagerPage: React.FC = () => {
         due_date: assignmentData.due_date || undefined,
       });
 
-      setSuccess(`Document assigned to ${assignmentData.employee_ids.length} employees`);
+      setSuccess(t('hrDocumentManager.documentAssigned'));
       setOpenAssignmentDialog(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to assign document');
+      setError(err.message || t('hrDocumentManager.failedToAssign'));
     }
   };
 
@@ -181,15 +190,54 @@ export const HRDocumentManagerPage: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          HR Document Management
-        </Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={handleCreate}>
-          Upload Document
-        </Button>
-      </Box>
+    <Box sx={{ flexGrow: 1 }}>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            {t('hrDocumentManager.title')}
+          </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
+          <Button
+            onClick={logout}
+            color="inherit"
+            startIcon={<Logout />}
+            sx={{ ml: 1 }}
+          >
+            {t('common.logout')}
+          </Button>
+        </Toolbar>
+      </AppBar>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" component="h1">
+            {t('hrDocumentManager.title')}
+          </Typography>
+          <Button variant="contained" startIcon={<Add />} onClick={handleCreate}>
+            {t('hrDocumentManager.createDocument')}
+          </Button>
+        </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -208,21 +256,21 @@ export const HRDocumentManagerPage: React.FC = () => {
 
       <TableContainer component={Paper}>
         <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Required</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
+            <TableHead>
+              <TableRow>
+                <TableCell>{t('hrDocumentManager.title')}</TableCell>
+                <TableCell>{t('hrDocumentManager.documentType')}</TableCell>
+                <TableCell>{t('hrDocumentManager.required')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell>{t('common.created')}</TableCell>
+                <TableCell align="right">{t('common.actions')}</TableCell>
+              </TableRow>
+            </TableHead>
           <TableBody>
             {documents.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center">
-                  No documents found
+                  {t('common.noData')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -241,14 +289,14 @@ export const HRDocumentManagerPage: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={doc.is_required ? 'Required' : 'Optional'}
+                      label={doc.is_required ? t('hrDocumentManager.required') : t('hrDocumentManager.optional')}
                       color={doc.is_required ? 'error' : 'default'}
                       size="small"
                     />
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={doc.is_active ? 'Active' : 'Inactive'}
+                      label={doc.is_active ? t('common.active') : t('common.inactive')}
                       color={doc.is_active ? 'success' : 'default'}
                       size="small"
                     />
@@ -260,7 +308,7 @@ export const HRDocumentManagerPage: React.FC = () => {
                     <IconButton
                       size="small"
                       onClick={() => handleAssign(doc)}
-                      title="Assign to employees"
+                      title={t('hrDocumentManager.assignDocument')}
                     >
                       <Assignment />
                     </IconButton>
@@ -268,7 +316,7 @@ export const HRDocumentManagerPage: React.FC = () => {
                       size="small"
                       onClick={() => handleDelete(doc.id)}
                       color="error"
-                      title="Delete"
+                      title={t('common.delete')}
                     >
                       <Delete />
                     </IconButton>
@@ -282,12 +330,12 @@ export const HRDocumentManagerPage: React.FC = () => {
 
       {/* Create/Edit Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>{selectedDocument ? 'Edit Document' : 'Upload Document'}</DialogTitle>
+        <DialogTitle>{selectedDocument ? t('hrDocumentManager.editDocument') : t('hrDocumentManager.createDocument')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <TextField
               fullWidth
-              label="Title"
+              label={t('hrDocumentManager.title')}
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
@@ -295,7 +343,7 @@ export const HRDocumentManagerPage: React.FC = () => {
             />
             <TextField
               fullWidth
-              label="Description"
+              label={t('hrDocumentManager.description')}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               multiline
@@ -303,23 +351,23 @@ export const HRDocumentManagerPage: React.FC = () => {
               sx={{ mb: 2 }}
             />
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Document Type</InputLabel>
+              <InputLabel>{t('hrDocumentManager.documentType')}</InputLabel>
               <Select
                 value={formData.document_type}
                 onChange={(e) =>
                   setFormData({ ...formData, document_type: e.target.value as any })
                 }
-                label="Document Type"
+                label={t('hrDocumentManager.documentType')}
               >
-                <MenuItem value="onboarding">Onboarding</MenuItem>
-                <MenuItem value="policy">Policy</MenuItem>
-                <MenuItem value="contract">Contract</MenuItem>
-                <MenuItem value="other">Other</MenuItem>
+                <MenuItem value="onboarding">{t('hrDocumentManager.onboarding')}</MenuItem>
+                <MenuItem value="policy">{t('hrDocumentManager.policy')}</MenuItem>
+                <MenuItem value="contract">{t('hrDocumentManager.contract')}</MenuItem>
+                <MenuItem value="other">{t('hrDocumentManager.other')}</MenuItem>
               </Select>
             </FormControl>
             {!selectedDocument && (
               <Button variant="outlined" component="label" fullWidth sx={{ mb: 2 }}>
-                {selectedFile ? selectedFile.name : 'Select File'}
+                {selectedFile ? selectedFile.name : t('common.selectFile')}
                 <input
                   type="file"
                   hidden
@@ -331,9 +379,9 @@ export const HRDocumentManagerPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleSave} variant="contained">
-            {selectedDocument ? 'Update' : 'Upload'}
+            {selectedDocument ? t('common.update') : t('common.upload')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -345,11 +393,11 @@ export const HRDocumentManagerPage: React.FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Assign Document to Employees</DialogTitle>
+        <DialogTitle>{t('hrDocumentManager.assignDocument')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Employees</InputLabel>
+              <InputLabel>{t('common.employees')}</InputLabel>
               <Select
                 multiple
                 value={assignmentData.employee_ids}
@@ -359,7 +407,7 @@ export const HRDocumentManagerPage: React.FC = () => {
                     employee_ids: e.target.value as string[],
                   })
                 }
-                label="Employees"
+                label={t('common.employees')}
               >
                 {employees.map((emp) => (
                   <MenuItem key={emp.id} value={emp.id}>
@@ -370,7 +418,7 @@ export const HRDocumentManagerPage: React.FC = () => {
             </FormControl>
             <TextField
               fullWidth
-              label="Due Date (Optional)"
+              label={`${t('common.dueDate')} (${t('common.optional')})`}
               type="date"
               value={assignmentData.due_date}
               onChange={(e) =>
@@ -381,13 +429,14 @@ export const HRDocumentManagerPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenAssignmentDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenAssignmentDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleBulkAssign} variant="contained">
-            Assign
+            {t('hrDocumentManager.assignDocument')}
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 

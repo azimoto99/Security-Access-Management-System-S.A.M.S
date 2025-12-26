@@ -36,8 +36,12 @@ import {
   Refresh,
   Visibility,
   Add,
+  Translate,
+  Logout,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import {
   alertService,
   type Alert as AlertType,
@@ -47,7 +51,9 @@ import {
 import { jobSiteService, type JobSite } from '../services/jobSiteService';
 
 export const AlertsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
+  const { user, logout } = useAuth();
   const [alerts, setAlerts] = useState<AlertType[]>([]);
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +102,7 @@ export const AlertsPage: React.FC = () => {
       setTotal(alertsData.total);
       setJobSites(jobSitesData);
     } catch (err: any) {
-      setError(err.message || 'Failed to load alerts');
+      setError(err.message || t('alertsPage.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -106,10 +112,10 @@ export const AlertsPage: React.FC = () => {
     try {
       setError(null);
       await alertService.acknowledgeAlert(alert.id);
-      setSuccess('Alert acknowledged successfully');
+      setSuccess(t('alertsPage.alertAcknowledged'));
       await loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to acknowledge alert');
+      setError(err.message || t('alertsPage.failedToAcknowledge'));
     }
   };
 
@@ -117,10 +123,10 @@ export const AlertsPage: React.FC = () => {
     try {
       setError(null);
       await alertService.triggerAlertChecks();
-      setSuccess('Alert checks triggered successfully');
+      setSuccess(t('alertsPage.checksTriggered'));
       await loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to trigger alert checks');
+      setError(err.message || t('alertsPage.failedToTrigger'));
     }
   };
 
@@ -133,7 +139,7 @@ export const AlertsPage: React.FC = () => {
     try {
       setError(null);
       if (!newAlert.type || !newAlert.title || !newAlert.message) {
-        setError('Type, title, and message are required');
+        setError(t('alertsPage.required'));
         return;
       }
       setCreating(true);
@@ -144,7 +150,7 @@ export const AlertsPage: React.FC = () => {
         message: newAlert.message,
         job_site_id: newAlert.job_site_id || undefined,
       });
-      setSuccess('Alert created successfully');
+      setSuccess(t('alertsPage.alertCreated'));
       setCreateDialogOpen(false);
       setNewAlert({
         type: '' as AlertTypeEnum | '',
@@ -155,7 +161,7 @@ export const AlertsPage: React.FC = () => {
       });
       await loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to create alert');
+      setError(err.message || t('alertsPage.failedToCreate'));
     } finally {
       setCreating(false);
     }
@@ -178,12 +184,12 @@ export const AlertsPage: React.FC = () => {
 
   const getTypeLabel = (type: AlertTypeEnum) => {
     const labels: Record<AlertTypeEnum, string> = {
-      overstay: 'Overstay',
-      capacity_warning: 'Capacity Warning',
-      watchlist_match: 'Watchlist Match',
-      invalid_exit: 'Invalid Exit',
-      failed_login: 'Failed Login',
-      account_locked: 'Account Locked',
+      overstay: t('alertsPage.overstay'),
+      capacity_warning: t('alertsPage.capacityWarning'),
+      watchlist_match: t('alertsPage.watchlistMatch'),
+      invalid_exit: t('alertsPage.invalidExit'),
+      failed_login: t('alertsPage.failedLogin'),
+      account_locked: t('alertsPage.accountLocked'),
     };
     return labels[type] || type;
   };
@@ -204,18 +210,49 @@ export const AlertsPage: React.FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Security Alerts
+            {t('alertsPage.title')}
           </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
           {isAdmin && (
             <>
               <Button color="inherit" startIcon={<Add />} onClick={() => setCreateDialogOpen(true)}>
-                Create Alert
+                {t('alertsPage.createAlert')}
               </Button>
               <Button color="inherit" startIcon={<Refresh />} onClick={handleTriggerChecks}>
-                Trigger Checks
+                {t('alertsPage.triggerChecks')}
               </Button>
             </>
           )}
+          <Button
+            onClick={logout}
+            color="inherit"
+            startIcon={<Logout />}
+            sx={{ ml: 1 }}
+          >
+            {t('common.logout')}
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -225,7 +262,7 @@ export const AlertsPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Total Alerts
+                  {t('alertsPage.title')}
                 </Typography>
                 <Typography variant="h4">{total}</Typography>
               </CardContent>
@@ -235,7 +272,7 @@ export const AlertsPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Unacknowledged
+                  {t('alertsPage.unacknowledged')}
                 </Typography>
                 <Typography variant="h4" color="warning.main">
                   {unacknowledgedCount}
@@ -247,7 +284,7 @@ export const AlertsPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Critical
+                  {t('alertsPage.high')}
                 </Typography>
                 <Typography variant="h4" color="error.main">
                   {criticalCount}
@@ -262,47 +299,47 @@ export const AlertsPage: React.FC = () => {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
+                <InputLabel>{t('alertsPage.type')}</InputLabel>
                 <Select
                   value={filters.type}
                   onChange={(e) => setFilters({ ...filters, type: e.target.value as AlertTypeEnum | '' })}
-                  label="Type"
+                  label={t('alertsPage.type')}
                 >
-                  <MenuItem value="">All Types</MenuItem>
-                  <MenuItem value="overstay">Overstay</MenuItem>
-                  <MenuItem value="capacity_warning">Capacity Warning</MenuItem>
-                  <MenuItem value="watchlist_match">Watchlist Match</MenuItem>
-                  <MenuItem value="invalid_exit">Invalid Exit</MenuItem>
-                  <MenuItem value="failed_login">Failed Login</MenuItem>
-                  <MenuItem value="account_locked">Account Locked</MenuItem>
+                  <MenuItem value="">{t('alertsPage.all')}</MenuItem>
+                  <MenuItem value="overstay">{t('alertsPage.overstay')}</MenuItem>
+                  <MenuItem value="capacity_warning">{t('alertsPage.capacityWarning')}</MenuItem>
+                  <MenuItem value="watchlist_match">{t('alertsPage.watchlistMatch')}</MenuItem>
+                  <MenuItem value="invalid_exit">{t('alertsPage.invalidExit')}</MenuItem>
+                  <MenuItem value="failed_login">{t('alertsPage.failedLogin')}</MenuItem>
+                  <MenuItem value="account_locked">{t('alertsPage.accountLocked')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Severity</InputLabel>
+                <InputLabel>{t('alertsPage.severity')}</InputLabel>
                 <Select
                   value={filters.severity}
                   onChange={(e) => setFilters({ ...filters, severity: e.target.value as AlertSeverity | '' })}
-                  label="Severity"
+                  label={t('alertsPage.severity')}
                 >
-                  <MenuItem value="">All Severities</MenuItem>
-                  <MenuItem value="low">Low</MenuItem>
-                  <MenuItem value="medium">Medium</MenuItem>
-                  <MenuItem value="high">High</MenuItem>
-                  <MenuItem value="critical">Critical</MenuItem>
+                  <MenuItem value="">{t('alertsPage.all')}</MenuItem>
+                  <MenuItem value="low">{t('alertsPage.low')}</MenuItem>
+                  <MenuItem value="medium">{t('alertsPage.medium')}</MenuItem>
+                  <MenuItem value="high">{t('alertsPage.high')}</MenuItem>
+                  <MenuItem value="critical">{t('alertsPage.high')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Job Site</InputLabel>
+                <InputLabel>{t('alertsPage.jobSite')}</InputLabel>
                 <Select
                   value={filters.job_site_id}
                   onChange={(e) => setFilters({ ...filters, job_site_id: e.target.value })}
-                  label="Job Site"
+                  label={t('alertsPage.jobSite')}
                 >
-                  <MenuItem value="">All Job Sites</MenuItem>
+                  <MenuItem value="">{t('alertsPage.allJobSites')}</MenuItem>
                   {jobSites.map((site) => (
                     <MenuItem key={site.id} value={site.id}>
                       {site.name}
@@ -313,16 +350,16 @@ export const AlertsPage: React.FC = () => {
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
+                <InputLabel>{t('alertsPage.status')}</InputLabel>
                 <Select
                   value={filters.is_acknowledged ? 'acknowledged' : 'unacknowledged'}
                   onChange={(e) =>
                     setFilters({ ...filters, is_acknowledged: e.target.value === 'acknowledged' })
                   }
-                  label="Status"
+                  label={t('alertsPage.status')}
                 >
-                  <MenuItem value="unacknowledged">Unacknowledged</MenuItem>
-                  <MenuItem value="acknowledged">Acknowledged</MenuItem>
+                  <MenuItem value="unacknowledged">{t('alertsPage.unacknowledged')}</MenuItem>
+                  <MenuItem value="acknowledged">{t('alertsPage.acknowledged')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -348,20 +385,20 @@ export const AlertsPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Type</TableCell>
-                <TableCell>Severity</TableCell>
-                <TableCell>Title</TableCell>
-                <TableCell>Message</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>{t('alertsPage.type')}</TableCell>
+                <TableCell>{t('alertsPage.severity')}</TableCell>
+                <TableCell>{t('alertsPage.title')}</TableCell>
+                <TableCell>{t('alertsPage.message')}</TableCell>
+                <TableCell>{t('alertsPage.status')}</TableCell>
+                <TableCell>{t('common.created')}</TableCell>
+                <TableCell align="right">{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {alerts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
-                    No alerts found
+                    {t('common.noData')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -385,7 +422,7 @@ export const AlertsPage: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={alert.is_acknowledged ? 'Acknowledged' : 'Unacknowledged'}
+                        label={alert.is_acknowledged ? t('alertsPage.acknowledged') : t('alertsPage.unacknowledged')}
                         color={alert.is_acknowledged ? 'success' : 'warning'}
                         size="small"
                       />
@@ -397,7 +434,7 @@ export const AlertsPage: React.FC = () => {
                       <IconButton
                         size="small"
                         onClick={() => handleViewDetails(alert)}
-                        title="View Details"
+                        title={t('common.viewDetails')}
                       >
                         <Visibility />
                       </IconButton>
@@ -406,7 +443,7 @@ export const AlertsPage: React.FC = () => {
                           size="small"
                           onClick={() => handleAcknowledge(alert)}
                           color="success"
-                          title="Acknowledge"
+                          title={t('alertsPage.acknowledge')}
                         >
                           <CheckCircle />
                         </IconButton>
@@ -421,20 +458,20 @@ export const AlertsPage: React.FC = () => {
 
         {/* Alert Detail Dialog */}
         <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Alert Details</DialogTitle>
+          <DialogTitle>{t('alertsPage.alertDetails')}</DialogTitle>
           <DialogContent>
             {selectedAlert && (
               <Box sx={{ mt: 2 }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="subtitle2" color="textSecondary">
-                      Type
+                      {t('alertsPage.type')}
                     </Typography>
                     <Typography variant="body1">{getTypeLabel(selectedAlert.type)}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="subtitle2" color="textSecondary">
-                      Severity
+                      {t('alertsPage.severity')}
                     </Typography>
                     <Chip
                       label={selectedAlert.severity.toUpperCase()}
@@ -444,29 +481,29 @@ export const AlertsPage: React.FC = () => {
                   </Grid>
                   <Grid item xs={12}>
                     <Typography variant="subtitle2" color="textSecondary">
-                      Title
+                      {t('alertsPage.title')}
                     </Typography>
                     <Typography variant="body1">{selectedAlert.title}</Typography>
                   </Grid>
                   <Grid item xs={12}>
                     <Typography variant="subtitle2" color="textSecondary">
-                      Message
+                      {t('alertsPage.message')}
                     </Typography>
                     <Typography variant="body1">{selectedAlert.message}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="subtitle2" color="textSecondary">
-                      Status
+                      {t('alertsPage.status')}
                     </Typography>
                     <Chip
-                      label={selectedAlert.is_acknowledged ? 'Acknowledged' : 'Unacknowledged'}
+                      label={selectedAlert.is_acknowledged ? t('alertsPage.acknowledged') : t('alertsPage.unacknowledged')}
                       color={selectedAlert.is_acknowledged ? 'success' : 'warning'}
                       size="small"
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="subtitle2" color="textSecondary">
-                      Created
+                      {t('common.created')}
                     </Typography>
                     <Typography variant="body1">
                       {new Date(selectedAlert.created_at).toLocaleString()}
@@ -475,7 +512,7 @@ export const AlertsPage: React.FC = () => {
                   {selectedAlert.acknowledged_at && (
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="textSecondary">
-                        Acknowledged At
+                        {t('alertsPage.acknowledged')} {t('common.at')}
                       </Typography>
                       <Typography variant="body1">
                         {new Date(selectedAlert.acknowledged_at).toLocaleString()}
@@ -508,55 +545,55 @@ export const AlertsPage: React.FC = () => {
                 variant="contained"
                 startIcon={<CheckCircle />}
               >
-                Acknowledge
+                {t('alertsPage.acknowledge')}
               </Button>
             )}
-            <Button onClick={() => setDetailDialogOpen(false)}>Close</Button>
+            <Button onClick={() => setDetailDialogOpen(false)}>{t('common.close')}</Button>
           </DialogActions>
         </Dialog>
 
         {/* Create Alert Dialog */}
         <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Create New Alert</DialogTitle>
+          <DialogTitle>{t('alertsPage.createAlert')}</DialogTitle>
           <DialogContent>
             <Box sx={{ mt: 2 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <FormControl fullWidth required>
-                    <InputLabel>Alert Type</InputLabel>
+                    <InputLabel>{t('alertsPage.type')}</InputLabel>
                     <Select
                       value={newAlert.type}
                       onChange={(e) => setNewAlert({ ...newAlert, type: e.target.value as AlertTypeEnum | '' })}
-                      label="Alert Type"
+                      label={t('alertsPage.type')}
                     >
-                      <MenuItem value="overstay">Overstay</MenuItem>
-                      <MenuItem value="capacity_warning">Capacity Warning</MenuItem>
-                      <MenuItem value="watchlist_match">Watchlist Match</MenuItem>
-                      <MenuItem value="invalid_exit">Invalid Exit</MenuItem>
-                      <MenuItem value="failed_login">Failed Login</MenuItem>
-                      <MenuItem value="account_locked">Account Locked</MenuItem>
+                      <MenuItem value="overstay">{t('alertsPage.overstay')}</MenuItem>
+                      <MenuItem value="capacity_warning">{t('alertsPage.capacityWarning')}</MenuItem>
+                      <MenuItem value="watchlist_match">{t('alertsPage.watchlistMatch')}</MenuItem>
+                      <MenuItem value="invalid_exit">{t('alertsPage.invalidExit')}</MenuItem>
+                      <MenuItem value="failed_login">{t('alertsPage.failedLogin')}</MenuItem>
+                      <MenuItem value="account_locked">{t('alertsPage.accountLocked')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
-                    <InputLabel>Severity</InputLabel>
+                    <InputLabel>{t('alertsPage.severity')}</InputLabel>
                     <Select
                       value={newAlert.severity}
                       onChange={(e) => setNewAlert({ ...newAlert, severity: e.target.value as AlertSeverity })}
-                      label="Severity"
+                      label={t('alertsPage.severity')}
                     >
-                      <MenuItem value="low">Low</MenuItem>
-                      <MenuItem value="medium">Medium</MenuItem>
-                      <MenuItem value="high">High</MenuItem>
-                      <MenuItem value="critical">Critical</MenuItem>
+                      <MenuItem value="low">{t('alertsPage.low')}</MenuItem>
+                      <MenuItem value="medium">{t('alertsPage.medium')}</MenuItem>
+                      <MenuItem value="high">{t('alertsPage.high')}</MenuItem>
+                      <MenuItem value="critical">{t('alertsPage.high')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Title"
+                    label={t('alertsPage.title')}
                     value={newAlert.title}
                     onChange={(e) => setNewAlert({ ...newAlert, title: e.target.value })}
                     required
@@ -565,7 +602,7 @@ export const AlertsPage: React.FC = () => {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Message"
+                    label={t('alertsPage.message')}
                     value={newAlert.message}
                     onChange={(e) => setNewAlert({ ...newAlert, message: e.target.value })}
                     multiline
@@ -575,13 +612,13 @@ export const AlertsPage: React.FC = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
-                    <InputLabel>Job Site (Optional)</InputLabel>
+                    <InputLabel>{t('alertsPage.jobSite')} ({t('common.optional')})</InputLabel>
                     <Select
                       value={newAlert.job_site_id}
                       onChange={(e) => setNewAlert({ ...newAlert, job_site_id: e.target.value })}
-                      label="Job Site (Optional)"
+                      label={`${t('alertsPage.jobSite')} (${t('common.optional')})`}
                     >
-                      <MenuItem value="">None</MenuItem>
+                      <MenuItem value="">{t('common.none')}</MenuItem>
                       {jobSites.map((site) => (
                         <MenuItem key={site.id} value={site.id}>
                           {site.name}

@@ -31,8 +31,12 @@ import {
   Add,
   Delete,
   MoreVert,
+  Translate,
+  Logout,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import {
   watchlistService,
   type WatchlistEntry,
@@ -42,7 +46,9 @@ import {
 import { WatchlistForm } from '../components/WatchlistForm';
 
 export const WatchlistManagementPage: React.FC = () => {
-  const { user } = useAuth();
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
+  const { user, logout } = useAuth();
   const [entries, setEntries] = useState<WatchlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +72,7 @@ export const WatchlistManagementPage: React.FC = () => {
       const data = await watchlistService.getAllEntries(activeOnly);
       setEntries(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load watchlist entries');
+      setError(err.message || t('watchlistManagement.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -99,16 +105,16 @@ export const WatchlistManagementPage: React.FC = () => {
       setError(null);
       if (editingEntry) {
         await watchlistService.updateEntry(editingEntry.id, data as UpdateWatchlistData);
-        setSuccess('Watchlist entry updated successfully');
+        setSuccess(t('watchlistManagement.entryUpdated'));
       } else {
         await watchlistService.createEntry(data as CreateWatchlistData);
-        setSuccess('Watchlist entry created successfully');
+        setSuccess(t('watchlistManagement.entryCreated'));
       }
       setOpenDialog(false);
       setEditingEntry(null);
       await loadEntries();
     } catch (err: any) {
-      setError(err.message || 'Failed to save watchlist entry');
+      setError(err.message || t('watchlistManagement.failedToSave'));
     }
   };
 
@@ -118,11 +124,11 @@ export const WatchlistManagementPage: React.FC = () => {
     try {
       setError(null);
       await watchlistService.deleteEntry(selectedEntry.id);
-      setSuccess('Watchlist entry deleted successfully');
+      setSuccess(t('watchlistManagement.entryDeleted'));
       handleMenuClose();
       await loadEntries();
     } catch (err: any) {
-      setError(err.message || 'Failed to delete watchlist entry');
+      setError(err.message || t('watchlistManagement.failedToDelete'));
       handleMenuClose();
     }
   };
@@ -153,14 +159,45 @@ export const WatchlistManagementPage: React.FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Watchlist Management
+            {t('watchlistManagement.title')}
           </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
+          <Button
+            onClick={logout}
+            color="inherit"
+            startIcon={<Logout />}
+            sx={{ ml: 1 }}
+          >
+            {t('common.logout')}
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1">
-            Watchlist
+            {t('watchlistManagement.watchlist')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <FormControlLabel
@@ -170,11 +207,11 @@ export const WatchlistManagementPage: React.FC = () => {
                   onChange={(e) => setActiveOnly(e.target.checked)}
                 />
               }
-              label="Active Only"
+              label={t('watchlistManagement.activeOnly')}
             />
             {isAdmin && (
               <Button variant="contained" startIcon={<Add />} onClick={handleCreate}>
-                Add Entry
+                {t('watchlistManagement.addEntry')}
               </Button>
             )}
           </Box>
@@ -199,21 +236,21 @@ export const WatchlistManagementPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Type</TableCell>
-                <TableCell>Identifier</TableCell>
-                <TableCell>Reason</TableCell>
-                <TableCell>Alert Level</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Created By</TableCell>
-                <TableCell>Created</TableCell>
-                {isAdmin && <TableCell align="right">Actions</TableCell>}
+                <TableCell>{t('watchlistManagement.type')}</TableCell>
+                <TableCell>{t('watchlistManagement.identifier')}</TableCell>
+                <TableCell>{t('watchlistManagement.reason')}</TableCell>
+                <TableCell>{t('watchlistManagement.alertLevel')}</TableCell>
+                <TableCell>{t('watchlistManagement.status')}</TableCell>
+                <TableCell>{t('watchlistManagement.createdBy')}</TableCell>
+                <TableCell>{t('watchlistManagement.created')}</TableCell>
+                {isAdmin && <TableCell align="right">{t('watchlistManagement.actions')}</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {entries.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={isAdmin ? 8 : 7} align="center">
-                    No watchlist entries found
+                    {t('watchlistManagement.noEntriesFound')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -221,7 +258,7 @@ export const WatchlistManagementPage: React.FC = () => {
                   <TableRow key={entry.id}>
                     <TableCell>
                       <Chip
-                        label={entry.type === 'person' ? 'Person' : 'Vehicle'}
+                        label={entry.type === 'person' ? t('watchlistManagement.person') : t('watchlistManagement.vehicle')}
                         size="small"
                         color={entry.type === 'person' ? 'primary' : 'secondary'}
                       />
@@ -241,7 +278,7 @@ export const WatchlistManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={entry.is_active ? 'Active' : 'Inactive'}
+                        label={entry.is_active ? t('watchlistManagement.active') : t('watchlistManagement.inactive')}
                         color={entry.is_active ? 'success' : 'default'}
                         size="small"
                       />
@@ -269,7 +306,7 @@ export const WatchlistManagementPage: React.FC = () => {
 
         {/* Create/Edit Dialog */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>{editingEntry ? 'Edit Watchlist Entry' : 'Add Watchlist Entry'}</DialogTitle>
+          <DialogTitle>{editingEntry ? t('watchlistManagement.editEntry') : t('watchlistManagement.addWatchlistEntry')}</DialogTitle>
           <DialogContent>
             <WatchlistForm
               entry={editingEntry}
@@ -286,11 +323,11 @@ export const WatchlistManagementPage: React.FC = () => {
         <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={handleMenuClose}>
           <MenuItem onClick={() => selectedEntry && handleEdit(selectedEntry)}>
             <Edit sx={{ mr: 1 }} fontSize="small" />
-            Edit
+            {t('watchlistManagement.edit')}
           </MenuItem>
           <MenuItem onClick={handleDelete}>
             <Delete sx={{ mr: 1 }} fontSize="small" />
-            Delete
+            {t('watchlistManagement.delete')}
           </MenuItem>
         </Menu>
       </Container>

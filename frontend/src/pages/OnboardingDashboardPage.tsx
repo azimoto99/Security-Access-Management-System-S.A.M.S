@@ -26,13 +26,22 @@ import {
   Error,
   Download,
   Edit,
+  Translate,
+  Logout,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import {
   hrDocumentService,
   type DocumentAssignment,
 } from '../services/hrDocumentService';
+import { AppBar, Toolbar } from '@mui/material';
 
 export const OnboardingDashboardPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
+  const { logout } = useAuth();
   const [assignments, setAssignments] = useState<DocumentAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +58,7 @@ export const OnboardingDashboardPage: React.FC = () => {
       const data = await hrDocumentService.getEmployeeAssignments();
       setAssignments(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load assignments');
+      setError(err.message || t('onboardingDashboard.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -73,7 +82,7 @@ export const OnboardingDashboardPage: React.FC = () => {
       );
 
       if (!popup) {
-        setError('Please allow popups to sign documents');
+        setError(t('onboardingDashboard.allowPopups'));
         return;
       }
 
@@ -84,7 +93,7 @@ export const OnboardingDashboardPage: React.FC = () => {
             clearInterval(checkStatus);
             // Refresh assignments after popup closes
             await loadAssignments();
-            setSuccess('Document signing completed. Please refresh if status has not updated.');
+            setSuccess(t('onboardingDashboard.documentSigningCompleted'));
           } else {
             // Check if signing is complete by polling the status
             const status = await hrDocumentService.getSigningStatus(assignment.id);
@@ -92,7 +101,7 @@ export const OnboardingDashboardPage: React.FC = () => {
               clearInterval(checkStatus);
               popup.close();
               await loadAssignments();
-              setSuccess('Document signed successfully!');
+              setSuccess(t('onboardingDashboard.documentSigned'));
             }
           }
         } catch (err) {
@@ -108,7 +117,7 @@ export const OnboardingDashboardPage: React.FC = () => {
         }
       }, 600000);
     } catch (err: any) {
-      setError(err.message || 'Failed to initiate signing');
+      setError(err.message || t('onboardingDashboard.failedToInitiateSigning'));
     }
   };
 
@@ -125,7 +134,7 @@ export const OnboardingDashboardPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err: any) {
-      setError(err.message || 'Failed to download document');
+      setError(err.message || t('onboardingDashboard.failedToDownload'));
     }
   };
 
@@ -167,10 +176,49 @@ export const OnboardingDashboardPage: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Onboarding Documents
-      </Typography>
+    <Box sx={{ flexGrow: 1 }}>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            {t('onboardingDashboard.title')}
+          </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
+          <Button
+            onClick={logout}
+            color="inherit"
+            startIcon={<Logout />}
+            sx={{ ml: 1 }}
+          >
+            {t('common.logout')}
+          </Button>
+        </Toolbar>
+      </AppBar>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          {t('onboardingDashboard.myDocuments')}
+        </Typography>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -193,7 +241,7 @@ export const OnboardingDashboardPage: React.FC = () => {
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Total Documents
+                {t('onboardingDashboard.myDocuments')}
               </Typography>
               <Typography variant="h4">{assignments.length}</Typography>
             </CardContent>
@@ -203,7 +251,7 @@ export const OnboardingDashboardPage: React.FC = () => {
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Pending
+                {t('onboardingDashboard.pending')}
               </Typography>
               <Typography variant="h4" color="warning.main">
                 {pendingCount}
@@ -215,7 +263,7 @@ export const OnboardingDashboardPage: React.FC = () => {
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Completed
+                {t('onboardingDashboard.completed')}
               </Typography>
               <Typography variant="h4" color="success.main">
                 {completedCount}
@@ -228,20 +276,20 @@ export const OnboardingDashboardPage: React.FC = () => {
       {/* Documents Table */}
       <TableContainer component={Paper}>
         <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Document</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Assigned</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
+            <TableHead>
+              <TableRow>
+                <TableCell>{t('onboardingDashboard.document')}</TableCell>
+                <TableCell>{t('onboardingDashboard.status')}</TableCell>
+                <TableCell>{t('onboardingDashboard.assignedDate')}</TableCell>
+                <TableCell>{t('onboardingDashboard.dueDate')}</TableCell>
+                <TableCell align="right">{t('onboardingDashboard.actions')}</TableCell>
+              </TableRow>
+            </TableHead>
           <TableBody>
             {assignments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} align="center">
-                  No documents assigned
+                  {t('onboardingDashboard.noAssignments')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -278,7 +326,7 @@ export const OnboardingDashboardPage: React.FC = () => {
                       onClick={() => handleDownload(assignment)}
                       sx={{ mr: 1 }}
                     >
-                      Download
+                      {t('onboardingDashboard.download')}
                     </Button>
                     {(assignment.status === 'pending' || assignment.status === 'in_progress') && (
                       <Button
@@ -287,7 +335,7 @@ export const OnboardingDashboardPage: React.FC = () => {
                         startIcon={<Edit />}
                         onClick={() => handleSign(assignment)}
                       >
-                        {assignment.status === 'in_progress' ? 'Continue Signing' : 'Sign with DocuSign'}
+                        {assignment.status === 'in_progress' ? t('onboardingDashboard.continueSigning') : t('onboardingDashboard.sign')}
                       </Button>
                     )}
                   </TableCell>
@@ -297,7 +345,8 @@ export const OnboardingDashboardPage: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 

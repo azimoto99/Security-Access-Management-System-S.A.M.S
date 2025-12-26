@@ -33,7 +33,12 @@ import {
   Warning,
   CheckCircle,
   ExitToApp,
+  Translate,
+  Logout,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import {
   emergencyService,
   type EmergencyMode,
@@ -43,6 +48,9 @@ import { jobSiteService, type JobSite } from '../services/jobSiteService';
 import { useWebSocket } from '../hooks/useWebSocket';
 
 export const EmergencyManagementPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
+  const { logout } = useAuth();
   const [activeEmergencyModes, setActiveEmergencyModes] = useState<EmergencyMode[]>([]);
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [occupancy, setOccupancy] = useState<any>(null);
@@ -87,7 +95,7 @@ export const EmergencyManagementPage: React.FC = () => {
       setActiveEmergencyModes(emergencyModes);
       setJobSites(jobSitesData);
     } catch (err: any) {
-      setError(err.message || 'Failed to load emergency data');
+      setError(err.message || t('emergencyManagement.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -119,12 +127,12 @@ export const EmergencyManagementPage: React.FC = () => {
         reason: formData.reason || undefined,
       };
       await emergencyService.activateEmergencyMode(data);
-      setSuccess('Emergency mode activated successfully');
+      setSuccess(t('emergencyManagement.emergencyActivated'));
       setActivateDialogOpen(false);
       setFormData({ job_site_id: '', reason: '' });
       await loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to activate emergency mode');
+      setError(err.message || t('emergencyManagement.failedToActivate'));
     }
   };
 
@@ -134,13 +142,13 @@ export const EmergencyManagementPage: React.FC = () => {
     try {
       setError(null);
       await emergencyService.deactivateEmergencyMode(selectedEmergencyMode.id, summaryReport);
-      setSuccess('Emergency mode deactivated successfully');
+      setSuccess(t('emergencyManagement.emergencyDeactivated'));
       setDeactivateDialogOpen(false);
       setSelectedEmergencyMode(null);
       setSummaryReport('');
       await loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to deactivate emergency mode');
+      setError(err.message || t('emergencyManagement.failedToDeactivate'));
     }
   };
 
@@ -153,12 +161,12 @@ export const EmergencyManagementPage: React.FC = () => {
         emergency_mode_id: selectedEmergencyMode.id,
         job_site_id: selectedJobSiteForExit,
       });
-      setSuccess(`Bulk exit processed: ${result.exited_count} entries exited`);
+      setSuccess(t('emergencyManagement.bulkExitProcessed'));
       setBulkExitDialogOpen(false);
       setSelectedJobSiteForExit('');
       await loadOccupancy(selectedEmergencyMode.job_site_id);
     } catch (err: any) {
-      setError(err.message || 'Failed to process bulk exit');
+      setError(err.message || t('emergencyManagement.failedToProcessBulkExit'));
     }
   };
 
@@ -183,8 +191,31 @@ export const EmergencyManagementPage: React.FC = () => {
         <Toolbar>
           <Warning sx={{ mr: 2 }} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Emergency Management
+            {t('emergencyManagement.title')}
           </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
           {!hasActiveEmergency && (
             <Button
               color="inherit"
@@ -192,19 +223,27 @@ export const EmergencyManagementPage: React.FC = () => {
               onClick={() => setActivateDialogOpen(true)}
               startIcon={<Warning />}
             >
-              Activate Emergency Mode
+              {t('emergencyManagement.activateEmergency')}
             </Button>
           )}
+          <Button
+            onClick={logout}
+            color="inherit"
+            startIcon={<Logout />}
+            sx={{ ml: 1 }}
+          >
+            {t('common.logout')}
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         {hasActiveEmergency && (
           <Alert severity="error" sx={{ mb: 3 }}>
             <Typography variant="h6" gutterBottom>
-              EMERGENCY MODE ACTIVE
+              {t('emergencyManagement.activeEmergencies')}
             </Typography>
             <Typography variant="body2">
-              Normal entry processing is disabled. Use bulk exit to process evacuations.
+              {t('emergencyManagement.normalEntryDisabled')}
             </Typography>
           </Alert>
         )}
@@ -233,18 +272,18 @@ export const EmergencyManagementPage: React.FC = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                       <Box>
                         <Typography variant="h5" gutterBottom color="error">
-                          Emergency Mode Active
+                          {t('emergencyManagement.activeEmergencies')}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {mode.job_site_name || 'All Job Sites'}
+                          {mode.job_site_name || t('emergencyManagement.allJobSites')}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Activated by: {mode.activated_by_username} at{' '}
+                          {t('emergencyManagement.activatedBy')} {mode.activated_by_username} {t('common.at')}{' '}
                           {new Date(mode.activated_at).toLocaleString()}
                         </Typography>
                         {mode.reason && (
                           <Typography variant="body2" sx={{ mt: 1 }}>
-                            <strong>Reason:</strong> {mode.reason}
+                            <strong>{t('emergencyManagement.reason')}:</strong> {mode.reason}
                           </Typography>
                         )}
                       </Box>
@@ -257,7 +296,7 @@ export const EmergencyManagementPage: React.FC = () => {
                         }}
                         startIcon={<CheckCircle />}
                       >
-                        Deactivate
+                        {t('emergencyManagement.deactivateEmergency')}
                       </Button>
                     </Box>
 
@@ -267,7 +306,7 @@ export const EmergencyManagementPage: React.FC = () => {
                         onClick={() => handleSelectEmergencyMode(mode)}
                         startIcon={<ExitToApp />}
                       >
-                        View Occupancy
+                        {t('emergencyManagement.viewOccupancy')}
                       </Button>
                       <Button
                         variant="outlined"
@@ -278,25 +317,25 @@ export const EmergencyManagementPage: React.FC = () => {
                         }}
                         startIcon={<ExitToApp />}
                       >
-                        Bulk Exit
+                        {t('emergencyManagement.bulkExit')}
                       </Button>
                     </Box>
 
                     {selectedEmergencyMode?.id === mode.id && occupancy && (
                       <Box sx={{ mt: 3 }}>
                         <Typography variant="h6" gutterBottom>
-                          Current Occupancy
+                          {t('emergencyManagement.currentOccupancy')}
                         </Typography>
                         {Array.isArray(occupancy) ? (
                           <TableContainer component={Paper} sx={{ mt: 2 }}>
                             <Table>
                               <TableHead>
                                 <TableRow>
-                                  <TableCell>Job Site</TableCell>
-                                  <TableCell align="right">Vehicles</TableCell>
-                                  <TableCell align="right">Visitors</TableCell>
-                                  <TableCell align="right">Trucks</TableCell>
-                                  <TableCell align="right">Total</TableCell>
+                                  <TableCell>{t('emergencyManagement.jobSite')}</TableCell>
+                                  <TableCell align="right">{t('common.vehicles')}</TableCell>
+                                  <TableCell align="right">{t('common.visitors')}</TableCell>
+                                  <TableCell align="right">{t('common.trucks')}</TableCell>
+                                  <TableCell align="right">{t('common.total')}</TableCell>
                                 </TableRow>
                               </TableHead>
                               <TableBody>
@@ -317,19 +356,19 @@ export const EmergencyManagementPage: React.FC = () => {
                             <Grid container spacing={2}>
                               <Grid item xs={4}>
                                 <Typography variant="body2" color="text.secondary">
-                                  Vehicles
+                                  {t('common.vehicles')}
                                 </Typography>
                                 <Typography variant="h6">{occupancy.counts.vehicles}</Typography>
                               </Grid>
                               <Grid item xs={4}>
                                 <Typography variant="body2" color="text.secondary">
-                                  Visitors
+                                  {t('common.visitors')}
                                 </Typography>
                                 <Typography variant="h6">{occupancy.counts.visitors}</Typography>
                               </Grid>
                               <Grid item xs={4}>
                                 <Typography variant="body2" color="text.secondary">
-                                  Trucks
+                                  {t('common.trucks')}
                                 </Typography>
                                 <Typography variant="h6">{occupancy.counts.trucks}</Typography>
                               </Grid>
@@ -347,10 +386,10 @@ export const EmergencyManagementPage: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" align="center" gutterBottom>
-                No Active Emergency Mode
+                {t('emergencyManagement.noActiveEmergency')}
               </Typography>
               <Typography variant="body2" color="text.secondary" align="center">
-                Emergency mode can be activated to handle evacuations or lockdowns.
+                {t('emergencyManagement.canBeActivated')}
               </Typography>
             </CardContent>
           </Card>
@@ -358,17 +397,17 @@ export const EmergencyManagementPage: React.FC = () => {
 
         {/* Activate Emergency Mode Dialog */}
         <Dialog open={activateDialogOpen} onClose={() => setActivateDialogOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Activate Emergency Mode</DialogTitle>
+          <DialogTitle>{t('emergencyManagement.activateEmergency')}</DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 2 }}>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Job Site (Optional)</InputLabel>
+                <InputLabel>{t('emergencyManagement.jobSite')} ({t('common.optional')})</InputLabel>
                 <Select
                   value={formData.job_site_id}
                   onChange={(e) => setFormData({ ...formData, job_site_id: e.target.value })}
-                  label="Job Site (Optional)"
+                  label={`${t('emergencyManagement.jobSite')} (${t('common.optional')})`}
                 >
-                  <MenuItem value="">All Job Sites</MenuItem>
+                  <MenuItem value="">{t('emergencyManagement.allJobSites')}</MenuItem>
                   {jobSites.map((site) => (
                     <MenuItem key={site.id} value={site.id}>
                       {site.name}
@@ -378,61 +417,61 @@ export const EmergencyManagementPage: React.FC = () => {
               </FormControl>
               <TextField
                 fullWidth
-                label="Reason (Optional)"
+                label={`${t('emergencyManagement.reason')} (${t('common.optional')})`}
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                 multiline
                 rows={3}
-                helperText="Provide a reason for activating emergency mode"
+                helperText={t('emergencyManagement.reasonHelper')}
               />
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setActivateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setActivateDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleActivate} variant="contained" color="error">
-              Activate Emergency Mode
+              {t('emergencyManagement.activate')}
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* Deactivate Emergency Mode Dialog */}
         <Dialog open={deactivateDialogOpen} onClose={() => setDeactivateDialogOpen(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Deactivate Emergency Mode</DialogTitle>
+          <DialogTitle>{t('emergencyManagement.deactivateEmergency')}</DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 2 }}>
               <TextField
                 fullWidth
-                label="Summary Report (Optional)"
+                label={`${t('emergencyManagement.summaryReport')} (${t('common.optional')})`}
                 value={summaryReport}
                 onChange={(e) => setSummaryReport(e.target.value)}
                 multiline
                 rows={6}
-                helperText="Provide a summary of actions taken during the emergency"
+                helperText={t('emergencyManagement.summaryReportHelper')}
               />
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDeactivateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setDeactivateDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleDeactivate} variant="contained" color="success">
-              Deactivate Emergency Mode
+              {t('emergencyManagement.deactivate')}
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* Bulk Exit Dialog */}
         <Dialog open={bulkExitDialogOpen} onClose={() => setBulkExitDialogOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Process Bulk Exit</DialogTitle>
+          <DialogTitle>{t('emergencyManagement.processBulkExit')}</DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 2 }}>
               <Alert severity="warning" sx={{ mb: 2 }}>
-                This will exit all active entries at the selected job site. This action cannot be undone.
+                {t('emergencyManagement.bulkExitWarning')}
               </Alert>
               <FormControl fullWidth>
-                <InputLabel>Job Site</InputLabel>
+                <InputLabel>{t('emergencyManagement.jobSite')}</InputLabel>
                 <Select
                   value={selectedJobSiteForExit}
                   onChange={(e) => setSelectedJobSiteForExit(e.target.value)}
-                  label="Job Site"
+                  label={t('emergencyManagement.jobSite')}
                 >
                   {jobSites.map((site) => (
                     <MenuItem key={site.id} value={site.id}>
@@ -444,9 +483,9 @@ export const EmergencyManagementPage: React.FC = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setBulkExitDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setBulkExitDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleBulkExit} variant="contained" color="error" disabled={!selectedJobSiteForExit}>
-              Process Bulk Exit
+              {t('emergencyManagement.processBulkExit')}
             </Button>
           </DialogActions>
         </Dialog>

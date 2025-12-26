@@ -22,13 +22,17 @@ import {
   AppBar,
   Toolbar,
 } from '@mui/material';
-import { Edit, Delete, Add, CheckCircle, Cancel } from '@mui/icons-material';
+import { Edit, Delete, Add, CheckCircle, Cancel, Translate, Logout } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { jobSiteService, type JobSite, type CreateJobSiteData, type UpdateJobSiteData } from '../services/jobSiteService';
 import { JobSiteForm } from '../components/JobSiteForm';
 
 export const JobSiteManagementPage: React.FC = () => {
-  const { user } = useAuth();
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
+  const { user, logout } = useAuth();
   const [jobSites, setJobSites] = useState<JobSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +53,7 @@ export const JobSiteManagementPage: React.FC = () => {
       const data = await jobSiteService.getAllJobSites();
       setJobSites(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load job sites');
+      setError(err.message || t('jobSiteManagement.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -77,7 +81,7 @@ export const JobSiteManagementPage: React.FC = () => {
       setEditingJobSite(null);
       await loadJobSites();
     } catch (err: any) {
-      setError(err.message || 'Failed to save job site');
+      setError(err.message || t('jobSiteManagement.failedToSave'));
     }
   };
 
@@ -90,7 +94,7 @@ export const JobSiteManagementPage: React.FC = () => {
       setDeleteConfirm(null);
       await loadJobSites();
     } catch (err: any) {
-      setError(err.message || 'Failed to delete job site');
+      setError(err.message || t('jobSiteManagement.failedToDelete'));
     }
   };
 
@@ -104,7 +108,7 @@ export const JobSiteManagementPage: React.FC = () => {
       }
       await loadJobSites();
     } catch (err: any) {
-      setError(err.message || 'Failed to update job site status');
+      setError(err.message || t('jobSiteManagement.failedToUpdateStatus'));
     }
   };
 
@@ -121,18 +125,49 @@ export const JobSiteManagementPage: React.FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Job Site Management
+            {t('jobSiteManagement.title')}
           </Typography>
+          <Button
+            onClick={toggleLanguage}
+            size="small"
+            startIcon={<Translate fontSize="small" />}
+            variant="outlined"
+            sx={{
+              borderColor: '#ffd700',
+              color: '#ffd700',
+              mr: 1,
+              minWidth: 'auto',
+              px: 1.5,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#ffed4e',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              },
+            }}
+          >
+            {language === 'en' ? 'EN' : 'ES'}
+          </Button>
+          <Button
+            onClick={logout}
+            color="inherit"
+            startIcon={<Logout />}
+            sx={{ ml: 1 }}
+          >
+            {t('common.logout')}
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1">
-            Job Sites
+            {t('jobSiteManagement.jobSites')}
           </Typography>
           {isAdmin && (
             <Button variant="contained" startIcon={<Add />} onClick={handleCreate}>
-              Create Job Site
+              {t('jobSiteManagement.createJobSite')}
             </Button>
           )}
         </Box>
@@ -147,20 +182,20 @@ export const JobSiteManagementPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Address</TableCell>
-                <TableCell>Vehicle Capacity</TableCell>
-                <TableCell>Visitor Capacity</TableCell>
-                <TableCell>Truck Capacity</TableCell>
-                <TableCell>Status</TableCell>
-                {isAdmin && <TableCell align="right">Actions</TableCell>}
+                <TableCell>{t('jobSiteManagement.name')}</TableCell>
+                <TableCell>{t('jobSiteManagement.address')}</TableCell>
+                <TableCell>{t('jobSiteManagement.vehicleCapacity')}</TableCell>
+                <TableCell>{t('jobSiteManagement.visitorCapacity')}</TableCell>
+                <TableCell>{t('jobSiteManagement.truckCapacity')}</TableCell>
+                <TableCell>{t('jobSiteManagement.status')}</TableCell>
+                {isAdmin && <TableCell align="right">{t('jobSiteManagement.actions')}</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {jobSites.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={isAdmin ? 7 : 6} align="center">
-                    No job sites found
+                    {t('jobSiteManagement.noJobSitesFound')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -173,7 +208,7 @@ export const JobSiteManagementPage: React.FC = () => {
                     <TableCell>{jobSite.truck_capacity}</TableCell>
                     <TableCell>
                       <Chip
-                        label={jobSite.is_active ? 'Active' : 'Inactive'}
+                        label={jobSite.is_active ? t('jobSiteManagement.active') : t('jobSiteManagement.inactive')}
                         color={jobSite.is_active ? 'success' : 'default'}
                         size="small"
                       />
@@ -184,7 +219,7 @@ export const JobSiteManagementPage: React.FC = () => {
                           size="small"
                           onClick={() => handleToggleActive(jobSite)}
                           color={jobSite.is_active ? 'error' : 'success'}
-                          title={jobSite.is_active ? 'Deactivate' : 'Activate'}
+                          title={jobSite.is_active ? t('jobSiteManagement.deactivate') : t('jobSiteManagement.activate')}
                         >
                           {jobSite.is_active ? <Cancel /> : <CheckCircle />}
                         </IconButton>
@@ -192,7 +227,7 @@ export const JobSiteManagementPage: React.FC = () => {
                           size="small"
                           onClick={() => handleEdit(jobSite)}
                           color="primary"
-                          title="Edit"
+                          title={t('jobSiteManagement.edit')}
                         >
                           <Edit />
                         </IconButton>
@@ -200,7 +235,7 @@ export const JobSiteManagementPage: React.FC = () => {
                           size="small"
                           onClick={() => setDeleteConfirm(jobSite)}
                           color="error"
-                          title="Delete"
+                          title={t('jobSiteManagement.delete')}
                         >
                           <Delete />
                         </IconButton>
@@ -215,7 +250,7 @@ export const JobSiteManagementPage: React.FC = () => {
 
         {/* Create/Edit Dialog */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>{editingJobSite ? 'Edit Job Site' : 'Create Job Site'}</DialogTitle>
+          <DialogTitle>{editingJobSite ? t('jobSiteManagement.editJobSite') : t('jobSiteManagement.createJobSite')}</DialogTitle>
           <DialogContent>
             <JobSiteForm
               jobSite={editingJobSite}
@@ -230,17 +265,16 @@ export const JobSiteManagementPage: React.FC = () => {
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)}>
-          <DialogTitle>Delete Job Site</DialogTitle>
+          <DialogTitle>{t('jobSiteManagement.deleteJobSite')}</DialogTitle>
           <DialogContent>
             <Typography>
-              Are you sure you want to delete "{deleteConfirm?.name}"? This will deactivate the job
-              site and preserve historical data.
+              {t('jobSiteManagement.deleteConfirm', { name: deleteConfirm?.name })}
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+            <Button onClick={() => setDeleteConfirm(null)}>{t('common.cancel')}</Button>
             <Button onClick={handleDelete} color="error" variant="contained">
-              Delete
+              {t('jobSiteManagement.delete')}
             </Button>
           </DialogActions>
         </Dialog>
