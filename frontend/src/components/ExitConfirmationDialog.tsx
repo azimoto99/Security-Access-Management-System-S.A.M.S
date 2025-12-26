@@ -169,11 +169,11 @@ export const ExitConfirmationDialog: React.FC<ExitConfirmationDialogProps> = ({
             <CircularProgress size={24} />
           </Box>
         ) : exitFieldConfigs.length > 0 ? (
-          <MuiBox sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2 }}>
             {exitFieldConfigs
               .sort((a, b) => a.display_order - b.display_order)
               .map((field) => (
-                <MuiBox key={field.id} sx={{ mb: 2 }}>
+                <Box key={field.id} sx={{ mb: 2 }}>
                   <DynamicFormField
                     field={field}
                     value={exitData[field.field_key]}
@@ -184,9 +184,9 @@ export const ExitConfirmationDialog: React.FC<ExitConfirmationDialogProps> = ({
                     size="medium"
                     fullWidth
                   />
-                </MuiBox>
+                </Box>
               ))}
-          </MuiBox>
+          </Box>
         ) : (
           // Fallback: show exit_trailer_number for trucks if no configs
           entry.entry_type === 'truck' && (
