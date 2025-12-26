@@ -62,15 +62,18 @@ const reorderCustomFieldsSchema = Joi.object({
   field_ids: Joi.array().items(Joi.string().uuid()).required(),
 });
 
-// All routes require authentication and admin role
+// All routes require authentication
 router.use(authenticateToken);
-router.use(authorizeRole('admin'));
 
+// GET endpoints are accessible to all authenticated users (admin, guard, client)
 // Get custom fields for a job site (optionally filtered by entry_type)
 router.get('/', customFieldController.getCustomFields);
 
 // Get a single custom field by ID
 router.get('/:id', customFieldController.getCustomFieldById);
+
+// POST/PUT/DELETE endpoints require admin role
+router.use(authorizeRole('admin'));
 
 // Create a new custom field
 router.post('/', validate(createCustomFieldSchema), customFieldController.createCustomField);

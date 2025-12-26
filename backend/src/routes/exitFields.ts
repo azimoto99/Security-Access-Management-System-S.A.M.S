@@ -56,12 +56,15 @@ const updateExitFieldSchema = Joi.object({
   help_text: Joi.string().allow('').optional(),
 }).unknown(false);
 
-// All routes require authentication and admin role
+// All routes require authentication
 router.use(authenticateToken);
-router.use(authorizeRole('admin'));
 
+// GET endpoints are accessible to all authenticated users (admin, guard, client)
 // Get exit fields for a job site (optionally filtered by entry_type)
 router.get('/', exitFieldController.getExitFields);
+
+// POST/PUT/DELETE endpoints require admin role
+router.use(authorizeRole('admin'));
 
 // Create a new exit field
 router.post('/', validate(createExitFieldSchema), exitFieldController.createExitField);
