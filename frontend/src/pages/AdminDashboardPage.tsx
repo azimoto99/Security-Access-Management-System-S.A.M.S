@@ -44,7 +44,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { adminDashboardService } from '../services/adminDashboardService';
-import { userService } from '../services/userService';
 import { authService } from '../services/authService';
 import { AdminMetricCard } from '../components/AdminMetricCard';
 import { SiteStatusGrid } from '../components/SiteStatusGrid';

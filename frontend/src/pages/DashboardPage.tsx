@@ -64,7 +64,6 @@ import { QuickEntryForm } from '../components/QuickEntryForm';
 import { OnSiteVehiclesList } from '../components/OnSiteVehiclesList';
 import { ManualExitForm } from '../components/ManualExitForm';
 import { entryService, type Entry } from '../services/entryService';
-import { userService } from '../services/userService';
 import { authService } from '../services/authService';
 import { AdminDashboardPage } from './AdminDashboardPage';
 
