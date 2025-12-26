@@ -51,6 +51,7 @@ import { RecentActivityFeed } from '../components/RecentActivityFeed';
 import { AnalyticsCharts } from '../components/AnalyticsCharts';
 import { SecurityAlertsPanel } from '../components/SecurityAlertsPanel';
 import { QuickActionsPanel } from '../components/QuickActionsPanel';
+import { EntryDetailDialog } from '../components/EntryDetailDialog';
 
 export const AdminDashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -69,6 +70,8 @@ export const AdminDashboardPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [entryDetailDialogOpen, setEntryDetailDialogOpen] = useState(false);
 
   // Update time every second
   useEffect(() => {
@@ -421,7 +424,10 @@ export const AdminDashboardPage: React.FC = () => {
               <RecentActivityFeed
                 activities={recentActivity || []}
                 loading={activityLoading}
-                onActivityClick={(entryId) => navigate(`/search?entry_id=${entryId}`)}
+                onActivityClick={(entryId) => {
+                  setSelectedEntryId(entryId);
+                  setEntryDetailDialogOpen(true);
+                }}
                 initialHasMore={recentActivityHasMore}
               />
             </Box>
@@ -450,6 +456,16 @@ export const AdminDashboardPage: React.FC = () => {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Entry Detail Dialog */}
+      <EntryDetailDialog
+        open={entryDetailDialogOpen}
+        entryId={selectedEntryId}
+        onClose={() => {
+          setEntryDetailDialogOpen(false);
+          setSelectedEntryId(null);
+        }}
+      />
 
       {/* Change Password Dialog */}
       <Dialog open={changePasswordDialogOpen} onClose={() => setChangePasswordDialogOpen(false)} maxWidth="sm" fullWidth>
