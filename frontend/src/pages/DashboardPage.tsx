@@ -1163,30 +1163,3 @@ export const DashboardPage: React.FC = () => {
     </Box>
   );
 };
-
-2025-12-25T19:33:45.538509787Z ==> Downloading cache...
-2025-12-25T19:33:45.577571959Z ==> Cloning from https://github.com/azimoto99/Security-Access-Management-System-S.A.M.S
-2025-12-25T19:33:45.924852089Z ==> Checking out commit da4570147bf57e3a8fb0d9e3f5c569b55d39a2f3 in branch main
-2025-12-25T19:33:59.623471914Z ==> Downloaded 378MB in 4s. Extraction took 10s.
-2025-12-25T19:34:11.972313357Z ==> Using Node.js version 22.16.0 (default)
-2025-12-25T19:34:11.997532094Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
-2025-12-25T19:34:12.119336575Z ==> Running build command 'npm install; npm run build'...
-2025-12-25T19:34:13.012451688Z 
-2025-12-25T19:34:13.012477199Z up to date, audited 459 packages in 827ms
-2025-12-25T19:34:13.01248844Z 
-2025-12-25T19:34:13.01249275Z 102 packages are looking for funding
-2025-12-25T19:34:13.012496761Z   run `npm fund` for details
-2025-12-25T19:34:13.013412067Z 
-2025-12-25T19:34:13.013427378Z found 0 vulnerabilities
-2025-12-25T19:34:13.165614174Z 
-2025-12-25T19:34:13.165635645Z > frontend@0.0.0 build
-2025-12-25T19:34:13.165639196Z > tsc -b && vite build
-2025-12-25T19:34:13.165641376Z 
-2025-12-25T19:34:18.96427646Z src/pages/EntryPage.tsx(128,14): error TS2304: Cannot find name 'Button'.
-2025-12-25T19:34:18.964389456Z src/pages/EntryPage.tsx(150,15): error TS2304: Cannot find name 'Button'.
-2025-12-25T19:34:18.964397577Z src/pages/EntryPage.tsx(173,14): error TS2304: Cannot find name 'Button'.
-2025-12-25T19:34:18.964406268Z src/pages/EntryPage.tsx(195,15): error TS2304: Cannot find name 'Button'.
-2025-12-25T19:34:18.964409168Z src/pages/EntryPage.tsx(212,12): error TS2304: Cannot find name 'Button'.
-2025-12-25T19:34:18.964414938Z src/pages/EntryPage.tsx(234,13): error TS2304: Cannot find name 'Button'.
-2025-12-25T19:34:19.266251164Z ==> Build failed 😞
-2025-12-25T19:34:19.266265805Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
