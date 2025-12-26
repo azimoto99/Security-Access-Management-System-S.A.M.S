@@ -9,6 +9,7 @@ import {
   SearchEntriesRequest,
 } from '../types/entry';
 import { AppError } from '../middleware/errorHandler';
+import type { EntryFieldConfig } from '../types/customField';
 
 // Re-export types for convenience
 export type {
@@ -25,7 +26,7 @@ export type {
 /**
  * Validate vehicle entry data
  */
-export const validateVehicleEntry = (data: any): VehicleEntryData => {
+export const validateVehicleEntry = (data: any, fieldConfigs?: EntryFieldConfig[]): VehicleEntryData & Record<string, any> => {
   if (!data.license_plate || typeof data.license_plate !== 'string' || data.license_plate.trim().length === 0) {
     throw new Error('License plate is required');
   }
@@ -46,7 +47,7 @@ export const validateVehicleEntry = (data: any): VehicleEntryData => {
     throw new Error('Expected duration must be a non-negative number');
   }
 
-  return {
+  const validatedData: any = {
     license_plate: data.license_plate.trim().toUpperCase(),
     vehicle_type: data.vehicle_type.trim(),
     driver_name: data.driver_name.trim(),
@@ -54,12 +55,47 @@ export const validateVehicleEntry = (data: any): VehicleEntryData => {
     purpose: data.purpose.trim(),
     expected_duration: data.expected_duration,
   };
+
+  // Add and validate custom fields
+  if (fieldConfigs) {
+    fieldConfigs.forEach((field) => {
+      if (field.is_active) {
+        const value = data[field.field_key];
+        
+        // Validate required fields
+        if (field.is_required) {
+          if (value === undefined || value === null || value === '') {
+            throw new Error(`${field.field_label} is required`);
+          }
+        }
+
+        // Add field value if present
+        if (value !== undefined && value !== null) {
+          if (field.field_type === 'number') {
+            const numValue = Number(value);
+            if (isNaN(numValue)) {
+              throw new Error(`${field.field_label} must be a number`);
+            }
+            validatedData[field.field_key] = numValue;
+          } else if (field.field_type === 'boolean') {
+            validatedData[field.field_key] = Boolean(value);
+          } else if (typeof value === 'string') {
+            validatedData[field.field_key] = value.trim();
+          } else {
+            validatedData[field.field_key] = value;
+          }
+        }
+      }
+    });
+  }
+
+  return validatedData;
 };
 
 /**
  * Validate visitor entry data
  */
-export const validateVisitorEntry = (data: any): VisitorEntryData => {
+export const validateVisitorEntry = (data: any, fieldConfigs?: EntryFieldConfig[]): VisitorEntryData & Record<string, any> => {
   if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
     throw new Error('Name is required');
   }
@@ -76,7 +112,7 @@ export const validateVisitorEntry = (data: any): VisitorEntryData => {
     throw new Error('Expected duration must be a non-negative number');
   }
 
-  return {
+  const validatedData: any = {
     name: data.name.trim(),
     company: data.company?.trim(),
     contact_phone: data.contact_phone?.trim(),
@@ -84,12 +120,47 @@ export const validateVisitorEntry = (data: any): VisitorEntryData => {
     host_contact: data.host_contact?.trim(),
     expected_duration: data.expected_duration,
   };
+
+  // Add and validate custom fields
+  if (fieldConfigs) {
+    fieldConfigs.forEach((field) => {
+      if (field.is_active) {
+        const value = data[field.field_key];
+        
+        // Validate required fields
+        if (field.is_required) {
+          if (value === undefined || value === null || value === '') {
+            throw new Error(`${field.field_label} is required`);
+          }
+        }
+
+        // Add field value if present
+        if (value !== undefined && value !== null) {
+          if (field.field_type === 'number') {
+            const numValue = Number(value);
+            if (isNaN(numValue)) {
+              throw new Error(`${field.field_label} must be a number`);
+            }
+            validatedData[field.field_key] = numValue;
+          } else if (field.field_type === 'boolean') {
+            validatedData[field.field_key] = Boolean(value);
+          } else if (typeof value === 'string') {
+            validatedData[field.field_key] = value.trim();
+          } else {
+            validatedData[field.field_key] = value;
+          }
+        }
+      }
+    });
+  }
+
+  return validatedData;
 };
 
 /**
  * Validate truck entry data
  */
-export const validateTruckEntry = (data: any): TruckEntryData => {
+export const validateTruckEntry = (data: any, fieldConfigs?: EntryFieldConfig[]): TruckEntryData & Record<string, any> => {
   if (!data.license_plate || typeof data.license_plate !== 'string' || data.license_plate.trim().length === 0) {
     throw new Error('License plate is required');
   }
@@ -110,7 +181,8 @@ export const validateTruckEntry = (data: any): TruckEntryData => {
     throw new Error('Expected duration must be a non-negative number');
   }
 
-  return {
+  // Validate custom fields if field configs are provided
+  const validatedData: any = {
     license_plate: data.license_plate.trim().toUpperCase(),
     truck_number: data.truck_number?.trim(),
     trailer_number: data.trailer_number?.trim(),
@@ -120,19 +192,54 @@ export const validateTruckEntry = (data: any): TruckEntryData => {
     delivery_pickup: data.delivery_pickup,
     expected_duration: data.expected_duration,
   };
+
+  // Add and validate custom fields
+  if (fieldConfigs) {
+    fieldConfigs.forEach((field) => {
+      if (field.is_active) {
+        const value = data[field.field_key];
+        
+        // Validate required fields
+        if (field.is_required) {
+          if (value === undefined || value === null || value === '') {
+            throw new Error(`${field.field_label} is required`);
+          }
+        }
+
+        // Add field value if present
+        if (value !== undefined && value !== null) {
+          if (field.field_type === 'number') {
+            const numValue = Number(value);
+            if (isNaN(numValue)) {
+              throw new Error(`${field.field_label} must be a number`);
+            }
+            validatedData[field.field_key] = numValue;
+          } else if (field.field_type === 'boolean') {
+            validatedData[field.field_key] = Boolean(value);
+          } else if (typeof value === 'string') {
+            validatedData[field.field_key] = value.trim();
+          } else {
+            validatedData[field.field_key] = value;
+          }
+        }
+      }
+    });
+  }
+
+  return validatedData;
 };
 
 /**
  * Validate entry data based on entry type
  */
-export const validateEntryData = (entryType: EntryType, data: any): VehicleEntryData | VisitorEntryData | TruckEntryData => {
+export const validateEntryData = (entryType: EntryType, data: any, fieldConfigs?: EntryFieldConfig[]): (VehicleEntryData | VisitorEntryData | TruckEntryData) & Record<string, any> => {
   switch (entryType) {
     case 'vehicle':
-      return validateVehicleEntry(data);
+      return validateVehicleEntry(data, fieldConfigs);
     case 'visitor':
-      return validateVisitorEntry(data);
+      return validateVisitorEntry(data, fieldConfigs);
     case 'truck':
-      return validateTruckEntry(data);
+      return validateTruckEntry(data, fieldConfigs);
     default:
       throw new Error(`Invalid entry type: ${entryType}`);
   }

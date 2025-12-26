@@ -89,10 +89,27 @@ export const createEntry = async (
       }
     }
 
+    // Fetch field configurations for validation
+    let fieldConfigs: any[] = [];
+    try {
+      const fieldConfigResult = await pool.query(
+        'SELECT * FROM entry_field_configs WHERE job_site_id = $1 AND entry_type = $2 AND is_active = true ORDER BY display_order',
+        [job_site_id, entry_type]
+      );
+      fieldConfigs = fieldConfigResult.rows.map((row) => ({
+        ...row,
+        options: typeof row.options === 'string' ? JSON.parse(row.options) : row.options || [],
+        validation: typeof row.validation === 'string' ? JSON.parse(row.validation) : row.validation || {},
+      }));
+    } catch (configError) {
+      // Log but don't fail - validation will work without field configs
+      logger.warn('Failed to fetch field configs for validation:', configError);
+    }
+
     // Validate entry data
     let validatedData;
     try {
-      validatedData = validateEntryData(entry_type as EntryType, entry_data);
+      validatedData = validateEntryData(entry_type as EntryType, entry_data, fieldConfigs);
     } catch (validationError: any) {
       const error: AppError = new Error(validationError.message);
       error.statusCode = 400;
