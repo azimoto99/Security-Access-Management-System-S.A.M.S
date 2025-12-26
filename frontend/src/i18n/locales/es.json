@@ -29,7 +29,8 @@
     "hoursAgo": "hace {{count}} hora",
     "hoursAgo_plural": "hace {{count}} horas",
     "daysAgo": "hace {{count}} día",
-    "daysAgo_plural": "hace {{count}} días"
+    "daysAgo_plural": "hace {{count}} días",
+    "admin": "Administrador"
   },
   "dashboard": {
     "title": "Panel de control",
