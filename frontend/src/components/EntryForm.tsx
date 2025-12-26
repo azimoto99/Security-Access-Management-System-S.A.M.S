@@ -44,6 +44,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
   const hasAutofilledRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const photoUploadRef = useRef<PhotoUploadRef | null>(null);
+  const lastAutofilledSearchRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (initialData) {
@@ -86,6 +87,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
       }
     }
     hasAutofilledRef.current = false;
+    lastAutofilledSearchRef.current = null;
   }, [entryType, initialData]);
 
   // Autofill from previous entries when license plate or truck number is entered
@@ -98,12 +100,41 @@ export const EntryForm: React.FC<EntryFormProps> = ({
     const licensePlate = formData.license_plate?.trim().toUpperCase();
     const truckNumber = entryType === 'truck' ? formData.truck_number?.trim() : null;
     
+    // Create a search key from the current input
+    const currentSearchKey = entryType === 'truck' 
+      ? `${licensePlate || ''}|${truckNumber || ''}`
+      : licensePlate || '';
+    
     // Don't autofill if both license plate and truck number are empty or too short
     const hasSearchValue = 
       (licensePlate && licensePlate.length >= 2) || 
       (truckNumber && truckNumber.length >= 2);
     
+    // If user changed the search value after autofill, clear autofilled fields
+    if (lastAutofilledSearchRef.current && currentSearchKey !== lastAutofilledSearchRef.current && hasSearchValue) {
+      setFormData((prev) => {
+        const updated = { ...prev };
+        if (entryType === 'vehicle') {
+          // Clear autofilled fields for vehicles
+          if (hasAutofilledRef.current) {
+            updated.driver_name = '';
+            updated.company = '';
+            updated.vehicle_type = '';
+          }
+        } else if (entryType === 'truck') {
+          // Clear autofilled fields for trucks (but not license_plate or truck_number as those are search fields)
+          if (hasAutofilledRef.current) {
+            updated.driver_name = '';
+            updated.company = '';
+          }
+        }
+        hasAutofilledRef.current = false;
+        return updated;
+      });
+    }
+    
     if (!hasSearchValue) {
+      lastAutofilledSearchRef.current = null;
       return;
     }
 
@@ -179,6 +210,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 
             if (hasChanges) {
               hasAutofilledRef.current = true;
+              lastAutofilledSearchRef.current = currentSearchKey;
             }
 
             return updated;
@@ -188,7 +220,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
         // Silently fail - autofill is a convenience feature
         console.log('Autofill search failed:', error);
       }
-    }, 4000); // 4 second delay for autocomplete
+    }, 2000); // 2 second delay for autocomplete
 
     return () => {
       if (autofillTimeoutRef.current) {

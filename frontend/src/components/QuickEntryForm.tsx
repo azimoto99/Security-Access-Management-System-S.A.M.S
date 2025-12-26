@@ -58,6 +58,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
   const autofillTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAutofilledRef = useRef(false);
   const isSubmittingRef = useRef(false);
+  const lastAutofilledSearchRef = useRef<string | null>(null);
 
   // Initialize form data when entry type changes
   useEffect(() => {
@@ -97,6 +98,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
     }
     setErrors({});
     hasAutofilledRef.current = false;
+    lastAutofilledSearchRef.current = null;
     setTimeout(() => identifierInputRef.current?.focus(), 100);
   }, [entryType]);
 
@@ -109,11 +111,40 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
     const licensePlate = formData.license_plate?.trim().toUpperCase();
     const truckNumber = entryType === 'truck' ? formData.truck_number?.trim() : null;
     
+    // Create a search key from the current input
+    const currentSearchKey = entryType === 'truck' 
+      ? `${licensePlate || ''}|${truckNumber || ''}`
+      : licensePlate || '';
+    
     const hasSearchValue = 
       (licensePlate && licensePlate.length >= 2) || 
       (truckNumber && truckNumber.length >= 2);
     
+    // If user changed the search value after autofill, clear autofilled fields
+    if (lastAutofilledSearchRef.current && currentSearchKey !== lastAutofilledSearchRef.current && hasSearchValue) {
+      setFormData((prev) => {
+        const updated = { ...prev };
+        if (entryType === 'vehicle') {
+          // Clear autofilled fields for vehicles
+          if (hasAutofilledRef.current) {
+            updated.driver_name = '';
+            updated.company = '';
+            updated.vehicle_type = '';
+          }
+        } else if (entryType === 'truck') {
+          // Clear autofilled fields for trucks (but not license_plate or truck_number as those are search fields)
+          if (hasAutofilledRef.current) {
+            updated.driver_name = '';
+            updated.company = '';
+          }
+        }
+        hasAutofilledRef.current = false;
+        return updated;
+      });
+    }
+    
     if (!hasSearchValue) {
+      lastAutofilledSearchRef.current = null;
       return;
     }
 
@@ -180,6 +211,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
 
             if (hasChanges) {
               hasAutofilledRef.current = true;
+              lastAutofilledSearchRef.current = currentSearchKey;
             }
 
             return updated;
@@ -188,7 +220,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
       } catch (error) {
         console.log('Autofill search failed:', error);
       }
-    }, 4000);
+    }, 2000); // 2 second delay for autocomplete
 
     return () => {
       if (autofillTimeoutRef.current) {
