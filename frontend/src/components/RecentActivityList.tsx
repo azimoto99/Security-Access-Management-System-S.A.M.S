@@ -261,7 +261,8 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
   if (isMobile) {
     // Mobile: Card layout
     return (
-      <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+      <>
+        <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
         <CardContent sx={{ p: 2 }}>
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '0.875rem' }}>
             {t('recentActivity.recentActivity')}
