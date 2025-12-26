@@ -181,15 +181,80 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
     }
   };
 
+  // Find the entry with expanded image
+  const expandedEntry = expandedImageIndex
+    ? allEntries.find((e) => e.id === expandedImageIndex.entryId)
+    : null;
+
+  // Image Expansion Modal Component
+  const ImageExpansionModal = () => (
+    <Modal
+      open={!!expandedImageIndex && !!expandedEntry}
+      onClose={() => setExpandedImageIndex(null)}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+      }}
+    >
+      <Box
+        sx={{
+          position: 'relative',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          outline: 'none',
+        }}
+        onClick={() => setExpandedImageIndex(null)}
+      >
+        {expandedEntry && expandedImageIndex && (
+          <>
+            <IconButton
+              onClick={() => setExpandedImageIndex(null)}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                color: '#ffffff',
+                zIndex: 1,
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                },
+              }}
+            >
+              <Close />
+            </IconButton>
+            <Box
+              component="img"
+              src={photoService.getPhotoUrl(expandedEntry.photoUrl!, true)}
+              alt="Expanded photo"
+              sx={{
+                maxWidth: '100%',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </>
+        )}
+      </Box>
+    </Modal>
+  );
+
   if (allEntries.length === 0) {
     return (
-      <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
-        <CardContent sx={{ p: 3, textAlign: 'center' }}>
-          <Typography variant="body1" sx={{ color: '#b0b0b0' }}>
-            {t('recentActivity.noRecentActivity')}
-          </Typography>
-        </CardContent>
-      </Card>
+      <>
+        <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+          <CardContent sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body1" sx={{ color: '#b0b0b0' }}>
+              {t('recentActivity.noRecentActivity')}
+            </Typography>
+          </CardContent>
+        </Card>
+        <ImageExpansionModal />
+      </>
     );
   }
 
@@ -415,16 +480,14 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
           )}
         </CardContent>
       </Card>
+      <ImageExpansionModal />
+    </>
     );
   }
 
-  // Find the entry with expanded image
-  const expandedEntry = expandedImageIndex
-    ? allEntries.find((e) => e.id === expandedImageIndex.entryId)
-    : null;
-
   // Desktop: Table layout
   return (
+    <>
       <Card sx={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
       <CardContent sx={{ p: 0 }}>
         <Box sx={{ p: 2, borderBottom: '1px solid #2a2a2a' }}>
@@ -620,60 +683,8 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
         )}
       </CardContent>
     </Card>
-    {/* Image Expansion Modal */}
-    <Modal
-      open={!!expandedImageIndex && !!expandedEntry}
-      onClose={() => setExpandedImageIndex(null)}
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-      }}
-    >
-      <Box
-        sx={{
-          position: 'relative',
-          maxWidth: '90vw',
-          maxHeight: '90vh',
-          outline: 'none',
-        }}
-        onClick={() => setExpandedImageIndex(null)}
-      >
-        {expandedEntry && expandedImageIndex && (
-          <>
-            <IconButton
-              onClick={() => setExpandedImageIndex(null)}
-              sx={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                color: '#ffffff',
-                zIndex: 1,
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                },
-              }}
-            >
-              <Close />
-            </IconButton>
-            <Box
-              component="img"
-              src={photoService.getPhotoUrl(expandedEntry.photoUrl!, true)}
-              alt="Expanded photo"
-              sx={{
-                maxWidth: '100%',
-                maxHeight: '90vh',
-                objectFit: 'contain',
-                display: 'block',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </>
-        )}
-      </Box>
-    </Modal>
+    <ImageExpansionModal />
+    </>
   );
 };
 
