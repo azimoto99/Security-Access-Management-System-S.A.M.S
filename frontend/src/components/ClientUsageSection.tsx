@@ -121,7 +121,15 @@ export const ClientUsageSection: React.FC<ClientUsageSectionProps> = ({
             ))}
           </Box>
         ) : (
-          <TableContainer>
+          <TableContainer
+            sx={{
+              overflowX: 'auto',
+              width: '100%',
+              '& .MuiTable-root': {
+                minWidth: 600,
+              },
+            }}
+          >
             <Table size="small">
               <TableHead>
                 <TableRow>

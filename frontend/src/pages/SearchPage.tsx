@@ -249,8 +249,18 @@ export const SearchPage: React.FC = () => {
           </Button>
         </Toolbar>
       </AppBar>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Paper sx={{ p: 3, mb: 3 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          mt: { xs: 2, sm: 4 }, 
+          mb: { xs: 2, sm: 4 },
+          px: { xs: 1, sm: 2, md: 3 },
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        }}
+      >
+        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
           <Typography variant="h5" gutterBottom>
             {t('search.title')}
           </Typography>
@@ -261,7 +271,7 @@ export const SearchPage: React.FC = () => {
             </Alert>
           )}
 
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1, sm: 2 }}>
             <Grid item xs={12}>
               <TextField
                 fullWidth

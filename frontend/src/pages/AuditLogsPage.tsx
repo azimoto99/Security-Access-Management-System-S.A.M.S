@@ -225,8 +225,18 @@ export const AuditLogsPage: React.FC = () => {
           </Button>
         </Toolbar>
       </AppBar>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Paper sx={{ p: 3, mb: 3 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          mt: { xs: 2, sm: 4 }, 
+          mb: { xs: 2, sm: 4 },
+          px: { xs: 1, sm: 2, md: 3 },
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        }}
+      >
+        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h5">{t('auditLogs.title')}</Typography>
             <Button
@@ -308,7 +318,7 @@ export const AuditLogsPage: React.FC = () => {
           <Alert severity="info">{t('auditLogs.noLogsFound')}</Alert>
         ) : (
           <>
-            <Paper sx={{ p: 2, mb: 2 }}>
+            <Paper sx={{ p: { xs: 1.5, sm: 2 }, mb: 2 }}>
               <Typography variant="body2" color="text.secondary">
                 {t('auditLogs.foundLogs', { count: total })}
               </Typography>

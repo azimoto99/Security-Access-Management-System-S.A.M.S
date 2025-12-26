@@ -151,7 +151,16 @@ export const EntryPage: React.FC = () => {
             </Button>
           </Toolbar>
         </AppBar>
-        <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Container 
+          maxWidth="md" 
+          sx={{ 
+            mt: { xs: 2, sm: 4 },
+            px: { xs: 1, sm: 2, md: 3 },
+            width: '100%',
+            maxWidth: '100%',
+            overflowX: 'hidden'
+          }}
+        >
           <Alert severity="warning">{t('entry.noActiveJobSites')}</Alert>
         </Container>
       </Box>
@@ -196,7 +205,16 @@ export const EntryPage: React.FC = () => {
             </Button>
           </Toolbar>
         </AppBar>
-        <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Container 
+          maxWidth="md" 
+          sx={{ 
+            mt: { xs: 2, sm: 4 },
+            px: { xs: 1, sm: 2, md: 3 },
+            width: '100%',
+            maxWidth: '100%',
+            overflowX: 'hidden'
+          }}
+        >
           <Alert severity="warning">{t('entry.noAccessToJobSites')}</Alert>
         </Container>
       </Box>
@@ -235,7 +253,17 @@ export const EntryPage: React.FC = () => {
           </Button>
         </Toolbar>
       </AppBar>
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Container 
+        maxWidth="md" 
+        sx={{ 
+          mt: { xs: 2, sm: 4 }, 
+          mb: { xs: 2, sm: 4 },
+          px: { xs: 1, sm: 2, md: 3 },
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        }}
+      >
         <Paper sx={{ p: 3 }}>
           <Typography variant="h5" gutterBottom>
             {t('entry.logEntry')}

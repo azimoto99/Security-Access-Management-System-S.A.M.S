@@ -55,10 +55,20 @@ export const LoginPage: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#0a0a0a',
-        padding: 2,
+        padding: { xs: 1, sm: 2 },
+        width: '100%',
+        overflowX: 'hidden',
       }}
     >
-      <Container component="main" maxWidth="xs">
+      <Container 
+        component="main" 
+        maxWidth="xs"
+        sx={{
+          width: '100%',
+          maxWidth: '100%',
+          px: { xs: 1, sm: 2 },
+        }}
+      >
         <Paper
           elevation={0}
           sx={{

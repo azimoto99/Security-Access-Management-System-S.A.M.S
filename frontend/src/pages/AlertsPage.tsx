@@ -255,9 +255,19 @@ export const AlertsPage: React.FC = () => {
           </Button>
         </Toolbar>
       </AppBar>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          mt: { xs: 2, sm: 4 }, 
+          mb: { xs: 2, sm: 4 },
+          px: { xs: 1, sm: 2, md: 3 },
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        }}
+      >
         {/* Summary Cards */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={4}>
             <Card>
               <CardContent>
@@ -295,8 +305,8 @@ export const AlertsPage: React.FC = () => {
         </Grid>
 
         {/* Filters */}
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Grid container spacing={2}>
+        <Paper sx={{ p: { xs: 1.5, sm: 2 }, mb: 3 }}>
+          <Grid container spacing={{ xs: 1, sm: 2 }}>
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
                 <InputLabel>{t('alertsPage.type')}</InputLabel>

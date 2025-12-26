@@ -26,16 +26,25 @@ a:hover {
   color: #ffed4e;
 }
 
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   background-color: #0a0a0a;
   color: #ffffff;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 #root {
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 h1 {
@@ -94,4 +103,26 @@ button:focus-visible {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #3a3a3a;
+}
+
+/* Prevent horizontal overflow */
+* {
+  max-width: 100%;
+}
+
+img, video, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Ensure tables are responsive */
+table {
+  width: 100%;
+  table-layout: auto;
+}
+
+@media (max-width: 600px) {
+  table {
+    font-size: 0.875rem;
+  }
 }

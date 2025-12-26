@@ -260,8 +260,18 @@ export const ReportsPage: React.FC = () => {
           </Button>
         </Toolbar>
       </AppBar>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Paper sx={{ p: 3, mb: 3 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          mt: { xs: 2, sm: 4 }, 
+          mb: { xs: 2, sm: 4 },
+          px: { xs: 1, sm: 2, md: 3 },
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        }}
+      >
+        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
           <Typography variant="h5" gutterBottom>
             {t('reports.generateReport')}
           </Typography>
@@ -272,7 +282,7 @@ export const ReportsPage: React.FC = () => {
             </Alert>
           )}
 
-          <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mb: 2 }}>
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
                 <InputLabel>{t('reports.jobSite')}</InputLabel>
@@ -414,7 +424,7 @@ export const ReportsPage: React.FC = () => {
         ) : report ? (
           <>
             {/* Summary Cards */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid container spacing={{ xs: 1, sm: 2, md: 3 }} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6} md={3}>
                 <Card>
                   <CardContent>
@@ -458,9 +468,9 @@ export const ReportsPage: React.FC = () => {
             </Grid>
 
             {/* Charts */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid container spacing={{ xs: 1, sm: 2, md: 3 }} sx={{ mb: 3 }}>
               <Grid item xs={12} md={6}>
-                <Paper sx={{ p: 3 }}>
+                <Paper sx={{ p: { xs: 2, sm: 3 } }}>
                   <Typography variant="h6" gutterBottom>
                     {t('reports.entriesByType')}
                   </Typography>
@@ -482,7 +492,7 @@ export const ReportsPage: React.FC = () => {
               </Grid>
 
               <Grid item xs={12} md={6}>
-                <Paper sx={{ p: 3 }}>
+                <Paper sx={{ p: { xs: 2, sm: 3 } }}>
                   <Typography variant="h6" gutterBottom>
                     {t('reports.peakHours')}
                   </Typography>
@@ -501,7 +511,7 @@ export const ReportsPage: React.FC = () => {
 
               {report.daily_breakdown.length > 0 && (
                 <Grid item xs={12}>
-                  <Paper sx={{ p: 3 }}>
+                  <Paper sx={{ p: { xs: 2, sm: 3 } }}>
                     <Typography variant="h6" gutterBottom>
                       {t('reports.dailyBreakdown')}
                     </Typography>

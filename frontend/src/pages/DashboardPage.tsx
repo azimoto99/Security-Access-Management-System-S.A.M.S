@@ -406,14 +406,14 @@ export const DashboardPage: React.FC = () => {
     return (
       <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
         <AppBar position="static" elevation={0}>
-          <Toolbar sx={{ minHeight: '56px !important', py: 1 }}>
+          <Toolbar sx={{ minHeight: '56px !important', py: 1, px: { xs: 1, sm: 2 }, flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: { xs: 1, sm: 0 } }}>
             <Box
               component="img"
               src="/logo.png"
               alt="Shield Logo"
-              sx={{ height: 32, mr: 2 }}
+              sx={{ height: { xs: 24, sm: 32 }, mr: { xs: 1, sm: 2 }, flexShrink: 0 }}
             />
-            <Typography variant="h6" sx={{ flexGrow: 1, fontSize: '1rem', fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ flexGrow: 1, fontSize: { xs: '0.875rem', sm: '1rem' }, fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>
               {t('dashboard.securityAccessManagement')}
             </Typography>
             <Chip
@@ -424,10 +424,11 @@ export const DashboardPage: React.FC = () => {
               sx={{
                 backgroundColor: '#2a2a2a',
                 color: '#ffffff',
-                mr: 1,
+                mr: { xs: 0.5, sm: 1 },
                 height: '28px',
-                fontSize: '0.75rem',
+                fontSize: { xs: '0.7rem', sm: '0.75rem' },
                 cursor: 'pointer',
+                flexShrink: 0,
                 '&:hover': {
                   backgroundColor: '#3a3a3a',
                 },
@@ -459,13 +460,14 @@ export const DashboardPage: React.FC = () => {
               sx={{
                 borderColor: '#ffd700',
                 color: '#ffd700',
-                mr: 1,
+                mr: { xs: 0.5, sm: 1 },
                 minWidth: 'auto',
-                px: 1.5,
+                px: { xs: 1, sm: 1.5 },
                 py: 0.5,
-                fontSize: '0.75rem',
+                fontSize: { xs: '0.7rem', sm: '0.75rem' },
                 fontWeight: 600,
                 textTransform: 'none',
+                flexShrink: 0,
                 '&:hover': {
                   borderColor: '#ffed4e',
                   backgroundColor: 'rgba(255, 215, 0, 0.1)',
@@ -486,10 +488,22 @@ export const DashboardPage: React.FC = () => {
             </IconButton>
           </Toolbar>
         </AppBar>
-        <Container maxWidth="xl" sx={{ py: 2, height: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column' }}>
+        <Container 
+          maxWidth="xl" 
+          sx={{ 
+            py: { xs: 1, sm: 2 }, 
+            px: { xs: 1, sm: 2, md: 3 }, 
+            height: 'calc(100vh - 56px)', 
+            display: 'flex', 
+            flexDirection: 'column',
+            width: '100%',
+            maxWidth: '100%',
+            overflowX: 'hidden'
+          }}
+        >
           {/* Header Section */}
           <Box sx={{ mb: 2, flexShrink: 0 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: { xs: 1, sm: 2 } }}>
               <Box>
                 <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
                   {guardSelectedSite?.name || 'Dashboard'}
@@ -500,7 +514,7 @@ export const DashboardPage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 {jobSites.length > 1 && (
-                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                  <FormControl size="small" sx={{ minWidth: { xs: 150, sm: 200 }, width: { xs: '100%', sm: 'auto' } }}>
                     <InputLabel>{t('guardDashboard.jobSite')}</InputLabel>
                     <Select
                       value={guardSelectedSiteId}
@@ -530,7 +544,7 @@ export const DashboardPage: React.FC = () => {
             <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
               {t('guardDashboard.quickActions')}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
                 startIcon={<Assessment />}
@@ -608,9 +622,9 @@ export const DashboardPage: React.FC = () => {
             </Box>
           ) : (
             /* Desktop: Split-Screen Layout */
-            <Grid container spacing={2} sx={{ flexGrow: 1, minHeight: 0 }}>
+            <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ flexGrow: 1, minHeight: 0 }}>
               {/* Left Column: Entry Form (40%) */}
-              <Grid item xs={12} md={4.8} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '100%' }}>
+              <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '100%' }}>
                 <Box sx={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
                   <QuickEntryForm
                     jobSiteId={guardSelectedSiteId}
@@ -620,7 +634,7 @@ export const DashboardPage: React.FC = () => {
               </Grid>
 
               {/* Right Column: On-Site List (60%) */}
-              <Grid item xs={12} md={7.2} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '100%' }}>
+              <Grid item xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '100%' }}>
                 <Box sx={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
                   <OnSiteVehiclesList
                     entries={onSiteEntries}
@@ -685,14 +699,14 @@ export const DashboardPage: React.FC = () => {
     return (
       <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
         <AppBar position="static" elevation={0}>
-          <Toolbar sx={{ minHeight: '56px !important', py: 1 }}>
+          <Toolbar sx={{ minHeight: '56px !important', py: 1, px: { xs: 1, sm: 2 }, flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: { xs: 1, sm: 0 } }}>
             <Box
               component="img"
               src="/logo.png"
               alt="Shield Logo"
-              sx={{ height: 32, mr: 2 }}
+              sx={{ height: { xs: 24, sm: 32 }, mr: { xs: 1, sm: 2 }, flexShrink: 0 }}
             />
-            <Typography variant="h6" sx={{ flexGrow: 1, fontSize: '1rem', fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ flexGrow: 1, fontSize: { xs: '0.875rem', sm: '1rem' }, fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>
               {t('dashboard.securityAccessManagement')}
             </Typography>
             <Chip
@@ -703,10 +717,11 @@ export const DashboardPage: React.FC = () => {
               sx={{
                 backgroundColor: '#2a2a2a',
                 color: '#ffffff',
-                mr: 1,
+                mr: { xs: 0.5, sm: 1 },
                 height: '28px',
-                fontSize: '0.75rem',
+                fontSize: { xs: '0.7rem', sm: '0.75rem' },
                 cursor: 'pointer',
+                flexShrink: 0,
                 '&:hover': {
                   backgroundColor: '#3a3a3a',
                 },
@@ -738,13 +753,14 @@ export const DashboardPage: React.FC = () => {
               sx={{
                 borderColor: '#ffd700',
                 color: '#ffd700',
-                mr: 1,
+                mr: { xs: 0.5, sm: 1 },
                 minWidth: 'auto',
-                px: 1.5,
+                px: { xs: 1, sm: 1.5 },
                 py: 0.5,
-                fontSize: '0.75rem',
+                fontSize: { xs: '0.7rem', sm: '0.75rem' },
                 fontWeight: 600,
                 textTransform: 'none',
+                flexShrink: 0,
                 '&:hover': {
                   borderColor: '#ffed4e',
                   backgroundColor: 'rgba(255, 215, 0, 0.1)',
@@ -765,7 +781,16 @@ export const DashboardPage: React.FC = () => {
             </IconButton>
           </Toolbar>
         </AppBar>
-        <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Container 
+          maxWidth="lg" 
+          sx={{ 
+            py: { xs: 2, sm: 3 }, 
+            px: { xs: 1, sm: 2, md: 3 },
+            width: '100%',
+            maxWidth: '100%',
+            overflowX: 'hidden'
+          }}
+        >
           {/* Header Section */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="h4" sx={{ fontWeight: 600, mb: 0.5 }}>
@@ -801,7 +826,7 @@ export const DashboardPage: React.FC = () => {
 
           {/* Summary Cards */}
           {dashboardLoading ? (
-            <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mb: 3 }}>
               {[1, 2, 3, 4].map((i) => (
                 <Grid item xs={12} sm={6} md={3} key={i}>
                   <Skeleton variant="rectangular" height={140} sx={{ borderRadius: '8px' }} />
@@ -809,7 +834,7 @@ export const DashboardPage: React.FC = () => {
               ))}
             </Grid>
           ) : dashboardData ? (
-            <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6} md={3}>
                 <DashboardSummaryCard
                   title={t('dashboard.onSiteNow')}
@@ -867,7 +892,7 @@ export const DashboardPage: React.FC = () => {
             <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
               {t('dashboard.quickActions')}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
                 startIcon={<Assessment />}
@@ -982,7 +1007,16 @@ export const DashboardPage: React.FC = () => {
           </IconButton>
         </Toolbar>
       </AppBar>
-      <Container maxWidth="xl" sx={{ py: 2 }}>
+      <Container 
+        maxWidth="xl" 
+        sx={{ 
+          py: { xs: 1, sm: 2 }, 
+          px: { xs: 1, sm: 2, md: 3 },
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        }}
+      >
         {/* Compact Header */}
         <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
@@ -1034,7 +1068,7 @@ export const DashboardPage: React.FC = () => {
               {t('dashboard.noActiveJobSites')}
             </Alert>
           ) : (
-            <Grid container spacing={1.5}>
+            <Grid container spacing={{ xs: 1, sm: 1.5 }}>
               {occupancies.map((occupancy) => (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={occupancy.job_site_id}>
                   <OccupancyCard occupancy={occupancy} />
@@ -1049,9 +1083,9 @@ export const DashboardPage: React.FC = () => {
           <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
             {t('dashboard.quickActions')}
           </Typography>
-          <Grid container spacing={1.5}>
+          <Grid container spacing={{ xs: 1, sm: 1.5 }}>
             {uniqueActionCards.map((action) => (
-              <Grid item xs={6} sm={4} md={3} lg={2.4} key={action.path}>
+              <Grid item xs={6} sm={4} md={3} lg={2} key={action.path}>
                 <Card
                   sx={{
                     cursor: 'pointer',

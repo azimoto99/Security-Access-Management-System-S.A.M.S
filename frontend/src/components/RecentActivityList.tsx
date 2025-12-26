@@ -393,7 +393,15 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
         </Box>
         <TableContainer 
           ref={scrollContainerRef}
-          sx={{ maxHeight: '600px', overflowY: 'auto' }}
+          sx={{ 
+            maxHeight: '600px', 
+            overflowY: 'auto',
+            overflowX: 'auto',
+            width: '100%',
+            '& .MuiTable-root': {
+              minWidth: 800,
+            },
+          }}
         >
           <Table>
             <TableHead>

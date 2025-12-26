@@ -284,7 +284,16 @@ export const AdminDashboardPage: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Container 
+        maxWidth="xl" 
+        sx={{ 
+          py: { xs: 2, sm: 3 }, 
+          px: { xs: 1, sm: 2, md: 3 },
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        }}
+      >
         {/* Filters Section */}
         <Card sx={{ mb: 3, p: 2 }}>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
