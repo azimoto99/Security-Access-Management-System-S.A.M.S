@@ -69,9 +69,11 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
     const loadFieldConfigs = async () => {
       try {
         setLoadingFields(true);
+        // Reset field configs while loading to avoid showing stale data
+        setFieldConfigs([]);
         const configs = await customFieldService.getCustomFields(jobSiteId, entryType);
         const activeConfigs = configs.filter((f) => f.is_active);
-        console.log('QuickEntryForm: Loaded field configs', { jobSiteId, entryType, total: configs.length, active: activeConfigs.length });
+        console.log('QuickEntryForm: Loaded field configs', { jobSiteId, entryType, total: configs.length, active: activeConfigs.length, configs });
         setFieldConfigs(activeConfigs);
         
         // Initialize form data based on field configurations
@@ -494,6 +496,7 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
               <CircularProgress size={24} />
             </Box>
           ) : fieldConfigs.length > 0 ? (
+            // Use dynamic field configurations
             fieldConfigs
               .sort((a, b) => a.display_order - b.display_order)
               .map((field) => {
