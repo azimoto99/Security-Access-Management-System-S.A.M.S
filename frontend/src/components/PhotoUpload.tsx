@@ -14,6 +14,7 @@ import {
   DialogActions,
 } from '@mui/material';
 import { CloudUpload, Delete, Camera, CameraAlt } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 interface PhotoFile {
   file: File;
@@ -48,6 +49,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
   maxPhotos = 10,
   maxFileSize = 10 * 1024 * 1024, // 10MB default
 }, ref) => {
+  const { t } = useTranslation();
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,15 +64,15 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
   const validateFile = (file: File): string | null => {
     // Check file type
     if (!file.type.startsWith('image/')) {
-      return 'File must be an image';
+      return t('photoUpload.fileMustBeImage');
     }
     if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
-      return 'Only JPEG and PNG images are allowed';
+      return t('photoUpload.onlyJpegPng');
     }
 
     // Check file size
     if (file.size > maxFileSize) {
-      return `File size must be less than ${Math.round(maxFileSize / 1024 / 1024)}MB`;
+      return t('photoUpload.fileSizeTooLarge', { maxSize: Math.round(maxFileSize / 1024 / 1024) });
     }
 
     return null;
@@ -85,7 +87,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
 
       Array.from(files).forEach((file) => {
         if (photos.length + newPhotos.length >= maxPhotos) {
-          errors.push(`Maximum ${maxPhotos} photos allowed`);
+          errors.push(t('photoUpload.maxPhotosExceeded', { maxPhotos }));
           return;
         }
 
@@ -199,10 +201,10 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
           console.error('Error accessing camera:', err);
           setCameraError(
             err.name === 'NotAllowedError'
-              ? 'Camera access denied. Please allow camera access in your browser settings.'
+              ? t('photoUpload.cameraAccessDenied')
               : err.name === 'NotFoundError'
-              ? 'No camera found on this device.'
-              : 'Failed to access camera. Please try again.'
+              ? t('photoUpload.noCameraFound')
+              : t('photoUpload.failedToAccessCamera')
           );
         }
       };
@@ -265,7 +267,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
         }
 
         if (photos.length >= maxPhotos) {
-          setError(`Maximum ${maxPhotos} photos allowed`);
+          setError(t('photoUpload.maxPhotosExceeded', { maxPhotos }));
           closeCamera();
           return;
         }
@@ -299,13 +301,13 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
 
   const handleUpload = async () => {
     if (!entryId) {
-      setError('Entry ID is required');
+      setError(t('photoUpload.entryIdRequired'));
       if (onUploadError) onUploadError();
       return;
     }
 
     if (photos.length === 0) {
-      setError('Please select at least one photo');
+      setError(t('photoUpload.selectAtLeastOne'));
       if (onUploadError) onUploadError();
       return;
     }
@@ -334,11 +336,11 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
       }
 
       if (result.errors && result.errors.length > 0) {
-        setError(`Some photos failed to upload: ${result.errors.map((e: any) => e.filename).join(', ')}`);
+        setError(t('photoUpload.somePhotosFailed', { filenames: result.errors.map((e: any) => e.filename).join(', ') }));
         if (onUploadError) onUploadError();
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to upload photos');
+      setError(err.message || t('photoUpload.failedToUpload'));
       setPhotos((prev) => prev.map((p) => ({ ...p, uploading: false })));
       if (onUploadError) onUploadError();
     }
@@ -407,10 +409,10 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
         />
         <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
         <Typography variant="h6" gutterBottom>
-          Drag and drop photos here, or click to select
+          {t('photoUpload.dragAndDrop')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          JPEG or PNG, max {Math.round(maxFileSize / 1024 / 1024)}MB per file, up to {maxPhotos} photos
+          {t('photoUpload.fileFormat', { maxSize: Math.round(maxFileSize / 1024 / 1024), maxPhotos })}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
           <Button
@@ -419,7 +421,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
             disabled={photos.length >= maxPhotos}
             startIcon={<CloudUpload />}
           >
-            Select Photos
+            {t('photoUpload.selectPhotos')}
           </Button>
           <Button
             variant="outlined"
@@ -427,7 +429,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
             disabled={photos.length >= maxPhotos}
             startIcon={<CameraAlt />}
           >
-            Take Photo
+            {t('photoUpload.takePhoto')}
           </Button>
         </Box>
       </Paper>
@@ -484,7 +486,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
                         value={photo.progress}
                         sx={{ mb: 0.5 }}
                       />
-                      <Typography variant="caption">Uploading...</Typography>
+                      <Typography variant="caption">{t('photoUpload.uploading')}</Typography>
                     </Box>
                   )}
                   {!photo.uploading && (
@@ -527,7 +529,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
           {entryId && (
             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
               <Button variant="contained" onClick={handleUpload} disabled={photos.some((p) => p.uploading)}>
-                Upload {photos.length} Photo{photos.length !== 1 ? 's' : ''}
+                {t('photoUpload.uploadPhotos', { count: photos.length })}
               </Button>
             </Box>
           )}
@@ -536,7 +538,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
 
       {/* Camera Dialog */}
       <Dialog open={cameraOpen} onClose={closeCamera} maxWidth="sm" fullWidth>
-        <DialogTitle>Take Photo</DialogTitle>
+        <DialogTitle>{t('photoUpload.takePhoto')}</DialogTitle>
         <DialogContent>
           {cameraError ? (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -564,7 +566,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeCamera}>Cancel</Button>
+          <Button onClick={closeCamera}>{t('common.cancel')}</Button>
           {!cameraError && streamRef.current && (
             <Button
               onClick={capturePhoto}
@@ -572,7 +574,7 @@ export const PhotoUpload = forwardRef<PhotoUploadRef, PhotoUploadProps>(({
               startIcon={<Camera />}
               color="primary"
             >
-              Capture
+              {t('photoUpload.capture')}
             </Button>
           )}
         </DialogActions>

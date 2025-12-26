@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import type { EntryType } from '../types/entry';
 import { PhotoUpload, type PhotoUploadRef } from './PhotoUpload';
 import { entryService } from '../services/entryService';
@@ -36,6 +37,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
   initialData,
   entryId,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -543,7 +545,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
         <Grid item xs={12}>
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMore />}>
-              <Typography>Upload Photos (Optional)</Typography>
+              <Typography>{t('entryForm.uploadPhotos')}</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <PhotoUpload

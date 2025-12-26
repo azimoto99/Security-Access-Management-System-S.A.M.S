@@ -685,6 +685,27 @@
     "failedToLoad": "Failed to load assignments",
     "failedToInitiateSigning": "Failed to initiate signing",
     "failedToDownload": "Failed to download document"
+  },
+  "photoUpload": {
+    "dragAndDrop": "Drag and drop photos here, or click to select",
+    "fileFormat": "JPEG or PNG, max {{maxSize}}MB per file, up to {{maxPhotos}} photos",
+    "selectPhotos": "Select Photos",
+    "takePhoto": "Take Photo",
+    "uploading": "Uploading...",
+    "uploadPhotos": "Upload {{count}} Photo",
+    "uploadPhotos_plural": "Upload {{count}} Photos",
+    "fileMustBeImage": "File must be an image",
+    "onlyJpegPng": "Only JPEG and PNG images are allowed",
+    "fileSizeTooLarge": "File size must be less than {{maxSize}}MB",
+    "maxPhotosExceeded": "Maximum {{maxPhotos}} photos allowed",
+    "entryIdRequired": "Entry ID is required",
+    "selectAtLeastOne": "Please select at least one photo",
+    "somePhotosFailed": "Some photos failed to upload: {{filenames}}",
+    "failedToUpload": "Failed to upload photos",
+    "cameraAccessDenied": "Camera access denied. Please allow camera access in your browser settings.",
+    "noCameraFound": "No camera found on this device.",
+    "failedToAccessCamera": "Failed to access camera. Please try again.",
+    "capture": "Capture"
   }
 }
 

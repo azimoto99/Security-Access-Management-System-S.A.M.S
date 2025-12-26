@@ -685,6 +685,27 @@
     "failedToLoad": "Error al cargar asignaciones",
     "failedToInitiateSigning": "Error al iniciar la firma",
     "failedToDownload": "Error al descargar documento"
+  },
+  "photoUpload": {
+    "dragAndDrop": "Arrastre y suelte fotos aquí, o haga clic para seleccionar",
+    "fileFormat": "JPEG o PNG, máximo {{maxSize}}MB por archivo, hasta {{maxPhotos}} fotos",
+    "selectPhotos": "Seleccionar Fotos",
+    "takePhoto": "Tomar Foto",
+    "uploading": "Subiendo...",
+    "uploadPhotos": "Subir {{count}} Foto",
+    "uploadPhotos_plural": "Subir {{count}} Fotos",
+    "fileMustBeImage": "El archivo debe ser una imagen",
+    "onlyJpegPng": "Solo se permiten imágenes JPEG y PNG",
+    "fileSizeTooLarge": "El tamaño del archivo debe ser menor a {{maxSize}}MB",
+    "maxPhotosExceeded": "Se permiten máximo {{maxPhotos}} fotos",
+    "entryIdRequired": "Se requiere ID de entrada",
+    "selectAtLeastOne": "Por favor, seleccione al menos una foto",
+    "somePhotosFailed": "Algunas fotos fallaron al subir: {{filenames}}",
+    "failedToUpload": "Error al subir fotos",
+    "cameraAccessDenied": "Acceso a la cámara denegado. Por favor, permita el acceso a la cámara en la configuración de su navegador.",
+    "noCameraFound": "No se encontró cámara en este dispositivo.",
+    "failedToAccessCamera": "Error al acceder a la cámara. Por favor, intente nuevamente.",
+    "capture": "Capturar"
   }
 }
 
