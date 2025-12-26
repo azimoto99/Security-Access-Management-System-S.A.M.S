@@ -89,6 +89,11 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
           }
         });
         
+        // Ensure required standard fields are initialized for trucks
+        if (entryType === 'truck' && !initialFormData.delivery_pickup) {
+          initialFormData.delivery_pickup = 'delivery';
+        }
+        
         setFormData(initialFormData);
       } catch (error) {
         console.error('Failed to load field configurations:', error);
@@ -400,12 +405,22 @@ export const QuickEntryForm: React.FC<QuickEntryFormProps> = ({
         entryData.expected_duration = parseInt(entryData.expected_duration);
       }
 
-      // Remove empty optional fields
+      // Remove empty optional fields (but keep required standard fields for trucks)
       Object.keys(entryData).forEach((key) => {
         if (entryData[key] === '') {
-          delete entryData[key];
+          // Don't remove delivery_pickup for trucks even if empty - it's required
+          if (entryType === 'truck' && key === 'delivery_pickup') {
+            entryData[key] = 'delivery'; // Set default if empty
+          } else {
+            delete entryData[key];
+          }
         }
       });
+      
+      // Ensure delivery_pickup is set for trucks
+      if (entryType === 'truck' && !entryData.delivery_pickup) {
+        entryData.delivery_pickup = 'delivery';
+      }
 
       const entry = await entryService.createEntry({
         job_site_id: jobSiteId,
