@@ -87,18 +87,51 @@ const getEntryDisplayFields = (entry: RecentEntry, fieldConfigs: Record<string, 
 
   const displayFields: Array<{label: string, value: string}> = [];
 
-  // Add identifier first (always shown)
+  // Add primary identifier with meaningful label based on entry type
+  let primaryLabel = t('recentActivity.identifier');
+  if (entry.entryType === 'vehicle') {
+    primaryLabel = 'License Plate';
+  } else if (entry.entryType === 'visitor') {
+    primaryLabel = 'Name';
+  } else if (entry.entryType === 'truck') {
+    primaryLabel = 'License Plate';
+  }
+
   displayFields.push({
-    label: t('recentActivity.identifier'),
+    label: primaryLabel,
     value: entry.identifier
   });
 
   // Add company name if present
   if (entry.companyName) {
     displayFields.push({
-      label: t('recentActivity.company'),
+      label: 'Company',
       value: entry.companyName
     });
+  }
+
+  // Add driver name for vehicles and trucks
+  if ((entry.entryType === 'vehicle' || entry.entryType === 'truck') && entry.driverName) {
+    displayFields.push({
+      label: 'Driver',
+      value: entry.driverName
+    });
+  }
+
+  // Add truck/trailer info for trucks
+  if (entry.entryType === 'truck') {
+    if (entry.truckNumber) {
+      displayFields.push({
+        label: 'Truck #',
+        value: entry.truckNumber
+      });
+    }
+    if (entry.trailerNumber) {
+      displayFields.push({
+        label: 'Trailer #',
+        value: entry.trailerNumber
+      });
+    }
   }
 
   // Get configured fields for this entry type
@@ -125,7 +158,7 @@ const getEntryDisplayFields = (entry: RecentEntry, fieldConfigs: Record<string, 
     }
   });
 
-  // Limit to 3 most important fields to avoid clutter
+  // Limit to 4 most important fields to avoid clutter
   return displayFields.slice(0, 4);
 };
 

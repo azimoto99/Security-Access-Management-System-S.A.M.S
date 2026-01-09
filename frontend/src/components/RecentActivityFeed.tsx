@@ -73,18 +73,51 @@ const getActivityDisplayFields = (activity: RecentActivity, fieldConfigs: Record
 
   const displayFields: Array<{label: string, value: string}> = [];
 
-  // Add identifier first (always shown)
+  // Add primary identifier with meaningful label based on entry type
+  let primaryLabel = 'Identifier';
+  if (activity.entryType === 'vehicle') {
+    primaryLabel = 'License Plate';
+  } else if (activity.entryType === 'visitor') {
+    primaryLabel = 'Name';
+  } else if (activity.entryType === 'truck') {
+    primaryLabel = 'License Plate';
+  }
+
   displayFields.push({
-    label: t('adminDashboard.identifier'),
+    label: primaryLabel,
     value: activity.identifier
   });
 
   // Add company if present
   if (activity.company) {
     displayFields.push({
-      label: t('adminDashboard.company'),
+      label: 'Company',
       value: activity.company
     });
+  }
+
+  // Add driver name for vehicles and trucks
+  if ((activity.entryType === 'vehicle' || activity.entryType === 'truck') && activity.driverName) {
+    displayFields.push({
+      label: 'Driver',
+      value: activity.driverName
+    });
+  }
+
+  // Add truck/trailer info for trucks
+  if (activity.entryType === 'truck') {
+    if (activity.truckNumber) {
+      displayFields.push({
+        label: 'Truck #',
+        value: activity.truckNumber
+      });
+    }
+    if (activity.trailerNumber) {
+      displayFields.push({
+        label: 'Trailer #',
+        value: activity.trailerNumber
+      });
+    }
   }
 
   // Get configured fields for this entry type
