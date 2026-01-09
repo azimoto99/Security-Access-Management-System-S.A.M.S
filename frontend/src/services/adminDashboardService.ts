@@ -28,7 +28,6 @@ export interface RecentActivity {
   identifier: string;
   company?: string;
   driverName?: string;
-  driverName?: string;
   truckNumber?: string;
   trailerNumber?: string;
   exitTrailerNumber?: string;
