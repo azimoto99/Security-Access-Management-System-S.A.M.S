@@ -6,7 +6,8 @@
 3. [Dashboard Overview](#dashboard-overview)
 4. [User Management](#user-management)
 5. [Job Site Management](#job-site-management)
-6. [Entry and Exit Management](#entry-and-exit-management)
+6. [Custom Field Management](#custom-field-management)
+7. [Entry and Exit Management](#entry-and-exit-management)
 7. [Watchlist Management](#watchlist-management)
 8. [Alerts Management](#alerts-management)
 9. [Reports and Analytics](#reports-and-analytics)
@@ -26,6 +27,7 @@ Welcome to the Security Access Management System (S.A.M.S.) administrator traini
 ### What You'll Learn
 - User account management and role assignment
 - Job site creation and configuration
+- Custom field configuration for entry forms
 - Watchlist and security alert management
 - Comprehensive reporting and analytics
 - Emergency mode activation and management
@@ -37,6 +39,8 @@ Welcome to the Security Access Management System (S.A.M.S.) administrator traini
 - Create and manage user accounts
 - Assign job site access to guards
 - Configure and manage job sites
+- Customize entry forms with custom fields per site and entry type
+- Configure dropdown options for select fields
 - Monitor security alerts and watchlist
 - Generate reports for management
 - Handle emergency situations
@@ -329,6 +333,145 @@ Job sites are the locations where entries and exits are tracked. You can create,
 **When NOT to Delete:**
 - Site has historical entries (deactivate instead)
 - Site may be used again in the future
+
+---
+
+## Custom Field Management
+
+The Custom Field Management feature allows you to customize entry forms for each job site and entry type (Vehicle, Visitor, Truck). This ensures that guards collect only the information relevant to each specific site and entry type.
+
+### Accessing Custom Field Management
+
+**Navigation:**
+1. Click **"Custom Fields"** in the main navigation menu
+2. Select the job site you want to configure
+3. Choose the entry type (Vehicle, Visitor, or Truck) using tabs
+
+### Understanding Field Types
+
+| Field Type | Description | Use Case |
+|------------|-------------|----------|
+| **Text** | Single line text input | Names, license plates, descriptions |
+| **Number** | Numeric input only | Phone numbers, quantities, counts |
+| **Select** | Dropdown with predefined options | Vehicle types, departments, purposes |
+| **Date** | Date picker | Expiration dates, visit dates |
+| **Boolean** | Yes/No checkbox | VIP status, hazardous materials |
+| **Textarea** | Multi-line text | Detailed notes, special instructions |
+| **Email** | Email address validation | Contact emails |
+| **Phone** | Phone number formatting | Contact numbers |
+
+### Creating Custom Fields
+
+**Steps to Add a Field:**
+1. Click the **"Add Custom Field"** button
+2. Fill in the field details:
+   - **Field Key**: Unique identifier (letters, numbers, underscores only)
+   - **Field Label**: Display name shown to guards
+   - **Field Type**: Select from available types
+   - **Required**: Check if this field must be filled
+   - **Active**: Check to make field visible to guards
+   - **Placeholder**: Hint text shown in input field
+   - **Help Text**: Additional instructions for guards
+3. For **Select** fields: Add dropdown options
+4. Click **"Save"**
+
+**Best Practices:**
+- Use clear, descriptive field labels
+- Keep field keys simple and consistent
+- Mark fields as required only when essential
+- Provide helpful placeholder and help text
+- Group related fields together in display order
+
+### Managing Dropdown Options
+
+For Select (dropdown) fields, you can add multiple options:
+
+**Adding Options:**
+1. Select "Select (Dropdown)" as field type
+2. In the "Dropdown Options" section, add options:
+   - **Value**: Internal identifier (used for storage)
+   - **Label**: Display text shown to guards
+3. Use **"Add Option"** to add more choices
+4. Use **"X"** button to remove options
+
+**Example Dropdown Options:**
+```
+Value: delivery    Label: Delivery
+Value: pickup      Label: Pickup
+Value: service     Label: Service Call
+```
+
+### Editing and Deleting Fields
+
+**Editing Fields:**
+1. Click the **"Edit"** icon (pencil) next to any field
+2. Modify field properties as needed
+3. Click **"Save"** to apply changes
+
+**Deleting Fields:**
+1. Click the **"Delete"** icon (trash) next to the field
+2. Confirm deletion
+3. Field is permanently removed from all forms
+
+**⚠️ Important Notes:**
+- Deleting a field removes it from all existing entries
+- Historical data containing the field remains intact
+- Consider deactivating instead of deleting if unsure
+
+### Field Display Order
+
+**Reordering Fields:**
+1. Use the **drag handle** (⋮⋮) to reorder fields
+2. Drag fields to desired position
+3. Changes apply immediately
+
+**Best Practices:**
+- Place most important fields at the top
+- Group related fields together
+- Consider logical workflow progression
+
+### Field Configuration Examples
+
+#### Construction Site Entry Form
+```
+1. Contractor Name (Text, Required)
+2. Company Name (Text, Required)
+3. Work Order Number (Text, Required)
+4. Equipment Type (Select: Excavator, Crane, Truck, etc.)
+5. Has Permits (Boolean, Required)
+6. Safety Training Completed (Boolean, Required)
+7. Emergency Contact (Phone)
+8. Special Notes (Textarea)
+```
+
+#### Office Visitor Form
+```
+1. Visitor Name (Text, Required)
+2. Company (Text)
+3. Host Employee (Select: dropdown of employees)
+4. Visit Purpose (Select: Meeting, Interview, Delivery, etc.)
+5. Expected Duration (Select: 30 min, 1 hour, 2 hours, etc.)
+6. Has Badge (Boolean)
+7. Parking Space (Text)
+8. Notes (Textarea)
+```
+
+### Troubleshooting Custom Fields
+
+**Field Not Appearing:**
+- Check that field is marked as "Active"
+- Verify field configurations are loaded (refresh page)
+- Confirm you're viewing the correct job site and entry type
+
+**Dropdown Options Not Saving:**
+- Ensure both "Value" and "Label" are filled for each option
+- Check for duplicate values in the same dropdown
+- Save the field after adding options
+
+**Field Data Not Showing in Reports:**
+- Custom fields are automatically included in reports
+- Check that entries were created after field configuration
+- Verify field is active and required data was entered
 
 ---
 

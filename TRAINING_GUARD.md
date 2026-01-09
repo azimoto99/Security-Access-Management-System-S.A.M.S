@@ -20,13 +20,15 @@
 Welcome to the Security Access Management System (S.A.M.S.) training guide for guards. This system helps you track and manage vehicle and visitor access at job sites efficiently and securely.
 
 ### What You'll Learn
-- How to log entries for vehicles, visitors, and trucks
+- How to log entries for vehicles, visitors, and trucks using custom forms
+- How to understand and fill custom fields configured for each site
 - How to process exits for logged entries
 - How to log manual exits for vehicles/trucks not logged in
 - How to search and view entry history
 - How to view and download reports and audit logs
 - How to manage security alerts
 - How to handle emergency situations
+- How to monitor recent activity across job sites
 
 ### System Requirements
 - Modern web browser (Chrome, Firefox, Edge, or Safari)
@@ -94,10 +96,17 @@ The Dashboard is your central hub for monitoring activity at your job sites.
 
 3. **Split-Screen Layout** (Desktop)
    - **Left Side**: Log New Entry form
-   - **Right Side**: Vehicles On Site list with Manual Exit button
+   - **Right Side**: Recent Activity feed showing latest entries
    - Both sections are always visible for quick access
 
-4. **Quick Actions Section**
+4. **Recent Activity Feed**
+   - Shows the most recent entries across all your job sites
+   - Displays only the fields configured for each site and entry type
+   - Click any entry to view detailed information
+   - Automatically scrolls to load more entries as you scroll down
+   - Helps you stay aware of recent site activity
+
+5. **Quick Actions Section**
    - **Reports**: Generate and view analytics reports
    - **Audit Logs**: View and download system activity logs
    - **HR Docs**: Access your HR documents and onboarding materials
@@ -113,6 +122,14 @@ The Dashboard is your central hub for monitoring activity at your job sites.
 ## Logging Entries
 
 Logging entries is one of your primary responsibilities. You can log three types of entries: Vehicles, Visitors, and Trucks.
+
+### Understanding Entry Forms
+
+**Custom Field Configuration:**
+- Entry forms are customized for each job site by administrators
+- Fields shown depend on the selected job site and entry type
+- Only relevant information is collected for each specific site
+- Required fields are marked with asterisks (*)
 
 ### Accessing Entry Logging
 
@@ -134,15 +151,18 @@ Logging entries is one of your primary responsibilities. You can log three types
 
 ### Logging a Vehicle Entry
 
-**Required Fields:**
-- **License Plate**: Enter the vehicle's license plate number (automatically converted to uppercase)
-
-**Optional Fields:**
-- **Vehicle Type**: Select from dropdown (Car, SUV, Van, etc.)
-- **Driver Name**: Name of the driver
-- **Company**: Company name if applicable
-- **Purpose**: Reason for visit
-- **Expected Duration**: Estimated stay duration
+**Dynamic Fields:**
+- Entry forms for vehicles are configured by administrators for each job site
+- Fields vary depending on the selected job site
+- Required fields are marked with asterisks (*) and must be filled
+- Common fields may include:
+  - License plate number
+  - Driver name
+  - Company name
+  - Vehicle type (from dropdown)
+  - Purpose of visit
+  - Expected duration
+  - Additional site-specific fields
 
 **Steps:**
 1. Select "Vehicle" tab
@@ -165,15 +185,18 @@ Logging entries is one of your primary responsibilities. You can log three types
 
 ### Logging a Visitor Entry
 
-**Required Fields:**
-- **Name**: Visitor's full name
-
-**Optional Fields:**
-- **Company**: Company name
-- **Contact Phone**: Phone number
-- **Purpose**: Reason for visit
-- **Host Contact**: Name of person they're visiting
-- **Expected Duration**: Estimated stay duration
+**Dynamic Fields:**
+- Entry forms for visitors are configured by administrators for each job site
+- Fields vary depending on the selected job site
+- Required fields are marked with asterisks (*) and must be filled
+- Common fields may include:
+  - Visitor's full name
+  - Company name
+  - Contact phone number
+  - Purpose of visit
+  - Host contact person
+  - Expected duration
+  - Additional site-specific fields
 
 **Steps:**
 1. Select "Visitor" tab
@@ -185,17 +208,20 @@ Logging entries is one of your primary responsibilities. You can log three types
 
 ### Logging a Truck Entry
 
-**Required Fields:**
-- **License Plate**: Truck's license plate
-- **Truck Number**: Company truck number
-
-**Optional Fields:**
-- **Trailer Number**: Trailer number if applicable
-- **Company**: Company name
-- **Driver Name**: Name of the driver
-- **Cargo Description**: Description of cargo
-- **Delivery/Pickup**: Select delivery or pickup
-- **Expected Duration**: Estimated stay duration
+**Dynamic Fields:**
+- Entry forms for trucks are configured by administrators for each job site
+- Fields vary depending on the selected job site
+- Required fields are marked with asterisks (*) and must be filled
+- Common fields may include:
+  - License plate number
+  - Truck number
+  - Trailer number
+  - Driver name
+  - Company name
+  - Cargo description
+  - Delivery or pickup type
+  - Expected duration
+  - Additional site-specific fields
 
 **Steps:**
 1. Select "Truck" tab
@@ -222,6 +248,43 @@ Logging entries is one of your primary responsibilities. You can log three types
 - Include license plates, vehicle identification, or visitor faces
 - Multiple angles are helpful
 - Photos are stored securely and linked to the entry
+
+### Understanding Custom Fields
+
+**Field Types You May Encounter:**
+
+| Field Type | Description | How to Fill |
+|------------|-------------|-------------|
+| **Text** | Single line text input | Type the requested information |
+| **Number** | Numbers only | Enter numbers (no letters or symbols) |
+| **Select** | Dropdown menu | Choose from the provided options |
+| **Date** | Date picker | Click to select a date from calendar |
+| **Boolean** | Yes/No checkbox | Check the box for "Yes", leave unchecked for "No" |
+| **Textarea** | Multi-line text | Type longer descriptions or notes |
+| **Email** | Email address | Enter a valid email format (user@domain.com) |
+| **Phone** | Phone number | Enter phone number (formatting may be automatic) |
+
+**Field Indicators:**
+- **Required Fields**: Marked with red asterisk (*) - must be filled
+- **Optional Fields**: No special marking - can be left blank
+- **Help Text**: Additional instructions appear below some fields
+- **Placeholder Text**: Grey hint text inside empty fields
+
+**Common Custom Fields:**
+- **Work Order Numbers**: Reference numbers for specific jobs
+- **Permit Numbers**: Safety or access permit references
+- **Department/Section**: Which part of the site they're visiting
+- **Equipment Types**: Specific machinery or tools being delivered
+- **Safety Training**: Confirmation of required certifications
+- **Emergency Contacts**: Backup contact information
+- **Special Instructions**: Site-specific requirements or notes
+
+**Tips for Custom Fields:**
+- Read field labels and help text carefully
+- Ask administrators if you encounter unfamiliar fields
+- Required fields cannot be left blank
+- Some fields may have validation (like email format)
+- Dropdown fields only accept the provided options
 
 ### Entry Submission Process
 
