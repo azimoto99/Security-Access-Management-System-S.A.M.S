@@ -28,6 +28,8 @@ import { useTranslation } from 'react-i18next';
 import type { RecentActivity } from '../services/adminDashboardService';
 import { photoService } from '../services/photoService';
 import { adminDashboardService } from '../services/adminDashboardService';
+import { customFieldService } from '../services/customFieldService';
+import type { CustomField } from '../types/customField';
 
 interface RecentActivityFeedProps {
   activities: RecentActivity[];
@@ -63,6 +65,56 @@ const formatTimeAgo = (dateString: string, t: any): string => {
   return t('adminDashboard.daysAgo', { days });
 };
 
+// Get display fields for an activity based on field configurations
+const getActivityDisplayFields = (activity: RecentActivity, fieldConfigs: Record<string, CustomField[]>, t: any): Array<{label: string, value: string}> => {
+  const siteId = activity.siteId;
+  const configKey = `${siteId}_${activity.entryType}`;
+  const configs = fieldConfigs[configKey] || [];
+
+  const displayFields: Array<{label: string, value: string}> = [];
+
+  // Add identifier first (always shown)
+  displayFields.push({
+    label: t('adminDashboard.identifier'),
+    value: activity.identifier
+  });
+
+  // Add company if present
+  if (activity.company) {
+    displayFields.push({
+      label: t('adminDashboard.company'),
+      value: activity.company
+    });
+  }
+
+  // Get configured fields for this entry type
+  configs.forEach(field => {
+    const value = activity[field.field_key as keyof RecentActivity] as any;
+    if (value !== undefined && value !== null && value !== '') {
+      let displayValue: string = '';
+
+      if (field.field_type === 'select' && field.options) {
+        const option = field.options.find((opt: any) => opt.value === value);
+        displayValue = option ? option.label : String(value);
+      } else if (field.field_type === 'boolean') {
+        displayValue = value ? 'Yes' : 'No';
+      } else if (field.field_type === 'date' && value) {
+        displayValue = new Date(value).toLocaleDateString();
+      } else {
+        displayValue = String(value);
+      }
+
+      displayFields.push({
+        label: field.field_label,
+        value: displayValue
+      });
+    }
+  });
+
+  // Limit to 3 most important fields to avoid clutter
+  return displayFields.slice(0, 4);
+};
+
 export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
   activities: initialActivities,
   loading: initialLoading,
@@ -76,6 +128,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
   const [hasMore, setHasMore] = useState(initialHasMore || initialActivities.length >= 20);
   const [offset, setOffset] = useState(initialActivities.length);
   const [searchTerm, setSearchTerm] = useState('');
+  const [fieldConfigs, setFieldConfigs] = useState<Record<string, CustomField[]>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Filter activities based on search term
@@ -161,6 +214,37 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
       clearTimeout(checkInitialLoad);
     };
   }, [hasMore, loadingMore, loadMore, allActivities.length]);
+
+  // Load field configurations for all sites
+  useEffect(() => {
+    const loadFieldConfigs = async () => {
+      const uniqueSites = new Set(allActivities.map(activity => activity.siteId).filter(Boolean));
+      const configs: Record<string, CustomField[]> = {};
+
+      for (const siteId of uniqueSites) {
+        try {
+          // Load configs for all entry types that might be present
+          const [vehicleConfigs, visitorConfigs, truckConfigs] = await Promise.all([
+            customFieldService.getCustomFields(siteId, 'vehicle'),
+            customFieldService.getCustomFields(siteId, 'visitor'),
+            customFieldService.getCustomFields(siteId, 'truck'),
+          ]);
+
+          configs[`${siteId}_vehicle`] = vehicleConfigs.filter(f => f.is_active);
+          configs[`${siteId}_visitor`] = visitorConfigs.filter(f => f.is_active);
+          configs[`${siteId}_truck`] = truckConfigs.filter(f => f.is_active);
+        } catch (error) {
+          console.error(`Failed to load field configs for site ${siteId}:`, error);
+        }
+      }
+
+      setFieldConfigs(configs);
+    };
+
+    if (allActivities.length > 0) {
+      loadFieldConfigs();
+    }
+  }, [allActivities]);
 
   if (initialLoading) {
     return (
@@ -269,21 +353,18 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                           <Typography variant="caption" sx={{ color: '#b0b0b0', display: 'block' }}>
                             {activity.siteName}
                           </Typography>
-                          {activity.driverName && (
-                            <Typography variant="caption" sx={{ color: '#b0b0b0', display: 'block', mt: 0.5 }}>
-                              {t('adminDashboard.driver')}: {activity.driverName}
-                            </Typography>
-                          )}
-                          {(activity.truckNumber || activity.trailerNumber) && (
-                            <Typography variant="caption" sx={{ color: '#b0b0b0', display: 'block', mt: 0.5 }}>
-                              {activity.truckNumber && `${t('adminDashboard.truck')}: ${activity.truckNumber}`}
-                              {activity.truckNumber && activity.trailerNumber && ' • '}
-                              {activity.trailerNumber && `${t('adminDashboard.trailer')}: ${activity.trailerNumber}`}
-                              {isExited && activity.exitTrailerNumber && activity.exitTrailerNumber !== activity.trailerNumber && (
-                                <span> → {t('adminDashboard.exitTrailer')}: {activity.exitTrailerNumber}</span>
-                              )}
-                            </Typography>
-                          )}
+                          {(() => {
+                            const displayFields = getActivityDisplayFields(activity, fieldConfigs, t);
+                            return displayFields.slice(1, 3).map((field, idx) => (
+                              <Typography
+                                key={idx}
+                                variant="caption"
+                                sx={{ color: '#b0b0b0', display: 'block', mt: 0.5 }}
+                              >
+                                {field.label}: {field.value}
+                              </Typography>
+                            ));
+                          })()}
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                             {getEntryIcon(activity.entryType)}
                             <Typography variant="caption" sx={{ color: '#888' }}>

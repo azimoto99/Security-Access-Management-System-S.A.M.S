@@ -35,6 +35,8 @@ import { useNavigate } from 'react-router-dom';
 import type { RecentEntry } from '../services/dashboardService';
 import { photoService } from '../services/photoService';
 import { dashboardService } from '../services/dashboardService';
+import { customFieldService } from '../services/customFieldService';
+import type { CustomField } from '../types/customField';
 
 interface RecentActivityListProps {
   entries: RecentEntry[];
@@ -77,6 +79,56 @@ const formatRelativeTime = (dateString: string, t: any): string => {
   }
 };
 
+// Get display fields for an entry based on field configurations
+const getEntryDisplayFields = (entry: RecentEntry, fieldConfigs: Record<string, CustomField[]>, t: any): Array<{label: string, value: string}> => {
+  const siteId = entry.jobSiteId || '';
+  const configKey = `${siteId}_${entry.entryType}`;
+  const configs = fieldConfigs[configKey] || [];
+
+  const displayFields: Array<{label: string, value: string}> = [];
+
+  // Add identifier first (always shown)
+  displayFields.push({
+    label: t('recentActivity.identifier'),
+    value: entry.identifier
+  });
+
+  // Add company name if present
+  if (entry.companyName) {
+    displayFields.push({
+      label: t('recentActivity.company'),
+      value: entry.companyName
+    });
+  }
+
+  // Get configured fields for this entry type
+  configs.forEach(field => {
+    const value = entry[field.field_key as keyof RecentEntry] as any;
+    if (value !== undefined && value !== null && value !== '') {
+      let displayValue: string = '';
+
+      if (field.field_type === 'select' && field.options) {
+        const option = field.options.find((opt: any) => opt.value === value);
+        displayValue = option ? option.label : String(value);
+      } else if (field.field_type === 'boolean') {
+        displayValue = value ? 'Yes' : 'No';
+      } else if (field.field_type === 'date' && value) {
+        displayValue = new Date(value).toLocaleDateString();
+      } else {
+        displayValue = String(value);
+      }
+
+      displayFields.push({
+        label: field.field_label,
+        value: displayValue
+      });
+    }
+  });
+
+  // Limit to 3 most important fields to avoid clutter
+  return displayFields.slice(0, 4);
+};
+
 export const RecentActivityList: React.FC<RecentActivityListProps> = ({
   entries: initialEntries,
   siteId,
@@ -93,6 +145,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(initialEntries.length);
   const [searchTerm, setSearchTerm] = useState('');
+  const [fieldConfigs, setFieldConfigs] = useState<Record<string, CustomField[]>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Filter entries based on search term
@@ -129,6 +182,39 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
     setOffset(initialEntries.length);
     setHasMore(initialEntries.length > 0);
   }, [initialEntries]);
+
+  // Load field configurations for all sites
+  useEffect(() => {
+    const loadFieldConfigs = async () => {
+      if (!siteId) return;
+
+      const uniqueSites = new Set(allEntries.map(entry => entry.jobSiteId || siteId).filter(Boolean));
+      const configs: Record<string, CustomField[]> = {};
+
+      for (const siteId of uniqueSites) {
+        try {
+          // Load configs for all entry types that might be present
+          const [vehicleConfigs, visitorConfigs, truckConfigs] = await Promise.all([
+            customFieldService.getCustomFields(siteId, 'vehicle'),
+            customFieldService.getCustomFields(siteId, 'visitor'),
+            customFieldService.getCustomFields(siteId, 'truck'),
+          ]);
+
+          configs[`${siteId}_vehicle`] = vehicleConfigs.filter(f => f.is_active);
+          configs[`${siteId}_visitor`] = visitorConfigs.filter(f => f.is_active);
+          configs[`${siteId}_truck`] = truckConfigs.filter(f => f.is_active);
+        } catch (error) {
+          console.error(`Failed to load field configs for site ${siteId}:`, error);
+        }
+      }
+
+      setFieldConfigs(configs);
+    };
+
+    if (allEntries.length > 0) {
+      loadFieldConfigs();
+    }
+  }, [allEntries, siteId]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || !siteId) return;
@@ -363,85 +449,65 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                   )}
                 </Box>
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontWeight: 600,
-                      color: '#ffffff',
-                      mb: 0.5,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {entry.identifier}
-                  </Typography>
-                  {entry.companyName && (
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: '#b0b0b0',
-                        fontSize: '0.7rem',
-                        display: 'block',
-                        mb: 0.5,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {entry.companyName}
-                    </Typography>
-                  )}
-                      {entry.driverName && (
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: '#b0b0b0',
-                        fontSize: '0.7rem',
-                        display: 'block',
-                        mb: 0.5,
-                      }}
-                    >
-                      {t('recentActivity.driverLabel', { name: entry.driverName })}
-                    </Typography>
-                  )}
-                  {(entry.truckNumber || entry.trailerNumber) && (
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: '#b0b0b0',
-                        fontSize: '0.7rem',
-                        display: 'block',
-                        mb: 0.5,
-                      }}
-                    >
-                      {entry.truckNumber && t('recentActivity.truckLabel', { number: entry.truckNumber })}
-                      {entry.truckNumber && entry.trailerNumber && ' • '}
-                      {entry.trailerNumber && t('recentActivity.trailerLabel', { number: entry.trailerNumber })}
-                      {!entry.isOnSite && entry.exitTrailerNumber && entry.exitTrailerNumber !== entry.trailerNumber && (
-                        <span> → {t('recentActivity.exitLabel', { number: entry.exitTrailerNumber })}</span>
-                      )}
-                    </Typography>
-                  )}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                    <Chip
-                      label={entry.isOnSite ? t('recentActivity.onSite') : t('recentActivity.exited')}
-                      size="small"
-                      sx={{
-                        height: 20,
-                        fontSize: '0.65rem',
-                        backgroundColor: entry.isOnSite ? '#4caf50' : '#9e9e9e',
-                        color: '#ffffff',
-                        fontWeight: 600,
-                      }}
-                    />
-                    <Typography
-                      variant="caption"
-                      sx={{ color: '#b0b0b0', fontSize: '0.7rem', ml: 'auto' }}
-                    >
-                      {formatRelativeTime(entry.entryTime, t)}
-                    </Typography>
-                  </Box>
+                  {(() => {
+                    const displayFields = getEntryDisplayFields(entry, fieldConfigs, t);
+                    const primaryField = displayFields[0];
+                    const secondaryFields = displayFields.slice(1);
+
+                    return (
+                      <>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            color: '#ffffff',
+                            mb: 0.5,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {primaryField ? primaryField.value : entry.identifier}
+                        </Typography>
+                        {secondaryFields.slice(0, 2).map((field, idx) => (
+                          <Typography
+                            key={idx}
+                            variant="caption"
+                            sx={{
+                              color: '#b0b0b0',
+                              fontSize: '0.7rem',
+                              display: 'block',
+                              mb: 0.25,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {field.label}: {field.value}
+                          </Typography>
+                        ))}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                          <Chip
+                            label={entry.isOnSite ? t('recentActivity.onSite') : t('recentActivity.exited')}
+                            size="small"
+                            sx={{
+                              height: 20,
+                              fontSize: '0.65rem',
+                              backgroundColor: entry.isOnSite ? '#4caf50' : '#9e9e9e',
+                              color: '#ffffff',
+                              fontWeight: 600,
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{ color: '#b0b0b0', fontSize: '0.7rem', ml: 'auto' }}
+                          >
+                            {formatRelativeTime(entry.entryTime, t)}
+                          </Typography>
+                        </Box>
+                      </>
+                    );
+                  })()}
                 </Box>
                 <Box sx={{ color: '#ffd700' }}>{getEntryTypeIcon(entry.entryType)}</Box>
               </Box>
@@ -533,13 +599,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                   {t('recentActivity.identifier')}
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  {t('recentActivity.company')}
-                </TableCell>
-                <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  {t('recentActivity.driver')}
-                </TableCell>
-                <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
-                  {t('recentActivity.truckTrailer')}
+                  {t('recentActivity.details')}
                 </TableCell>
                 <TableCell sx={{ borderColor: '#2a2a2a', color: '#b0b0b0', fontSize: '0.75rem' }}>
                   {t('recentActivity.entryTime')}
@@ -555,7 +615,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
             <TableBody>
               {filteredEntries.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} sx={{ textAlign: 'center', py: 4, borderColor: '#2a2a2a' }}>
+                  <TableCell colSpan={6} sx={{ textAlign: 'center', py: 4, borderColor: '#2a2a2a' }}>
                     <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
                       {searchTerm ? t('recentActivity.noEntriesMatch') : t('recentActivity.noRecentActivity')}
                     </Typography>
@@ -598,28 +658,24 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                      {entry.companyName || '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                      {entry.driverName || '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ color: '#b0b0b0', fontSize: '0.75rem' }}>
-                      {entry.truckNumber && t('recentActivity.truckLabel', { number: entry.truckNumber })}
-                      {entry.truckNumber && entry.trailerNumber && <br />}
-                      {entry.trailerNumber && t('recentActivity.trailerLabel', { number: entry.trailerNumber })}
-                      {!entry.isOnSite && entry.exitTrailerNumber && entry.exitTrailerNumber !== entry.trailerNumber && (
-                        <>
-                          <br />
-                          <span style={{ color: '#ff9800' }}>{t('recentActivity.exitLabel', { number: entry.exitTrailerNumber })}</span>
-                        </>
-                      )}
-                      {!entry.truckNumber && !entry.trailerNumber && '-'}
-                    </Typography>
+                    <Box>
+                      {(() => {
+                        const displayFields = getEntryDisplayFields(entry, fieldConfigs, t);
+                        return displayFields.slice(1, 4).map((field, idx) => (
+                          <Typography
+                            key={idx}
+                            variant="body2"
+                            sx={{
+                              color: '#b0b0b0',
+                              fontSize: '0.75rem',
+                              mb: idx < displayFields.slice(1, 4).length - 1 ? 0.25 : 0
+                            }}
+                          >
+                            {field.label}: {field.value}
+                          </Typography>
+                        ));
+                      })()}
+                    </Box>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
