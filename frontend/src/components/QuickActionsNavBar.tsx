@@ -52,13 +52,12 @@ export const QuickActionsNavBar: React.FC = () => {
       );
     }
 
+    // HR Documents access - prioritize role hierarchy
     if (user.role === 'guard') {
       actions.push(
         { icon: <Description />, label: t('dashboard.hrDocs'), path: '/hr/documents' }
       );
-    }
-
-    if (user.role === 'employee' || user.role === 'guard') {
+    } else if (user.role === 'employee') {
       actions.push(
         { icon: <Description />, label: t('dashboard.myDocuments'), path: '/hr/documents' }
       );

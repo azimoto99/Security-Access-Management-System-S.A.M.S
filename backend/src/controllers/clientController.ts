@@ -301,6 +301,7 @@ export const getRecentEntries = async (
         exitTime: row.exit_time,
         photoUrl: photoId,
         isOnSite: row.exit_time === null,
+        jobSiteId: siteId,
       };
     });
 

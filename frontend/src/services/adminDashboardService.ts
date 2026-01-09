@@ -28,10 +28,12 @@ export interface RecentActivity {
   identifier: string;
   company?: string;
   driverName?: string;
+  driverName?: string;
   truckNumber?: string;
   trailerNumber?: string;
   exitTrailerNumber?: string;
   siteName: string;
+  siteId: string;
   entryTime: string;
   exitTime?: string | null;
   hasAlert: boolean;

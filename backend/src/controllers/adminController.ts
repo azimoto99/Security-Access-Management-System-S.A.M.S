@@ -297,6 +297,7 @@ export const getRecentActivity = async (
         trailerNumber: entryData.trailer_number || entryData.entry_trailer_number || '',
         exitTrailerNumber: entryData.exit_trailer_number || '',
         siteName: row.site_name || 'Unknown Site',
+        siteId: row.job_site_id,
         entryTime: row.entry_time,
         exitTime: row.exit_time,
         hasAlert: !!row.alert_id,

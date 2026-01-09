@@ -23,6 +23,7 @@ export interface RecentEntry {
   exitTime: string | null;
   photoUrl: string | null;
   isOnSite: boolean;
+  jobSiteId: string;
 }
 
 export interface RecentEntriesResponse {
