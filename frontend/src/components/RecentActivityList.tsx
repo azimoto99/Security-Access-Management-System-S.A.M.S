@@ -80,7 +80,7 @@ const formatRelativeTime = (dateString: string, t: any): string => {
 };
 
 // Get display fields for an entry based on field configurations
-const getEntryDisplayFields = (entry: RecentEntry, fieldConfigs: Record<string, CustomField[]>, t: any): Array<{label: string, value: string}> => {
+const getEntryDisplayFields = (entry: RecentEntry, fieldConfigs: Record<string, CustomField[]>): Array<{label: string, value: string}> => {
   const siteId = entry.jobSiteId || '';
   const configKey = `${siteId}_${entry.entryType}`;
   const configs = fieldConfigs[configKey] || [];
@@ -88,7 +88,7 @@ const getEntryDisplayFields = (entry: RecentEntry, fieldConfigs: Record<string, 
   const displayFields: Array<{label: string, value: string}> = [];
 
   // Add primary identifier with meaningful label based on entry type
-  let primaryLabel = t('recentActivity.identifier');
+  let primaryLabel = 'Identifier';
   if (entry.entryType === 'vehicle') {
     primaryLabel = 'License Plate';
   } else if (entry.entryType === 'visitor') {
@@ -483,7 +483,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                 </Box>
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                   {(() => {
-                    const displayFields = getEntryDisplayFields(entry, fieldConfigs, t);
+                    const displayFields = getEntryDisplayFields(entry, fieldConfigs);
                     const primaryField = displayFields[0];
                     const secondaryFields = displayFields.slice(1);
 
@@ -693,7 +693,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                   <TableCell>
                     <Box>
                       {(() => {
-                        const displayFields = getEntryDisplayFields(entry, fieldConfigs, t);
+                        const displayFields = getEntryDisplayFields(entry, fieldConfigs);
                         return displayFields.slice(1, 4).map((field, idx) => (
                           <Typography
                             key={idx}

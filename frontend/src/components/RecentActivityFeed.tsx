@@ -66,7 +66,7 @@ const formatTimeAgo = (dateString: string, t: any): string => {
 };
 
 // Get display fields for an activity based on field configurations
-const getActivityDisplayFields = (activity: RecentActivity, fieldConfigs: Record<string, CustomField[]>, t: any): Array<{label: string, value: string}> => {
+const getActivityDisplayFields = (activity: RecentActivity, fieldConfigs: Record<string, CustomField[]>): Array<{label: string, value: string}> => {
   const siteId = activity.siteId;
   const configKey = `${siteId}_${activity.entryType}`;
   const configs = fieldConfigs[configKey] || [];
@@ -387,7 +387,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                             {activity.siteName}
                           </Typography>
                           {(() => {
-                            const displayFields = getActivityDisplayFields(activity, fieldConfigs, t);
+                            const displayFields = getActivityDisplayFields(activity, fieldConfigs);
                             return displayFields.slice(1, 3).map((field, idx) => (
                               <Typography
                                 key={idx}
